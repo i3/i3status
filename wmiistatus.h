@@ -13,3 +13,4 @@ static char *get_battery_info(void);
 static char *get_wireless_info(void);
 static char *get_ip_address(const char *interface);
 static char *get_eth_info(void);
+bool process_runs(const char *path);

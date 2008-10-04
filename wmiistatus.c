@@ -46,8 +46,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "wmiistatus.h"
+#include <glob.h>
 
+#include "wmiistatus.h"
 #include "config.h"
 
 static void write_to_statusbar(const char *message) {
@@ -232,14 +233,42 @@ static char *get_eth_info() {
 	return part;
 }
 
+/*
+ * Checks if the PID in path is still valid by checking if /proc/<pid> exists
+ *
+ */
+bool process_runs(const char *path) {
+	char pidbuf[512],
+	     procbuf[512];
+	static glob_t globbuf;
+	struct stat statbuf;
+
+	if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+		die("glob() failed");
+	const char *real_path = (globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path);
+	int fd = open(real_path, O_RDONLY);
+	globfree(&globbuf);
+	if (fd < 0)
+		return false;
+	read(fd, pidbuf, sizeof(pidbuf));
+	close(fd);
+	sprintf(procbuf, "/proc/%s", pidbuf);
+	return (stat(procbuf, &statbuf) >= 0);
+}
 
 int main(void) {
 	char part[512],
 	     *end;
+	unsigned int i;
 
 	while (1) {
 		memset(output, '\0', sizeof(output));
 		first_push = true;
+
+		for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
+			sprintf(part, "%s: %s", run_watches[i], (process_runs(run_watches[i+1]) ? "yes" : "no"));
+			push_part(part, strlen(part));
+		}
 
 		char *wireless_info = get_wireless_info();
 		push_part(wireless_info, strlen(wireless_info));
@@ -250,9 +279,10 @@ int main(void) {
 		char *battery_info = get_battery_info();
 		push_part(battery_info, strlen(battery_info));
 
-		
 		/* Get load */
 		int load_avg = open("/proc/loadavg", O_RDONLY);
+		if (load_avg == -1)
+			die("Could not open /proc/loadavg");
 		read(load_avg, part, sizeof(part));
 		close(load_avg);
 		end = skip_character(part, ' ', 3);
@@ -263,8 +293,6 @@ int main(void) {
 		struct tm *current_tm = localtime(&current_time);
 		strftime(part, sizeof(part), "%d.%m.%Y %H:%M:%S", current_tm);
 		push_part(part, strlen(part));
-
-		printf("output = %s\n", output);
 
 		int fd = open("/mnt/wmii/rbar/status", O_RDWR);
 		write(fd, output, strlen(output));
