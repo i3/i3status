@@ -46,16 +46,26 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "wmiistatus.h"
 
-const char *wlan_interface = "wlan0";
-const char *eth_interface = "eth0";
+#include "config.h"
 
-// TODO: run-watches, z.B.
-// "/var/run/dhcp*.pid" --> checkt ob's das file gibt, ob der prozess läuft und zeigt dann yes/no an
-// "/var/run/vpnc*.pid"
+static void write_to_statusbar(const char *message) {
+	int fd = open(wmii_path, O_RDWR);
+	if (fd == -1)
+		exit(-2);
+	write(fd, message, strlen(message));
+	close(fd);
+}
 
-char output[512];
-bool first_push = true;
+/*
+ * Write errormessage to statusbar and exit
+ *
+ */
+static void die(const char *message) {
+	write_to_statusbar(message);
+	exit(-1);
+}
 
 static char *skip_character(char *input, char character, int amount) {
 	char *walk;
@@ -84,46 +94,55 @@ static void push_part(const char *input, const int n) {
  */
 static char *get_battery_info() {
 	char buf[1024];
-	static char output[512];
+	static char part[512];
 	char *walk, *last = buf;
 	int fd = open("/sys/class/power_supply/BAT0/uevent", O_RDONLY);
+	if (fd == -1)
+		die("Could not open /sys/class/power_supply/BAT0/uevent");
 	int full_design = -1,
 	    remaining = -1,
 	    present_rate = -1;
-	bool charging = false;
-	memset(output, '\0', sizeof(output));
+	charging_status_t status = CS_DISCHARGING;
+	memset(part, '\0', sizeof(part));
 	read(fd, buf, sizeof(buf));
-	/* TODO: charged */
 	for (walk = buf; (walk-buf) < 1024; walk++)
 		if (*walk == '=') {
-			if (strncmp(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN", strlen("POWER_SUPPLY_ENERGY_FULL_DESIGN")) == 0)
+			if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
 				full_design = atoi(walk+1);
-			else if (strncmp(last, "POWER_SUPPLY_ENERGY_NOW", strlen("POWER_SUPPLY_ENERGY_NOW")) == 0)
+			else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW"))
 				remaining = atoi(walk+1);
-			else if (strncmp(last, "POWER_SUPPLY_CURRENT_NOW", strlen("POWER_SUPPLY_CURRENT_NOW")) == 0)
+			else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
 				present_rate = atoi(walk+1);
-			else if (strncmp(last, "POWER_SUPPLY_STATUS=Charging", strlen("POWER_SUPPLY_STATUS=Charging")) == 0)
-				charging = true;
+			else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
+				status = CS_CHARGING;
+			else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
+				status = CS_FULL;
 		} else if (*walk == '\n')
 			last = walk+1;
 	close(fd);
 
 	if ((full_design != -1) && (remaining != -1) && (present_rate != -1)) {
-		float time, perc;
-		if (charging)
-			time = ((float)full_design - (float)remaining) / (float)present_rate;
-		else time = ((float)remaining / (float)present_rate);
+		float remaining_time, perc;
+		if (status == CS_CHARGING)
+			remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
+		else if (status == CS_DISCHARGING)
+			remaining_time = ((float)remaining / (float)present_rate);
+		else {
+			snprintf(part, sizeof(part), "FULL");
+			return part;
+		}
 		perc = ((float)remaining / (float)full_design);
 
-		int seconds = (int)(time * 3600.0);
+		int seconds = (int)(remaining_time * 3600.0);
 		int hours = seconds / 3600;
 		seconds -= (hours * 3600);
 		int minutes = seconds / 60;
 		seconds -= (minutes * 60);
 
-		sprintf(output, "%s %.02f%% %02d:%02d:%02d", (charging ? "CHR" : "BAT"), (perc * 100), hours, minutes, seconds);
+		sprintf(part, "%s %.02f%% %02d:%02d:%02d", (status == CS_CHARGING? "CHR" : "BAT"),
+			(perc * 100), hours, minutes, seconds);
 	}
-	return output;
+	return part;
 }
 
 /*
@@ -132,10 +151,10 @@ static char *get_battery_info() {
  */
 static char *get_wireless_info() {
 	char buf[1024];
-	static char output[512];
+	static char part[512];
 	char *interfaces;
 	memset(buf, '\0', sizeof(buf));
-	memset(output, '\0', sizeof(output));
+	memset(part, '\0', sizeof(part));
 
 	int fd = open("/proc/net/wireless", O_RDONLY);
 	read(fd, buf, sizeof(buf));
@@ -154,34 +173,33 @@ static char *get_wireless_info() {
 			int quality = atoi(interfaces);
 			/* For some reason, I get 255 sometimes */
 			if ((quality == 255) || (quality == 0))
-				snprintf(output, sizeof(output), "W: down");
-			else snprintf(output, sizeof(output), "W: (%02d%%) ", quality);
+				snprintf(part, sizeof(part), "W: down");
+			else snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
 			// TODO: get IP address
-			return output;
+			return part;
 		}
 		interfaces = skip_character(interfaces, '\n', 1) + 1;
 	}
 
-	return output;
+	return part;
 }
 
 static char *get_eth_info() {
-	static char output[512];
+	static char part[512];
 	struct ifreq ifr;
-	memset(output, '\0', sizeof(output));
+	memset(part, '\0', sizeof(part));
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
 	strcpy(ifr.ifr_name, eth_interface);
-	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {
-		printf("böses fehler\n");
-		/* TODO: errorhandling */
-	}
+	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
+		die("Could not get interface flags (SIOCGIFFLAGS)");
+
 	if (!(ifr.ifr_flags & IFF_UP) ||
 	    !(ifr.ifr_flags & IFF_RUNNING)) {
-		sprintf(output, "E: down");
+		sprintf(part, "E: down");
 		close(fd);
-		return output;
+		return part;
 	}
 
 	strcpy(ifr.ifr_name, eth_interface);
@@ -189,17 +207,17 @@ static char *get_eth_info() {
 	if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
 		struct sockaddr_in addr;
 		memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr_in));
-		inet_ntop(AF_INET, &addr.sin_addr.s_addr, output+3, sizeof(struct sockaddr_in));
-		strncpy(output, "E: ", strlen("E: "));
-		if (strlen(output) == 0)
-			sprintf(output, "E: no IP");
+		inet_ntop(AF_INET, &addr.sin_addr.s_addr, part+3, sizeof(struct sockaddr_in));
+		strncpy(part, "E: ", strlen("E: "));
+		if (strlen(part) == 0)
+			sprintf(part, "E: no IP");
 	}
 
 	close(fd);
-	return output;
+	return part;
 }
 
-int main() {
+int main(void) {
 	char part[512],
 	     *end;
 
