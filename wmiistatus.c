@@ -157,6 +157,8 @@ static char *get_wireless_info() {
 	memset(part, '\0', sizeof(part));
 
 	int fd = open("/proc/net/wireless", O_RDONLY);
+	if (fd == -1)
+		die("Could not open /proc/net/wireless");
 	read(fd, buf, sizeof(buf));
 	close(fd);
 
@@ -174,8 +176,12 @@ static char *get_wireless_info() {
 			/* For some reason, I get 255 sometimes */
 			if ((quality == 255) || (quality == 0))
 				snprintf(part, sizeof(part), "W: down");
-			else snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
-			// TODO: get IP address
+			else {
+				snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
+				char *ip_address = get_ip_address(wlan_interface);
+				strcpy(part+strlen(part), ip_address);
+			}
+
 			return part;
 		}
 		interfaces = skip_character(interfaces, '\n', 1) + 1;
@@ -184,38 +190,48 @@ static char *get_wireless_info() {
 	return part;
 }
 
-static char *get_eth_info() {
+static char *get_ip_address(const char *interface) {
 	static char part[512];
 	struct ifreq ifr;
 	memset(part, '\0', sizeof(part));
 
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-	strcpy(ifr.ifr_name, eth_interface);
+	strcpy(ifr.ifr_name, interface);
 	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
 		die("Could not get interface flags (SIOCGIFFLAGS)");
 
 	if (!(ifr.ifr_flags & IFF_UP) ||
 	    !(ifr.ifr_flags & IFF_RUNNING)) {
-		sprintf(part, "E: down");
 		close(fd);
-		return part;
+		return NULL;
 	}
 
-	strcpy(ifr.ifr_name, eth_interface);
+	strcpy(ifr.ifr_name, interface);
 	ifr.ifr_addr.sa_family = AF_INET;
 	if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
 		struct sockaddr_in addr;
 		memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr_in));
-		inet_ntop(AF_INET, &addr.sin_addr.s_addr, part+3, sizeof(struct sockaddr_in));
-		strncpy(part, "E: ", strlen("E: "));
+		inet_ntop(AF_INET, &addr.sin_addr.s_addr, part, sizeof(struct sockaddr_in));
 		if (strlen(part) == 0)
-			sprintf(part, "E: no IP");
+			sprintf(part, "no IP");
 	}
 
 	close(fd);
 	return part;
 }
+
+static char *get_eth_info() {
+	static char part[512];
+	char *ip_address = get_ip_address(eth_interface);
+
+	if (ip_address == NULL)
+		snprintf(part, sizeof(part), "E: down");
+	else snprintf(part, sizeof(part), "E: %s", ip_address);
+
+	return part;
+}
+
 
 int main(void) {
 	char part[512],

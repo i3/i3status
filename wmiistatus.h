@@ -11,4 +11,5 @@ static char *skip_character(char *input, char character, int amount);
 static void push_part(const char *input, const int n);
 static char *get_battery_info(void);
 static char *get_wireless_info(void);
+static char *get_ip_address(const char *interface);
 static char *get_eth_info(void);
