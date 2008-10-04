@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -63,8 +64,14 @@ static void write_to_statusbar(const char *message) {
  * Write errormessage to statusbar and exit
  *
  */
-static void die(const char *message) {
-	write_to_statusbar(message);
+static void die(const char *fmt, ...) {
+	char buffer[512];
+	va_list ap;
+	va_start(ap, fmt);
+	vsprintf(buffer, fmt, ap);
+	va_end(ap);
+
+	write_to_statusbar(buffer);
 	exit(-1);
 }
 
@@ -97,9 +104,9 @@ static char *get_battery_info() {
 	char buf[1024];
 	static char part[512];
 	char *walk, *last = buf;
-	int fd = open("/sys/class/power_supply/BAT0/uevent", O_RDONLY);
+	int fd = open(battery, O_RDONLY);
 	if (fd == -1)
-		die("Could not open /sys/class/power_supply/BAT0/uevent");
+		die("Could not open %s", battery);
 	int full_design = -1,
 	    remaining = -1,
 	    present_rate = -1;
@@ -237,7 +244,7 @@ static char *get_eth_info() {
  * Checks if the PID in path is still valid by checking if /proc/<pid> exists
  *
  */
-bool process_runs(const char *path) {
+static bool process_runs(const char *path) {
 	char pidbuf[512],
 	     procbuf[512];
 	static glob_t globbuf;
@@ -291,12 +298,10 @@ int main(void) {
 		/* Get date & time */
 		time_t current_time = time(NULL);
 		struct tm *current_tm = localtime(&current_time);
-		strftime(part, sizeof(part), "%d.%m.%Y %H:%M:%S", current_tm);
+		strftime(part, sizeof(part), time_format, current_tm);
 		push_part(part, strlen(part));
 
-		int fd = open("/mnt/wmii/rbar/status", O_RDWR);
-		write(fd, output, strlen(output));
-		close(fd);
+		write_to_statusbar(output);
 
 		sleep(1);
 	}

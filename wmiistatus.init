@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          wmiistatus
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: little application to fill up wmii's status bar
+# Description:       little application to fill up wmii's status bar
+### END INIT INFO
+
+# For the pidfile, you must be root. wmiistatus itself runs as user just fine
+[ $UID -eq 0 ] || { echo "You need to be root"; exit 1; }
+
+. /lib/lsb/init-functions
+
+case "$1" in
+start)	log_daemon_msg "Starting wmii status bar filler" "wmiistatus"
+	start-stop-daemon --start --background --quiet --make-pidfile --pidfile /var/run/wmiistatus.pid --name wmiistatus --startas /usr/bin/wmiistatus
+	log_end_msg $?
+	;;
+stop)	log_daemon_msg "Stopping wmii status bar filler" "wmiistatus"
+	start-stop-daemon --stop --quiet --pidfile /var/run/wmiistatus.pid --name wmiistatus
+	log_end_msg $?
+	;;
+restart|reload|force-reload)	log_daemon_msg "Restarting wmii status bar filler" "wmiistatus"
+	start-stop-daemon --stop --retry 5 --quiet --pidfile /var/run/wmiistatus.pid --name wmiistatus
+	start-stop-daemon --start --background --quiet --make-pidfile --pidfile /var/run/wmiistatus.pid --name wmiistatus --startas /usr/bin/wmiistatus
+	;;
+*)	log_action_msg "Usage: $0 {start|stop|restart|reload|force-reload}"
+	exit 2
+	;;
+esac
+exit 0
