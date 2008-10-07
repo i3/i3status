@@ -68,6 +68,10 @@ static char *concat(const char *str1, const char *str2) {
 	return concatbuf;
 }
 
+/*
+ * Cleans wmii's /rbar directory by deleting all regular files
+ *
+ */
 static void cleanup_rbar_dir() {
 	struct dirent *ent;
 	DIR *dir;
@@ -86,6 +90,11 @@ static void cleanup_rbar_dir() {
 	closedir(dir);
 }
 
+/*
+ * Creates the specified file in wmii's /rbar directory with
+ * correct modes and initializes colors if colormode is enabled
+ * '
+ */
 static void create_file(const char *name) {
 	char pathbuf[strlen(wmii_path)+256+1];
 
@@ -100,6 +109,10 @@ static void create_file(const char *name) {
 	close(fd);
 }
 
+/*
+ * Writes the given message in the corresponding file in wmii's /rbar directory
+ *
+ */
 static void write_to_statusbar(const char *name, const char *message) {
 	char pathbuf[strlen(wmii_path)+256+1];
 
@@ -111,6 +124,10 @@ static void write_to_statusbar(const char *name, const char *message) {
 	close(fd);
 }
 
+/*
+ * Writes an errormessage to statusbar
+ *
+ */
 static void write_error_to_statusbar(const char *message) {
 	cleanup_rbar_dir();
 	create_file("error");
