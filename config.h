@@ -1,18 +1,25 @@
-const char *wlan_interface = "wlan0";
-const char *eth_interface = "eth0";
-/* wmii_path has to be terminated by slash */
-const char *wmii_path = "/mnt/wmii/rbar/";
-const char *time_format = "%d.%m.%Y %H:%M:%S";
-const char *battery = "/sys/class/power_supply/BAT0/uevent";
-const char *run_watches[] = {"DHCP", "/var/run/dhclient.pid",
-			     "VPN", "/var/run/vpnc*.pid"};
+#include <stdbool.h>
 
-#define ORDER_RUN	"0"
-#define ORDER_WLAN 	"1"
-#define ORDER_ETH 	"2"
-#define ORDER_BATTERY 	"3"
-#define ORDER_LOAD 	"4"
-#define ORDER_TIME 	"5"
+#ifndef _CONFIG_H
+#define _CONFIG_H
 
-#define USE_COLORS
-#define WMII_NORMCOLORS "#000000 #333333" /* <background> <border> */
+enum { ORDER_RUN, ORDER_WLAN, ORDER_ETH, ORDER_BATTERY, ORDER_LOAD, ORDER_TIME, MAX_ORDER };
+
+#ifndef _IS_CONFIG_C /* Definitions for everybody */
+extern const char *wlan_interface;
+extern const char *eth_interface;
+extern const char *wmii_path;
+extern const char *time_format;
+extern const char *battery_path;
+extern const char **run_watches;
+extern unsigned int num_run_watches;
+extern const char *wmii_normcolors;
+extern const char order[MAX_ORDER][2];
+
+extern bool use_colors;
+#endif
+
+char *glob_path(const char *path);
+int load_configuration(const char *configfile);
+
+#endif

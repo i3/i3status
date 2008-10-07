@@ -50,8 +50,22 @@
 #include <glob.h>
 #include <dirent.h>
 
+#define _IS_WMIISTATUS_C
 #include "wmiistatus.h"
+#undef _IS_WMIISTATUS_C
 #include "config.h"
+
+/*
+ * This function just concats two strings in place, it should only be used
+ * for concatting order to the name of a file or concatting color codes.
+ * Otherwise, the buffer size would have to be increased.
+ *
+ */
+static char *concat(const char *str1, const char *str2) {
+	static char concatbuf[32];
+	snprintf(concatbuf, sizeof(concatbuf), "%s%s", str1, str2);
+	return concatbuf;
+}
 
 static void cleanup_rbar_dir() {
 	struct dirent *ent;
@@ -78,9 +92,10 @@ static void create_file(const char *name) {
 	int fd = creat(pathbuf, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		exit(-4);
-#ifdef USE_COLORS
-	write(fd, "#888888 " WMII_NORMCOLORS, strlen("#888888 " WMII_NORMCOLORS));
-#endif
+	if (use_colors) {
+		char *tmp = concat("#888888 ", wmii_normcolors);
+		write(fd, tmp, strlen(tmp));
+	}
 	close(fd);
 }
 
@@ -97,6 +112,7 @@ static void write_to_statusbar(const char *name, const char *message) {
 
 static void write_error_to_statusbar(const char *message) {
 	cleanup_rbar_dir();
+	create_file("error");
 	write_to_statusbar("error", message);
 }
 
@@ -104,7 +120,7 @@ static void write_error_to_statusbar(const char *message) {
  * Write errormessage to statusbar and exit
  *
  */
-static void die(const char *fmt, ...) {
+void die(const char *fmt, ...) {
 	char buffer[512];
 	va_list ap;
 	va_start(ap, fmt);
@@ -136,9 +152,9 @@ static char *get_battery_info() {
 	char buf[1024];
 	static char part[512];
 	char *walk, *last = buf;
-	int fd = open(battery, O_RDONLY);
+	int fd = open(battery_path, O_RDONLY);
 	if (fd == -1)
-		die("Could not open %s", battery);
+		die("Could not open %s", battery_path);
 	int full_design = -1,
 	    remaining = -1,
 	    present_rate = -1;
@@ -215,11 +231,9 @@ static char *get_wireless_info() {
 			int quality = atoi(interfaces);
 			/* For some reason, I get 255 sometimes */
 			if ((quality == 255) || (quality == 0)) {
-#ifdef USE_COLORS
-			snprintf(part, sizeof(part), "#FF0000 " WMII_NORMCOLORS " W: down");
-#else
-			snprintf(part, sizeof(part), "W: down");
-#endif
+			if (use_colors)
+				snprintf(part, sizeof(part), "%s%s", concat("#FF0000 ", wmii_normcolors), " W: down");
+			else snprintf(part, sizeof(part), "W: down");
 
 			} else {
 				snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
@@ -315,32 +329,38 @@ int main(void) {
 	     *end;
 	unsigned int i;
 
+	load_configuration("/etc/wmiistatus.conf");
 	cleanup_rbar_dir();
-	create_file(ORDER_WLAN "wlan");
-	create_file(ORDER_ETH "eth");
-	create_file(ORDER_BATTERY "battery");
-	create_file(ORDER_LOAD "load");
-	create_file(ORDER_TIME "time");
-	for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
-		sprintf(pathbuf, "%s%s", ORDER_RUN, run_watches[i]);
+	if (wlan_interface)
+		create_file(concat(order[ORDER_WLAN],"wlan"));
+	if (eth_interface)
+		create_file(concat(order[ORDER_ETH],"eth"));
+	if (battery_path)
+		create_file(concat(order[ORDER_BATTERY],"battery"));
+	create_file(concat(order[ORDER_LOAD],"load"));
+	if (time_format)
+		create_file(concat(order[ORDER_TIME],"time"));
+	for (i = 0; i < num_run_watches; i += 2) {
+		sprintf(pathbuf, "%s%s", order[ORDER_RUN], run_watches[i]);
 		create_file(pathbuf);
 	}
 
 	while (1) {
-		for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
+		for (i = 0; i < num_run_watches; i += 2) {
 			bool running = process_runs(run_watches[i+1]);
-#ifdef USE_COLORS
-			sprintf(part, "%s %s: %s", (running ? "#00FF00 " WMII_NORMCOLORS : "#FF0000 " WMII_NORMCOLORS), run_watches[i], (running ? "yes" : "no"));
-#else
-			sprintf(part, "%s: %s", run_watches[i], (running ? "yes" : "no"));
-#endif
-			sprintf(pathbuf, "%s%s", ORDER_RUN, run_watches[i]);
+			if (use_colors)
+				sprintf(part, "%s %s: %s", (running ? concat("#00FF00 ", wmii_normcolors) : concat("#FF0000 ", wmii_normcolors)), run_watches[i], (running ? "yes" : "no"));
+			else sprintf(part, "%s: %s", run_watches[i], (running ? "yes" : "no"));
+			sprintf(pathbuf, "%s%s", order[ORDER_RUN], run_watches[i]);
 			write_to_statusbar(pathbuf, part);
 		}
 
-		write_to_statusbar(ORDER_WLAN "wlan", get_wireless_info());
-		write_to_statusbar(ORDER_ETH "eth", get_eth_info());
-		write_to_statusbar(ORDER_BATTERY "battery", get_battery_info());
+		if (wlan_interface)
+			write_to_statusbar(concat(order[ORDER_WLAN], "wlan"), get_wireless_info());
+		if (eth_interface)
+			write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info());
+		if (battery_path)
+			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info());
 
 		/* Get load */
 		int load_avg = open("/proc/loadavg", O_RDONLY);
@@ -350,13 +370,15 @@ int main(void) {
 		close(load_avg);
 		end = skip_character(part, ' ', 3);
 		*end = '\0';
-		write_to_statusbar(ORDER_LOAD "load", part);
+		write_to_statusbar(concat(order[ORDER_LOAD], "load"), part);
 
-		/* Get date & time */
-		time_t current_time = time(NULL);
-		struct tm *current_tm = localtime(&current_time);
-		strftime(part, sizeof(part), time_format, current_tm);
-		write_to_statusbar(ORDER_TIME "time", part);
+		if (time_format) {
+			/* Get date & time */
+			time_t current_time = time(NULL);
+			struct tm *current_tm = localtime(&current_time);
+			strftime(part, sizeof(part), time_format, current_tm);
+			write_to_statusbar(concat(order[ORDER_TIME], "time"), part);
+		}
 
 		sleep(1);
 	}
