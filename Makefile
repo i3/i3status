@@ -1,7 +1,14 @@
-wmiistatus: wmiistatus.c wmiistatus.h config.h config.c Makefile
-	gcc -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare -g -c -o wmiistatus.o wmiistatus.c
-	gcc -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare -g -c -o config.o config.c
-	gcc -Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare -g -o wmiistatus *.o
+CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
+CFLAGS+=-g
+CFLAGS+=-DPREFIX=\"\"
+
+wmiistatus: wmiistatus.o wmiistatus.h config.h config.o
+
+clean:
+	rm *.o
+
+distclean: clean
+	rm wmiistatus
 
 install:
 	install -m 755 -d $(DESTDIR)/usr/bin

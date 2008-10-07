@@ -179,7 +179,7 @@ int load_configuration(const char *configfile) {
 	fclose(handle);
 
 	if (wmii_path == NULL)
-		die("No wmii_path specified in configuration file");
+		exit(-4);
 
 	return result;
 }

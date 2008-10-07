@@ -49,6 +49,7 @@
 #include <arpa/inet.h>
 #include <glob.h>
 #include <dirent.h>
+#include <getopt.h>
 
 #define _IS_WMIISTATUS_C
 #include "wmiistatus.h"
@@ -323,13 +324,24 @@ static bool process_runs(const char *path) {
 	return (stat(procbuf, &statbuf) >= 0);
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	char part[512],
 	     pathbuf[512],
 	     *end;
 	unsigned int i;
 
-	load_configuration("/etc/wmiistatus.conf");
+	char *configfile = PREFIX "/etc/wmiistatus.conf";
+	int o, option_index = 0;
+	struct option long_options[] = {
+		{"config", required_argument, 0, 'c'},
+		{0, 0, 0, 0}
+	};
+
+	while ((o = getopt_long(argc, argv, "c:", long_options, &option_index)) != -1)
+		if ((char)o == 'c')
+			configfile = optarg;
+
+	load_configuration(configfile);
 	cleanup_rbar_dir();
 	if (wlan_interface)
 		create_file(concat(order[ORDER_WLAN],"wlan"));
