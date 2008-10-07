@@ -1,0 +1,99 @@
+.de Vb \" Begin verbatim text
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve \" End verbatim text
+.ft R
+.fi
+..
+
+.TH wmiistatus 1 "OCTOBER 2008" Linux "User Manuals"
+
+.SH NAME
+wmiistatus \- fill wmii's status bar
+.SH SYNOPSIS
+.B wmiistatus
+.RB [\|\-c
+.IR configfile \|]
+
+.SH DESCRIPTION
+
+.B wmiistatus
+is a small program for filling wmii's status bar via its 9P pseudo filesystem. It is designed to be very efficient by issuing a very small number of systemcalls (as the bar should be updated every second or at your specified interval).
+
+.SH CONFIGURATION
+.TP
+.B wlan
+Specifies the name of your WLAN interface (e.g. wlan0 or ath0 or eth1). Don't specify if you don't have a WLAN interface or if it should not be displayed.
+
+.TP
+.B eth
+Specifies the name of your ethernet interface (e.g. eth0). Don't specify if you don't have an ethernet interface or if it should not be displayed.
+
+.TP
+.B wmii_path
+Specifies the path to the rbar-folder of your mounted wmii pseudo file system (e.g. /mnt/wmii/rbar/). It has to be terminated by a slash.
+
+.TP
+.B time_format
+Format for the time/date to be displayed. See strftime(3) or date(1). Don't specify it if you don't want the time to be shown.
+
+.TP
+.B battery_path
+The path to your battery's uevent file in /sys, e.g. /sys/class/power_supply/BAT0/uevent. Only interesting for you if you have more than one battery. Don't specify if you don't have a battery.
+
+.TP
+.B run_watch
+You can specify this directive multiple times. Each line first has a name (one word, separated by space) followed by a path (can contain wildcards, given to glob(3)). The path is the path to a PID-file which contains just the process ID of a process. wmiistatus will then check if the process is still running and displays "yes" or "no" depending on the status. This is useful for displaying if your VPN is running, or dhclient for DHCP and so on...
+
+.TP
+.B order
+Followed by a comma separated list of the modules (run, wlan, eth, battery, load, time) this directive specifies the order of the information which should be displayed. An order is accomplished by prefixing the files in wmii's /rbar directory with a number, that is 0VPN, 1DHCP, 2time and so on..
+
+.TP
+.B color
+If specified, color mode is on. This affects WLAN which will be displayed red if WLAN is down and the run_watch system which will display the status in red/green.
+
+.TP
+.B normcolors
+Specifies the colors for background/border in the same format (html colorcodes) as wmii's configuration, that is #222222 #333333 for example.
+
+.TP
+.B interval
+Specifies the interval in which the status bar will be updated. If you got a very slow system or feel you don't need so much information, you may want to increase it.
+
+.SH FILES
+.TP
+.B /etc/wmiistatus.conf
+System-wide configuration file.
+
+.SH EXAMPLE CONFIGURATION
+.PP
+.Vb 10
+\&wlan wlan0
+\&eth eth0
+\&wmii_path /mnt/wmii/rbar/
+\&time_format %d.%m.%Y %H:%M:%S
+\&battery_path /sys/class/power_supply/BAT0/uevent
+\&run_watch DHCP /var/run/dhclient*.pid
+\&run_watch VPN /var/run/vpnc*.pid
+\&order run,wlan,eth,battery,load,time
+\&normcolors #000000 #333333
+\&color
+.Ve
+
+.SH MOUNTING WMII'S PSEUDO FILESYSTEM
+As of now (October 2008, Linux 2.6.27) you can mount wmii's 9P pseudo filesystem using:
+.PP
+.Vb 1
+mount -t 9p -o rw,trans=unix,uname=michael,dfltuid=1000,dfltgid=50,name=michael,noauto,noextend /tmp/ns.michael.:0/wmii /mnt/wmii 
+.Ve
+
+.SH SEE ALSO
+.BR strftime (3),
+.BR date (1),
+.BR glob (3)
+
+.SH AUTHOR
+Michael Stapelberg <michael+wmiistatus at stapelberg dot de>

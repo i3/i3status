@@ -15,6 +15,7 @@ extern const char **run_watches;
 extern unsigned int num_run_watches;
 extern const char *wmii_normcolors;
 extern const char order[MAX_ORDER][2];
+extern int interval;
 
 extern bool use_colors;
 #endif

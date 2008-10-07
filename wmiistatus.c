@@ -380,6 +380,6 @@ int main(void) {
 			write_to_statusbar(concat(order[ORDER_TIME], "time"), part);
 		}
 
-		sleep(1);
+		sleep(interval);
 	}
 }
