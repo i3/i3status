@@ -246,7 +246,9 @@ static char *get_eth_info() {
  */
 static bool process_runs(const char *path) {
 	char pidbuf[512],
-	     procbuf[512];
+	     procbuf[512],
+	     *walk;
+	int n;
 	static glob_t globbuf;
 	struct stat statbuf;
 
@@ -257,8 +259,15 @@ static bool process_runs(const char *path) {
 	globfree(&globbuf);
 	if (fd < 0)
 		return false;
-	read(fd, pidbuf, sizeof(pidbuf));
+	n = read(fd, pidbuf, sizeof(pidbuf));
+	if (n > 0)
+		pidbuf[n] = '\0';
 	close(fd);
+	for (walk = pidbuf; *walk != '\0'; walk++)
+		if (!isdigit((int)(*walk))) {
+			*walk = '\0';
+			break;
+		}
 	sprintf(procbuf, "/proc/%s", pidbuf);
 	return (stat(procbuf, &statbuf) >= 0);
 }
