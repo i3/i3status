@@ -48,16 +48,53 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <glob.h>
+#include <dirent.h>
 
 #include "wmiistatus.h"
 #include "config.h"
 
-static void write_to_statusbar(const char *message) {
-	int fd = open(wmii_path, O_RDWR);
+static void cleanup_rbar_dir() {
+	struct dirent *ent;
+	DIR *dir;
+	char pathbuf[strlen(wmii_path)+256+1];
+
+	if ((dir = opendir(wmii_path)) == NULL)
+		exit(-3);
+
+	while ((ent = readdir(dir)) != NULL) {
+		if (ent->d_type == DT_REG) {
+			sprintf(pathbuf, "%s%s", wmii_path, ent->d_name);
+			unlink(pathbuf);
+		}
+	}
+
+	closedir(dir);
+}
+
+static void create_file(const char *name) {
+	char pathbuf[strlen(wmii_path)+256+1];
+
+	sprintf(pathbuf, "%s%s", wmii_path, name);
+	int fd = creat(pathbuf, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		exit(-4);
+	close(fd);
+}
+
+static void write_to_statusbar(const char *name, const char *message) {
+	char pathbuf[strlen(wmii_path)+256+1];
+
+	sprintf(pathbuf, "%s%s", wmii_path, name);
+	int fd = open(pathbuf, O_RDWR);
 	if (fd == -1)
 		exit(-2);
 	write(fd, message, strlen(message));
 	close(fd);
+}
+
+static void write_error_to_statusbar(const char *message) {
+	cleanup_rbar_dir();
+	write_to_statusbar("error", message);
 }
 
 /*
@@ -71,7 +108,7 @@ static void die(const char *fmt, ...) {
 	vsprintf(buffer, fmt, ap);
 	va_end(ap);
 
-	write_to_statusbar(buffer);
+	write_error_to_statusbar(buffer);
 	exit(-1);
 }
 
@@ -277,6 +314,13 @@ int main(void) {
 	     *end;
 	unsigned int i;
 
+	cleanup_rbar_dir();
+	create_file(ORDER_WLAN "wlan");
+	create_file(ORDER_ETH "eth");
+	create_file(ORDER_BATTERY "battery");
+	create_file(ORDER_LOAD "load");
+	create_file(ORDER_TIME "time");
+
 	while (1) {
 		memset(output, '\0', sizeof(output));
 		first_push = true;
@@ -287,13 +331,13 @@ int main(void) {
 		}
 
 		char *wireless_info = get_wireless_info();
-		push_part(wireless_info, strlen(wireless_info));
+		write_to_statusbar(ORDER_WLAN "wlan", wireless_info);
 
 		char *eth_info = get_eth_info();
-		push_part(eth_info, strlen(eth_info));
+		write_to_statusbar(ORDER_ETH "eth", eth_info);
 
 		char *battery_info = get_battery_info();
-		push_part(battery_info, strlen(battery_info));
+		write_to_statusbar(ORDER_BATTERY "battery", battery_info);
 
 		/* Get load */
 		int load_avg = open("/proc/loadavg", O_RDONLY);
@@ -302,15 +346,14 @@ int main(void) {
 		read(load_avg, part, sizeof(part));
 		close(load_avg);
 		end = skip_character(part, ' ', 3);
-		push_part(part, (end-part));
+		*end = '\0';
+		write_to_statusbar(ORDER_LOAD "load", part);
 
 		/* Get date & time */
 		time_t current_time = time(NULL);
 		struct tm *current_tm = localtime(&current_time);
 		strftime(part, sizeof(part), time_format, current_tm);
-		push_part(part, strlen(part));
-
-		write_to_statusbar(output);
+		write_to_statusbar(ORDER_TIME "time", part);
 
 		sleep(1);
 	}

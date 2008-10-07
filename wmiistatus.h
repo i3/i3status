@@ -5,7 +5,9 @@ static bool first_push = true;
 
 typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
 
-static void write_to_statusbar(const char *message);
+static void cleanup_rbar_dir(void);
+static void write_to_statusbar(const char *name, const char *message);
+static void write_error_to_statusbar(const char *message);
 static void die(const char *fmt, ...);
 static char *skip_character(char *input, char character, int amount);
 static void push_part(const char *input, const int n);
