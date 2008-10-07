@@ -7,8 +7,11 @@ const char *battery = "/sys/class/power_supply/BAT0/uevent";
 const char *run_watches[] = {"DHCP", "/var/run/dhclient.pid",
 			     "VPN", "/var/run/vpnc*.pid"};
 
-#define ORDER_WLAN 	"0"
-#define ORDER_ETH 	"1"
-#define ORDER_BATTERY 	"2"
-#define ORDER_LOAD 	"3"
-#define ORDER_TIME 	"4"
+#define ORDER_RUN	"0"
+#define ORDER_WLAN 	"1"
+#define ORDER_ETH 	"2"
+#define ORDER_BATTERY 	"3"
+#define ORDER_LOAD 	"4"
+#define ORDER_TIME 	"5"
+
+#define USE_COLORS

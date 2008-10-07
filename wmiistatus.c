@@ -124,14 +124,6 @@ static char *skip_character(char *input, char character, int amount) {
 	return (walk == input ? walk : walk-1);
 }
 
-static void push_part(const char *input, const int n) {
-	if (first_push)
-		first_push = false;
-	else
-		strncpy(output+strlen(output), " | ", strlen(" | "));
-	strncpy(output+strlen(output), input, n);
-}
-
 /*
  * Get battery information from /sys. Note that it uses the design capacity to calculate the percentage,
  * not the full capacity.
@@ -311,6 +303,7 @@ static bool process_runs(const char *path) {
 
 int main(void) {
 	char part[512],
+	     pathbuf[512],
 	     *end;
 	unsigned int i;
 
@@ -320,24 +313,21 @@ int main(void) {
 	create_file(ORDER_BATTERY "battery");
 	create_file(ORDER_LOAD "load");
 	create_file(ORDER_TIME "time");
+	for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
+		sprintf(pathbuf, "%s%s", ORDER_RUN, run_watches[i]);
+		create_file(pathbuf);
+	}
 
 	while (1) {
-		memset(output, '\0', sizeof(output));
-		first_push = true;
-
 		for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
 			sprintf(part, "%s: %s", run_watches[i], (process_runs(run_watches[i+1]) ? "yes" : "no"));
-			push_part(part, strlen(part));
+			sprintf(pathbuf, "%s%s", ORDER_RUN, run_watches[i]);
+			write_to_statusbar(pathbuf, part);
 		}
 
-		char *wireless_info = get_wireless_info();
-		write_to_statusbar(ORDER_WLAN "wlan", wireless_info);
-
-		char *eth_info = get_eth_info();
-		write_to_statusbar(ORDER_ETH "eth", eth_info);
-
-		char *battery_info = get_battery_info();
-		write_to_statusbar(ORDER_BATTERY "battery", battery_info);
+		write_to_statusbar(ORDER_WLAN "wlan", get_wireless_info());
+		write_to_statusbar(ORDER_ETH "eth", get_eth_info());
+		write_to_statusbar(ORDER_BATTERY "battery", get_battery_info());
 
 		/* Get load */
 		int load_avg = open("/proc/loadavg", O_RDONLY);
