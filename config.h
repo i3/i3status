@@ -15,3 +15,4 @@ const char *run_watches[] = {"DHCP", "/var/run/dhclient.pid",
 #define ORDER_TIME 	"5"
 
 #define USE_COLORS
+#define WMII_NORMCOLORS "#000000 #333333" /* <background> <border> */

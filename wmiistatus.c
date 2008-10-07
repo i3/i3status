@@ -78,6 +78,9 @@ static void create_file(const char *name) {
 	int fd = creat(pathbuf, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		exit(-4);
+#ifdef USE_COLORS
+	write(fd, "#888888 " WMII_NORMCOLORS, strlen("#888888 " WMII_NORMCOLORS));
+#endif
 	close(fd);
 }
 
@@ -211,9 +214,14 @@ static char *get_wireless_info() {
 				interfaces++;
 			int quality = atoi(interfaces);
 			/* For some reason, I get 255 sometimes */
-			if ((quality == 255) || (quality == 0))
-				snprintf(part, sizeof(part), "W: down");
-			else {
+			if ((quality == 255) || (quality == 0)) {
+#ifdef USE_COLORS
+			snprintf(part, sizeof(part), "#FF0000 " WMII_NORMCOLORS " W: down");
+#else
+			snprintf(part, sizeof(part), "W: down");
+#endif
+
+			} else {
 				snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
 				char *ip_address = get_ip_address(wlan_interface);
 				strcpy(part+strlen(part), ip_address);
@@ -320,7 +328,12 @@ int main(void) {
 
 	while (1) {
 		for (i = 0; i < sizeof(run_watches) / sizeof(char*); i += 2) {
-			sprintf(part, "%s: %s", run_watches[i], (process_runs(run_watches[i+1]) ? "yes" : "no"));
+			bool running = process_runs(run_watches[i+1]);
+#ifdef USE_COLORS
+			sprintf(part, "%s %s: %s", (running ? "#00FF00 " WMII_NORMCOLORS : "#FF0000 " WMII_NORMCOLORS), run_watches[i], (running ? "yes" : "no"));
+#else
+			sprintf(part, "%s: %s", run_watches[i], (running ? "yes" : "no"));
+#endif
 			sprintf(pathbuf, "%s%s", ORDER_RUN, run_watches[i]);
 			write_to_statusbar(pathbuf, part);
 		}
