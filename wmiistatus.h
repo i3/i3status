@@ -10,7 +10,7 @@ static void write_error_to_statusbar(const char *message);
 static char *skip_character(char *input, char character, int amount);
 static char *get_battery_info(void);
 static char *get_wireless_info(void);
-static char *get_ip_address(const char *interface);
+static const char *get_ip_address(const char *interface);
 static char *get_eth_info(void);
 static bool process_runs(const char *path);
 #endif

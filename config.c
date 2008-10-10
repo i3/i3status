@@ -23,7 +23,7 @@ const char *wmii_normcolors = "#222222 #333333";
 char order[MAX_ORDER][2];
 const char **run_watches;
 unsigned int num_run_watches;
-int interval = 1;
+unsigned int interval = 1;
 
 void die(const char *fmt, ...);
 
