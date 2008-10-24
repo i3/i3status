@@ -46,7 +46,6 @@ binary-indep: build install
 
 # Build architecture-dependent files here.
 binary-arch: build install
-	dh_prep
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs 
