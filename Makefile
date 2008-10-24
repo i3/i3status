@@ -5,10 +5,10 @@ CFLAGS+=-DPREFIX=\"\"
 wmiistatus: wmiistatus.o wmiistatus.h config.h config.o
 
 clean:
-	rm *.o
+	rm -f *.o
 
 distclean: clean
-	rm wmiistatus
+	rm -f wmiistatus
 
 install:
 	install -m 755 -d $(DESTDIR)/usr/bin
@@ -16,5 +16,9 @@ install:
 	install -m 755 wmiistatus $(DESTDIR)/usr/bin/wmiistatus
 	install -m 755 wmiistatus.init $(DESTDIR)/etc/init.d/wmiistatus
 	install -m 644 wmiistatus.conf $(DESTDIR)/etc/wmiistatus.conf
+
+release:
+	tar cf wmiistatus.tar *.c *.h *.1 *.conf *.init Makefile
+	bzip2 -9 wmiistatus.tar
 
 all: wmiistatus
