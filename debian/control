@@ -1,0 +1,15 @@
+Source: wmiistatus
+Section: utils
+Priority: optional
+Maintainer: Michael Stapelberg <michael+wmiistatus@stapelberg.de>
+Standards-Version: 3.7.3
+Homepage: http://michael.stapelberg.de/wmiistatus
+
+Package: wmiistatus
+Architecture: any
+Priority: optional
+Section: utils
+Depends: ${shlibs:Depends}
+Description: little application to fill up wmii's status bar
+ wmiistatus is a program running in background and filling up wmii's status bar
+ using wmiis plan9 pseudo file system (therefore, you need 9pfs).
