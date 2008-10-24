@@ -56,6 +56,10 @@ Followed by a comma separated list of the modules (run, wlan, eth, battery, load
 If specified, color mode is on. This affects WLAN which will be displayed red if WLAN is down and the run_watch system which will display the status in red/green.
 
 .TP
+.B get_ethspeed
+Get current speed of the ethernet interface using the same mechanism as ethtool. You need to start wmiistatus with root privileges to use this.
+
+.TP
 .B normcolors
 Specifies the colors for background/border in the same format (html colorcodes) as wmii's configuration, that is #222222 #333333 for example.
 

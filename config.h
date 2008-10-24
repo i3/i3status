@@ -18,6 +18,7 @@ extern const char order[MAX_ORDER][2];
 extern unsigned int interval;
 
 extern bool use_colors;
+extern bool get_ethspeed;
 #endif
 
 char *glob_path(const char *path);

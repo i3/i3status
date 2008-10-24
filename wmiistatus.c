@@ -50,6 +50,9 @@
 #include <glob.h>
 #include <dirent.h>
 #include <getopt.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
+
 
 #define _IS_WMIISTATUS_C
 #include "wmiistatus.h"
@@ -262,7 +265,7 @@ static char *get_wireless_info() {
 			else (void)snprintf(part, sizeof(part), "W: down");
 
 			} else {
-				char *ip_address;
+				const char *ip_address;
 				(void)snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
 				ip_address = get_ip_address(wlan_interface);
 				strcpy(part+strlen(part), ip_address);
@@ -311,10 +314,34 @@ static const char *get_ip_address(const char *interface) {
 static char *get_eth_info() {
 	static char part[512];
 	const char *ip_address = get_ip_address(eth_interface);
+	int ethspeed = 0;
+
+	if (get_ethspeed) {
+		struct ifreq ifr;
+		struct ethtool_cmd ecmd;
+		int fd, err;
+
+		if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+			write_error_to_statusbar("Could not open socket");
+
+		ecmd.cmd = ETHTOOL_GSET;
+		(void)memset(&ifr, 0, sizeof(ifr));
+		ifr.ifr_data = (caddr_t)&ecmd;
+		(void)strcpy(ifr.ifr_name, eth_interface);
+		if ((err = ioctl(fd, SIOCETHTOOL, &ifr)) == 0)
+			ethspeed = ecmd.speed;
+		else write_error_to_statusbar("Could not get interface speed. Insufficient privileges?");
+
+		(void)close(fd);
+	}
 
 	if (ip_address == NULL)
 		(void)snprintf(part, sizeof(part), "E: down");
-	else (void)snprintf(part, sizeof(part), "E: %s", ip_address);
+	else {
+		if (get_ethspeed)
+			(void)snprintf(part, sizeof(part), "E: %s (%d Mbit/s)", ip_address, ethspeed);
+		else (void)snprintf(part, sizeof(part), "E: %s", ip_address);
+	}
 
 	return part;
 }

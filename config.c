@@ -19,6 +19,7 @@ const char *wmii_path;
 const char *time_format;
 const char *battery_path;
 bool use_colors;
+bool get_ethspeed;
 const char *wmii_normcolors = "#222222 #333333";
 char order[MAX_ORDER][2];
 const char **run_watches;
@@ -160,6 +161,10 @@ int load_configuration(const char *configfile) {
 		OPT("color")
 		{
 			use_colors = true;
+		}
+		OPT("get_ethspeed")
+		{
+			get_ethspeed = true;
 		}
 		OPT("normcolors")
 		{
