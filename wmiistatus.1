@@ -90,8 +90,10 @@ System-wide configuration file.
 .SH MOUNTING WMII'S PSEUDO FILESYSTEM
 As of now (October 2008, Linux 2.6.27) you can mount wmii's 9P pseudo filesystem using:
 .PP
-.Vb 1
+.Vb 3
 mount -t 9p -o rw,trans=unix,uname=michael,dfltuid=1000,dfltgid=50,name=michael,noauto,noextend /tmp/ns.michael.:0/wmii /mnt/wmii 
+# Perhaps you need to load module 9pnet_fd if that does not work
+modprobe 9pnet_fd
 .Ve
 
 .SH SEE ALSO

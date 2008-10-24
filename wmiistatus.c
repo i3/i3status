@@ -189,9 +189,11 @@ static char *get_battery_info() {
 	(void)read(fd, buf, sizeof(buf));
 	for (walk = buf, last = buf; (walk-buf) < 1024; walk++)
 		if (*walk == '=') {
-			if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
+			if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN") ||
+			    BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN"))
 				full_design = atoi(walk+1);
-			else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW"))
+			else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW") ||
+				 BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW"))
 				remaining = atoi(walk+1);
 			else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
 				present_rate = atoi(walk+1);
