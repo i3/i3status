@@ -109,8 +109,12 @@ int load_configuration(const char *configfile) {
 		OPT("wmii_path")
 		{
 			char *globbed = glob_path(dest_value);
-			if ((stat(globbed, &stbuf)) == -1)
-				die("wmii_path contains an invalid path");
+			if ((stat(globbed, &stbuf)) == -1) {
+				fprintf(stderr, "Warning: wmii_path contains an invalid path\n");
+				free(globbed);
+				globbed = strdup(dest_value);
+			}
+			fprintf(stderr, "gots path: %s\n", globbed);
 			if (globbed[strlen(globbed)-1] != '/')
 				die("wmii_path is not terminated by /");
 			wmii_path = globbed;
@@ -184,7 +188,7 @@ int load_configuration(const char *configfile) {
 	fclose(handle);
 
 	if (wmii_path == NULL)
-		exit(-4);
+		exit(EXIT_FAILURE);
 
 	return result;
 }

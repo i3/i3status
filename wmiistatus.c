@@ -114,6 +114,31 @@ static void create_file(const char *name) {
 	(void)close(fd);
 }
 
+static void setup(void) {
+	unsigned int i;
+	struct stat statbuf;
+	char pathbuf[512];
+
+	/* Wait until wmii_path/rbar exists */
+	for (; stat(wmii_path, &statbuf) < 0; sleep(interval));
+
+	cleanup_rbar_dir();
+	if (wlan_interface)
+		create_file(concat(order[ORDER_WLAN],"wlan"));
+	if (eth_interface)
+		create_file(concat(order[ORDER_ETH],"eth"));
+	if (battery_path)
+		create_file(concat(order[ORDER_BATTERY],"battery"));
+	create_file(concat(order[ORDER_LOAD],"load"));
+	if (time_format)
+		create_file(concat(order[ORDER_TIME],"time"));
+	for (i = 0; i < num_run_watches; i += 2) {
+		snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
+		create_file(pathbuf);
+	}
+
+}
+
 /*
  * Writes the given message in the corresponding file in wmii's /rbar directory
  *
@@ -123,8 +148,11 @@ static void write_to_statusbar(const char *name, const char *message) {
 	int fd;
 
 	(void)snprintf(pathbuf, sizeof(pathbuf), "%s%s", wmii_path, name);
-	if ((fd = open(pathbuf, O_RDWR)) == -1)
-		exit(EXIT_FAILURE);
+	if ((fd = open(pathbuf, O_RDWR)) == -1) {
+		/* Try to re-setup stuff and just continue */
+		setup();
+		return;
+	}
 	if (write(fd, message, strlen(message)) != (ssize_t)strlen(message))
 		exit(EXIT_FAILURE);
 	(void)close(fd);
@@ -151,7 +179,8 @@ void die(const char *fmt, ...) {
 	(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 	va_end(ap);
 
-	write_error_to_statusbar(buffer);
+	if (wmii_path != NULL)
+		write_error_to_statusbar(buffer);
 	exit(EXIT_FAILURE);
 }
 
@@ -399,21 +428,10 @@ int main(int argc, char *argv[]) {
 		if ((char)o == 'c')
 			configfile = optarg;
 
-	load_configuration(configfile);
-	cleanup_rbar_dir();
-	if (wlan_interface)
-		create_file(concat(order[ORDER_WLAN],"wlan"));
-	if (eth_interface)
-		create_file(concat(order[ORDER_ETH],"eth"));
-	if (battery_path)
-		create_file(concat(order[ORDER_BATTERY],"battery"));
-	create_file(concat(order[ORDER_LOAD],"load"));
-	if (time_format)
-		create_file(concat(order[ORDER_TIME],"time"));
-	for (i = 0; i < num_run_watches; i += 2) {
-		snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
-		create_file(pathbuf);
-	}
+	if (load_configuration(configfile) < 0)
+		return EXIT_FAILURE;
+
+	setup();
 
 	while (1) {
 		for (i = 0; i < num_run_watches; i += 2) {
