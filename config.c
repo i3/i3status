@@ -114,7 +114,6 @@ int load_configuration(const char *configfile) {
 				free(globbed);
 				globbed = strdup(dest_value);
 			}
-			fprintf(stderr, "gots path: %s\n", globbed);
 			if (globbed[strlen(globbed)-1] != '/')
 				die("wmii_path is not terminated by /");
 			wmii_path = globbed;
