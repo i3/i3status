@@ -297,7 +297,7 @@ static char *get_wireless_info() {
 
 			} else {
 				const char *ip_address;
-				(void)snprintf(part, sizeof(part), "W: (%02d%%) ", quality);
+				(void)snprintf(part, sizeof(part), "W: (%03d%%) ", quality);
 				ip_address = get_ip_address(wlan_interface);
 				strcpy(part+strlen(part), ip_address);
 			}
