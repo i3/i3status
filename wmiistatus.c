@@ -102,9 +102,16 @@ static void cleanup_rbar_dir() {
 static void create_file(const char *name) {
 	char pathbuf[strlen(wmii_path)+256+1];
 	int fd;
+	int flags = O_CREAT | O_WRONLY;
+	struct stat statbuf;
 
 	(void)snprintf(pathbuf, sizeof(pathbuf), "%s%s", wmii_path, name);
-	if ((fd = open(pathbuf, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
+
+	/* Overwrite file's contents if it exists */
+	if (stat(pathbuf, &statbuf) >= 0)
+		flags |= O_TRUNC;
+
+	if ((fd = open(pathbuf, flags, S_IRUSR | S_IWUSR)) < 0)
 		exit(EXIT_FAILURE);
 	if (use_colors) {
 		char *tmp = concat("#888888 ", wmii_normcolors);
