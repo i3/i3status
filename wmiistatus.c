@@ -367,7 +367,7 @@ static char *get_eth_info() {
 		ifr.ifr_data = (caddr_t)&ecmd;
 		(void)strcpy(ifr.ifr_name, eth_interface);
 		if ((err = ioctl(fd, SIOCETHTOOL, &ifr)) == 0)
-			ethspeed = ecmd.speed;
+			ethspeed = (ecmd.speed == 65535 ? 0 : ecmd.speed);
 		else write_error_to_statusbar("Could not get interface speed. Insufficient privileges?");
 
 		(void)close(fd);
