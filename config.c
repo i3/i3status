@@ -124,8 +124,6 @@ int load_configuration(const char *configfile) {
 		}
 		OPT("battery_path")
 		{
-			if ((stat(dest_value, &stbuf)) == -1)
-				die("battery_path contains an invalid path");
 			battery_path = strdup(dest_value);
 		}
 		OPT("run_watch")

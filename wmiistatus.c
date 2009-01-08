@@ -219,7 +219,7 @@ static char *get_battery_info() {
 	charging_status_t status = CS_DISCHARGING;
 
 	if ((fd = open(battery_path, O_RDONLY)) == -1)
-		die("Could not open %s", battery_path);
+		return "No battery found";
 
 	memset(part, 0, sizeof(part));
 	(void)read(fd, buf, sizeof(buf));
@@ -368,7 +368,7 @@ static char *get_eth_info() {
 		(void)strcpy(ifr.ifr_name, eth_interface);
 		if ((err = ioctl(fd, SIOCETHTOOL, &ifr)) == 0)
 			ethspeed = (ecmd.speed == 65535 ? 0 : ecmd.speed);
-		else write_error_to_statusbar("Could not get interface speed. Insufficient privileges?");
+		else get_ethspeed = false;
 
 		(void)close(fd);
 	}
