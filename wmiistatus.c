@@ -59,6 +59,9 @@
 #undef _IS_WMIISTATUS_C
 #include "config.h"
 
+/* socket file descriptor for general purposes */
+static int general_socket;
+
 /*
  * This function just concats two strings in place, it should only be used
  * for concatting order to the name of a file or concatting color codes.
@@ -336,33 +339,20 @@ static char *get_wireless_info() {
 static const char *get_ip_address(const char *interface) {
 	static char part[512];
 	struct ifreq ifr;
-	int fd;
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(struct sockaddr_in);
 	memset(part, 0, sizeof(part));
-
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		die("Could not create socket");
-
-	strcpy(ifr.ifr_name, interface);
-	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
-		die("Could not get interface flags (SIOCGIFFLAGS)");
-
-	if (!(ifr.ifr_flags & IFF_UP) ||
-	    !(ifr.ifr_flags & IFF_RUNNING)) {
-		close(fd);
-		return NULL;
-	}
 
 	(void)strcpy(ifr.ifr_name, interface);
 	ifr.ifr_addr.sa_family = AF_INET;
-	if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
-		struct sockaddr_in addr;
-		memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr_in));
-		(void)inet_ntop(AF_INET, &addr.sin_addr.s_addr, part, (socklen_t)sizeof(struct sockaddr_in));
-		if (strlen(part) == 0)
-			snprintf(part, sizeof(part), "no IP");
-	}
+	if (ioctl(general_socket, SIOCGIFADDR, &ifr) < 0)
+		return NULL;
 
-	(void)close(fd);
+	memcpy(&addr, &ifr.ifr_addr, len);
+	(void)inet_ntop(AF_INET, &addr.sin_addr.s_addr, part, len);
+	if (strlen(part) == 0)
+		(void)snprintf(part, sizeof(part), "no IP");
+
 	return part;
 }
 
@@ -379,20 +369,15 @@ static char *get_eth_info() {
 		/* This code path requires root privileges */
 		struct ifreq ifr;
 		struct ethtool_cmd ecmd;
-		int fd, err;
-
-		if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-			write_error_to_statusbar("Could not open socket");
+		int err;
 
 		ecmd.cmd = ETHTOOL_GSET;
 		(void)memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_data = (caddr_t)&ecmd;
 		(void)strcpy(ifr.ifr_name, eth_interface);
-		if ((err = ioctl(fd, SIOCETHTOOL, &ifr)) == 0)
+		if ((err = ioctl(general_socket, SIOCETHTOOL, &ifr)) == 0)
 			ethspeed = (ecmd.speed == 65535 ? 0 : ecmd.speed);
 		else get_ethspeed = false;
-
-		(void)close(fd);
 	}
 
 	if (ip_address == NULL)
@@ -461,6 +446,9 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 
 	setup();
+
+	if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		die("Could not create socket");
 
 	while (1) {
 		for (i = 0; i < num_run_watches; i += 2) {
