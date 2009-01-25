@@ -2,7 +2,7 @@
  * Generates a status line for use with wmii or other minimal window managers
  *
  *
- * Copyright (c) 2008 Michael Stapelberg and contributors
+ * Copyright (c) 2008-2009 Michael Stapelberg and contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -121,6 +121,11 @@ static void create_file(const char *name) {
 	(void)close(fd);
 }
 
+/*
+ * Waits until wmii_path/rbar exists (= the filesystem gets mounted),
+ * cleans up all files and creates the needed files
+ *
+ */
 static void setup(void) {
 	unsigned int i;
 	struct stat statbuf;
@@ -191,6 +196,11 @@ void die(const char *fmt, ...) {
 	exit(EXIT_FAILURE);
 }
 
+/*
+ * Skip the given character for maximum 'amount' times, returns
+ * a pointer to the first non-'character' character in 'input'.
+ *
+ */
 static char *skip_character(char *input, char character, int amount) {
 	char *walk;
 	size_t len = strlen(input);
@@ -204,8 +214,9 @@ static char *skip_character(char *input, char character, int amount) {
 }
 
 /*
- * Get battery information from /sys. Note that it uses the design capacity to calculate the percentage,
- * not the full capacity.
+ * Get battery information from /sys. Note that it uses the design capacity to
+ * calculate the percentage, not the last full capacity, so you can see how
+ * worn off your battery is.
  *
  */
 static char *get_battery_info() {
@@ -317,13 +328,19 @@ static char *get_wireless_info() {
 	return part;
 }
 
+/*
+ * Return the IP address for the given interface or "no IP" if the
+ * interface is up and running but hasn't got an IP address yet
+ *
+ */
 static const char *get_ip_address(const char *interface) {
 	static char part[512];
 	struct ifreq ifr;
 	int fd;
 	memset(part, 0, sizeof(part));
 
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		die("Could not create socket");
 
 	strcpy(ifr.ifr_name, interface);
 	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
@@ -335,7 +352,7 @@ static const char *get_ip_address(const char *interface) {
 		return NULL;
 	}
 
-	strcpy(ifr.ifr_name, interface);
+	(void)strcpy(ifr.ifr_name, interface);
 	ifr.ifr_addr.sa_family = AF_INET;
 	if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
 		struct sockaddr_in addr;
@@ -349,12 +366,17 @@ static const char *get_ip_address(const char *interface) {
 	return part;
 }
 
+/*
+ * Combines ethernet IP addresses and speed (if requested) for displaying
+ *
+ */
 static char *get_eth_info() {
 	static char part[512];
 	const char *ip_address = get_ip_address(eth_interface);
 	int ethspeed = 0;
 
 	if (get_ethspeed) {
+		/* This code path requires root privileges */
 		struct ifreq ifr;
 		struct ethtool_cmd ecmd;
 		int fd, err;
