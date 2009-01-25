@@ -151,7 +151,6 @@ static void setup(void) {
 		snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
 		create_file(pathbuf);
 	}
-
 }
 
 /*
@@ -188,14 +187,15 @@ static void write_error_to_statusbar(const char *message) {
  *
  */
 void die(const char *fmt, ...) {
-	char buffer[512];
-	va_list ap;
-	va_start(ap, fmt);
-	(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
-	va_end(ap);
+	if (wmii_path != NULL) {
+		char buffer[512];
+		va_list ap;
+		va_start(ap, fmt);
+		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
+		va_end(ap);
 
-	if (wmii_path != NULL)
 		write_error_to_statusbar(buffer);
+	}
 	exit(EXIT_FAILURE);
 }
 
@@ -256,17 +256,13 @@ static char *get_battery_info() {
 	(void)close(fd);
 
 	if ((full_design != -1) && (remaining != -1) && (present_rate != -1)) {
-		float remaining_time, perc;
+		float remaining_time;
 		int seconds, hours, minutes;
 		if (status == CS_CHARGING)
 			remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
 		else if (status == CS_DISCHARGING)
 			remaining_time = ((float)remaining / (float)present_rate);
-		else {
-			(void)snprintf(part, sizeof(part), "FULL");
-			return part;
-		}
-		perc = ((float)remaining / (float)full_design);
+		else remaining_time = 0;
 
 		seconds = (int)(remaining_time * 3600.0);
 		hours = seconds / 3600;
@@ -275,8 +271,10 @@ static char *get_battery_info() {
 		seconds -= (minutes * 60);
 
 		(void)snprintf(part, sizeof(part), "%s %.02f%% %02d:%02d:%02d",
-			(status == CS_CHARGING? "CHR" : "BAT"),
-			(perc * 100), hours, minutes, seconds);
+			(status == CS_CHARGING ? "CHR" :
+			 (status == CS_DISCHARGING ? "BAT" : "FULL")),
+			(((float)remaining / (float)full_design) * 100),
+			hours, minutes, seconds);
 	}
 	return part;
 }
