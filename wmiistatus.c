@@ -51,9 +51,15 @@
 #include <glob.h>
 #include <dirent.h>
 #include <getopt.h>
+
 #ifdef LINUX
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#else
+/* TODO: correctly check for *BSD */
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/resource.h>
 #endif
 
 #define _IS_WMIISTATUS_C
@@ -404,8 +410,18 @@ static bool process_runs(const char *path) {
 	(void)read(fd, pidbuf, sizeof(pidbuf));
 	(void)close(fd);
 
+#ifdef LINUX
 	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%ld", strtol(pidbuf, NULL, 10));
 	return (stat(procbuf, &statbuf) >= 0);
+#else
+	/* TODO: correctly check for NetBSD. Evaluate if this runs on OpenBSD/FreeBSD */
+	struct kinfo_proc info;
+	size_t length = sizeof(struct kinfo_proc);
+	int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, strtol(pidbuf, NULL, 10) };
+	if (sysctl(mib, 4, &info, &length, NULL, 0) < 0)
+		return false;
+	return (length != 0);
+#endif
 }
 
 int main(int argc, char *argv[]) {
@@ -462,11 +478,25 @@ int main(int argc, char *argv[]) {
 			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info());
 
 		/* Get load */
+#ifdef LINUX
 		if ((load_avg = open("/proc/loadavg", O_RDONLY)) == -1)
 			die("Could not open /proc/loadavg\n");
 		(void)read(load_avg, part, sizeof(part));
 		(void)close(load_avg);
 		*skip_character(part, ' ', 3) = '\0';
+#else
+		/* TODO: correctly check for NetBSD, check if it works the same on *BSD */
+		struct loadavg load;
+		size_t length = sizeof(struct loadavg);
+		int mib[2] = { CTL_VM, VM_LOADAVG };
+		if (sysctl(mib, 2, &load, &length, NULL, 0) < 0)
+			die("Could not sysctl({ CTL_VM, VM_LOADAVG })\n");
+		double scale = load.fscale;
+		(void)snprintf(part, sizeof(part), "%.02f %.02f %.02f",
+				(double)load.ldavg[0] / scale,
+				(double)load.ldavg[1] / scale,
+				(double)load.ldavg[2] / scale);
+#endif
 		write_to_statusbar(concat(order[ORDER_LOAD], "load"), part);
 
 		if (time_format) {
