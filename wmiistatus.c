@@ -100,7 +100,7 @@ static void cleanup_rbar_dir() {
 /*
  * Creates the specified file in wmii's /rbar directory with
  * correct modes and initializes colors if colormode is enabled
- * '
+ *
  */
 static void create_file(const char *name) {
 	char pathbuf[strlen(wmii_path)+256+1];
@@ -200,7 +200,7 @@ void die(const char *fmt, ...) {
 }
 
 /*
- * Skip the given character for maximum 'amount' times, returns
+ * Skip the given character for exactly 'amount' times, returns
  * a pointer to the first non-'character' character in 'input'.
  *
  */
@@ -298,34 +298,24 @@ static char *get_wireless_info() {
 	(void)read(fd, buf, sizeof(buf));
 	(void)close(fd);
 
-	interfaces = skip_character(buf, '\n', 2) + 1;
-	while (interfaces < buf+strlen(buf)) {
+	interfaces = skip_character(buf, '\n', 1) + 1;
+	while ((interfaces = skip_character(interfaces, '\n', 1)+1) < buf+strlen(buf)) {
 		while (isspace((int)*interfaces))
 			interfaces++;
-		if (strncmp(interfaces, wlan_interface, strlen(wlan_interface)) == 0) {
-			int quality;
-			/* Skip status field (0000) */
-			interfaces += strlen(wlan_interface) + 2;
-			interfaces = skip_character(interfaces, ' ', 1);
-			while (isspace((int)*interfaces))
-				interfaces++;
-			quality = atoi(interfaces);
-			/* For some reason, I get 255 sometimes */
-			if ((quality == 255) || (quality == 0)) {
+		if (!BEGINS_WITH(interfaces, wlan_interface))
+			continue;
+		int quality;
+		if (sscanf(interfaces, "%*[^:]: 0000 %d", &quality) != 1)
+			continue;
+		/* for some reason, I get 255 sometimes */
+		if ((quality == 255) || (quality == 0)) {
 			if (use_colors)
-				(void)snprintf(part, sizeof(part), "%s%s", concat("#FF0000 ", wmii_normcolors), " W: down");
+				(void)snprintf(part, sizeof(part), "%s%s",
+					concat("#FF0000 ", wmii_normcolors), " W: down");
 			else (void)snprintf(part, sizeof(part), "W: down");
-
-			} else {
-				const char *ip_address;
-				(void)snprintf(part, sizeof(part), "W: (%03d%%) ", quality);
-				ip_address = get_ip_address(wlan_interface);
-				strcpy(part+strlen(part), ip_address);
-			}
-
-			return part;
-		}
-		interfaces = skip_character(interfaces, '\n', 1) + 1;
+		} else (void)snprintf(part, sizeof(part), "W: (%03d%%) %s",
+				quality, get_ip_address(wlan_interface));
+		return part;
 	}
 
 	return part;
