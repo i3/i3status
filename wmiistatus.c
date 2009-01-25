@@ -307,8 +307,7 @@ static char *get_wireless_info() {
 		int quality;
 		if (sscanf(interfaces, "%*[^:]: 0000 %d", &quality) != 1)
 			continue;
-		/* for some reason, I get 255 sometimes */
-		if ((quality == 255) || (quality == 0)) {
+		if ((quality == UCHAR_MAX) || (quality == 0)) {
 			if (use_colors)
 				(void)snprintf(part, sizeof(part), "%s%s",
 					concat("#FF0000 ", wmii_normcolors), " W: down");
@@ -359,14 +358,13 @@ static char *get_eth_info() {
 		/* This code path requires root privileges */
 		struct ifreq ifr;
 		struct ethtool_cmd ecmd;
-		int err;
 
 		ecmd.cmd = ETHTOOL_GSET;
 		(void)memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_data = (caddr_t)&ecmd;
 		(void)strcpy(ifr.ifr_name, eth_interface);
-		if ((err = ioctl(general_socket, SIOCETHTOOL, &ifr)) == 0)
-			ethspeed = (ecmd.speed == 65535 ? 0 : ecmd.speed);
+		if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0)
+			ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
 		else get_ethspeed = false;
 	}
 
@@ -388,10 +386,10 @@ static char *get_eth_info() {
 static bool process_runs(const char *path) {
 	char pidbuf[512],
 	     procbuf[512];
-	ssize_t n;
 	static glob_t globbuf;
 	struct stat statbuf;
 	int fd;
+	memset(pidbuf, 0, sizeof(pidbuf));
 
 	if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
 		die("glob() failed");
@@ -399,8 +397,7 @@ static bool process_runs(const char *path) {
 	globfree(&globbuf);
 	if (fd < 0)
 		return false;
-	if ((n = read(fd, pidbuf, sizeof(pidbuf))) > 0)
-		pidbuf[n] = '\0';
+	(void)read(fd, pidbuf, sizeof(pidbuf));
 	(void)close(fd);
 
 	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%ld", strtol(pidbuf, NULL, 10));
