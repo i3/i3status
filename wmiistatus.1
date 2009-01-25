@@ -8,7 +8,7 @@
 .fi
 ..
 
-.TH wmiistatus 1 "OCTOBER 2008" Linux "User Manuals"
+.TH wmiistatus 1 "FEBRUARY 2009" Linux "User Manuals"
 
 .SH NAME
 wmiistatus \- fill wmii's status bar
@@ -20,7 +20,7 @@ wmiistatus \- fill wmii's status bar
 .SH DESCRIPTION
 
 .B wmiistatus
-is a small program for filling wmii's status bar via its 9P pseudo filesystem. It is designed to be very efficient by issuing a very small number of systemcalls (as the bar should be updated every second or at your specified interval).
+is a small program (around 500 SLOC) for filling wmii's status bar via its 9P pseudo filesystem. It is designed to be very efficient by issuing a very small number of systemcalls (as the bar should be updated every second or at your specified interval).
 
 .SH CONFIGURATION
 .TP
@@ -61,7 +61,7 @@ Get current speed of the ethernet interface using the same mechanism as ethtool.
 
 .TP
 .B normcolors
-Specifies the colors for background/border in the same format (html colorcodes) as wmii's configuration, that is #222222 #333333 for example.
+Specifies the colors for background/border in the same format (html colorcodes) as wmii's configuration (just the last two values), that is #222222 #333333 for example. Text color will be determined automatically (red/green/#888888), depending on context.
 
 .TP
 .B interval
@@ -88,13 +88,16 @@ System-wide configuration file.
 .Ve
 
 .SH MOUNTING WMII'S PSEUDO FILESYSTEM
-As of now (October 2008, Linux 2.6.27) you can mount wmii's 9P pseudo filesystem using:
+As of now (February 2009, Linux 2.6.28) you can mount wmii's 9P pseudo filesystem using:
 .PP
 .Vb 3
 mount -t 9p -o rw,trans=unix,uname=michael,dfltuid=1000,dfltgid=50,name=michael,noauto,noextend /tmp/ns.michael.:0/wmii /mnt/wmii 
 # Perhaps you need to load module 9pnet_fd if that does not work
 modprobe 9pnet_fd
 .Ve
+
+.SH BUGS
+Sometimes, wmiistatus crashes when the wlan interface vanishes (killswitch). I haven't yet found the bug, as it is not reproducible. If you can reproduce this, please fix it and send me a patch.
 
 .SH SEE ALSO
 .BR strftime (3),
@@ -103,3 +106,6 @@ modprobe 9pnet_fd
 
 .SH AUTHOR
 Michael Stapelberg <michael+wmiistatus at stapelberg dot de>
+
+.SH WEBSITE
+See http://michael.stapelberg.de/wmiistatus for the newest release.

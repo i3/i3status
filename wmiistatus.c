@@ -62,9 +62,7 @@
 #include <sys/resource.h>
 #endif
 
-#define _IS_WMIISTATUS_C
 #include "wmiistatus.h"
-#undef _IS_WMIISTATUS_C
 
 /* socket file descriptor for general purposes */
 static int general_socket;
