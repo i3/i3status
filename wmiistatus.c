@@ -405,7 +405,7 @@ static bool process_runs(const char *path) {
 		pidbuf[n] = '\0';
 	(void)close(fd);
 
-	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%d", strtol(pidbuf, NULL, 10));
+	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%ld", strtol(pidbuf, NULL, 10));
 	return (stat(procbuf, &statbuf) >= 0);
 }
 
