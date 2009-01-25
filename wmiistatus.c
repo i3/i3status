@@ -390,14 +390,14 @@ static char *get_eth_info() {
 }
 
 /*
- * Checks if the PID in path is still valid by checking if /proc/<pid> exists
+ * Checks if the PID in path is still valid by checking:
+ *  (Linux) if /proc/<pid> exists
+ *  (NetBSD) if sysctl returns process infos for this pid
  *
  */
 static bool process_runs(const char *path) {
-	char pidbuf[512],
-	     procbuf[512];
+	char pidbuf[16];
 	static glob_t globbuf;
-	struct stat statbuf;
 	int fd;
 	memset(pidbuf, 0, sizeof(pidbuf));
 
@@ -411,6 +411,8 @@ static bool process_runs(const char *path) {
 	(void)close(fd);
 
 #ifdef LINUX
+	struct stat statbuf;
+	char procbuf[512];
 	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%ld", strtol(pidbuf, NULL, 10));
 	return (stat(procbuf, &statbuf) >= 0);
 #else
@@ -428,7 +430,6 @@ int main(int argc, char *argv[]) {
 	char part[512],
 	     pathbuf[512];
 	unsigned int i;
-	int load_avg;
 
 	char *configfile = PREFIX "/etc/wmiistatus.conf";
 	int o, option_index = 0;
@@ -479,6 +480,7 @@ int main(int argc, char *argv[]) {
 
 		/* Get load */
 #ifdef LINUX
+		int load_avg;
 		if ((load_avg = open("/proc/loadavg", O_RDONLY)) == -1)
 			die("Could not open /proc/loadavg\n");
 		(void)read(load_avg, part, sizeof(part));
