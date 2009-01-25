@@ -282,7 +282,9 @@ static char *get_battery_info() {
 }
 
 /*
- * Just parses /proc/net/wireless
+ * Just parses /proc/net/wireless looking for lines beginning with
+ * wlan_interface, extracting the quality of the link and adding the
+ * current IP address of wlan_interface.
  *
  */
 static char *get_wireless_info() {
@@ -387,30 +389,23 @@ static char *get_eth_info() {
  */
 static bool process_runs(const char *path) {
 	char pidbuf[512],
-	     procbuf[512],
-	     *walk;
+	     procbuf[512];
 	ssize_t n;
 	static glob_t globbuf;
 	struct stat statbuf;
-	const char *real_path;
 	int fd;
 
 	if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
 		die("glob() failed");
-	real_path = (globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path);
-	fd = open(real_path, O_RDONLY);
+	fd = open((globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path), O_RDONLY);
 	globfree(&globbuf);
 	if (fd < 0)
 		return false;
 	if ((n = read(fd, pidbuf, sizeof(pidbuf))) > 0)
 		pidbuf[n] = '\0';
 	(void)close(fd);
-	for (walk = pidbuf; *walk != '\0'; walk++)
-		if (!isdigit((int)(*walk))) {
-			*walk = '\0';
-			break;
-		}
-	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%s", pidbuf);
+
+	(void)snprintf(procbuf, sizeof(procbuf), "/proc/%d", strtol(pidbuf, NULL, 10));
 	return (stat(procbuf, &statbuf) >= 0);
 }
 
