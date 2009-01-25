@@ -41,6 +41,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <ctype.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -50,9 +51,10 @@
 #include <glob.h>
 #include <dirent.h>
 #include <getopt.h>
+#ifdef LINUX
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
-
+#endif
 
 #define _IS_WMIISTATUS_C
 #include "wmiistatus.h"
@@ -355,6 +357,7 @@ static char *get_eth_info() {
 	int ethspeed = 0;
 
 	if (get_ethspeed) {
+#ifdef LINUX
 		/* This code path requires root privileges */
 		struct ifreq ifr;
 		struct ethtool_cmd ecmd;
@@ -366,6 +369,7 @@ static char *get_eth_info() {
 		if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0)
 			ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
 		else get_ethspeed = false;
+#endif
 	}
 
 	if (ip_address == NULL)
@@ -406,8 +410,7 @@ static bool process_runs(const char *path) {
 
 int main(int argc, char *argv[]) {
 	char part[512],
-	     pathbuf[512],
-	     *end;
+	     pathbuf[512];
 	unsigned int i;
 	int load_avg;
 
@@ -415,12 +418,18 @@ int main(int argc, char *argv[]) {
 	int o, option_index = 0;
 	struct option long_options[] = {
 		{"config", required_argument, 0, 'c'},
+		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 
-	while ((o = getopt_long(argc, argv, "c:", long_options, &option_index)) != -1)
+	while ((o = getopt_long(argc, argv, "c:h", long_options, &option_index)) != -1)
 		if ((char)o == 'c')
 			configfile = optarg;
+		else if ((char)o == 'h') {
+			printf("wmiistatus (c) 2008-2009 Michael Stapelberg\n"
+				"Syntax: %s [-c <configfile>]\n", argv[0]);
+			return 0;
+		}
 
 	if (load_configuration(configfile) < 0)
 		return EXIT_FAILURE;
@@ -457,8 +466,7 @@ int main(int argc, char *argv[]) {
 			die("Could not open /proc/loadavg");
 		(void)read(load_avg, part, sizeof(part));
 		(void)close(load_avg);
-		end = skip_character(part, ' ', 3);
-		*end = '\0';
+		*skip_character(part, ' ', 3) = '\0';
 		write_to_statusbar(concat(order[ORDER_LOAD], "load"), part);
 
 		if (time_format) {

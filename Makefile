@@ -2,6 +2,10 @@ CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -W
 CFLAGS+=-g
 CFLAGS+=-DPREFIX=\"\"
 
+ifeq ($(shell uname),Linux)
+CFLAGS+=-DLINUX
+endif
+
 wmiistatus: wmiistatus.o wmiistatus.h config.h config.o
 
 clean:
