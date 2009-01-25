@@ -15,7 +15,7 @@
 
 const char *wlan_interface;
 const char *eth_interface;
-const char *wmii_path;
+char *wmii_path;
 const char *time_format;
 const char *battery_path;
 bool use_colors;
@@ -29,56 +29,13 @@ unsigned int interval = 1;
 void die(const char *fmt, ...);
 
 /*
- * This function exists primarily for resolving ~ in pathnames. However, you
- * can also specify ~/Movies/ *, which will only return the first match!
- *
- */
-char *glob_path(const char *path) {
-	static glob_t globbuf;
-	if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
-		die("glob() failed");
-	char *result = strdup(globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path);
-	globfree(&globbuf);
-	return result;
-}
-
-/*
- * Loads configuration from configfile
- *
- */
-static void get_next_config_entry(FILE *handle, char **dest_name, char **dest_value, char *whole_buffer, int whole_buffer_size) {
-	char *ret;
-	if ((ret = fgets(whole_buffer, whole_buffer_size, handle)) == whole_buffer) {
-		char *c = whole_buffer;
-		/* Skip whitespaces in the beginning */
-		while (isspace((int)*c) && *c != '\0')
-			c++;
-		*dest_name = c;
-		while (!isspace((int)*c))
-			c++;
-		/* Terminate string as soon as whitespaces begin or it's terminated anyway */
-		*(c++) = '\0';
-
-		/* Same for the value: strip whitespaces */
-		while (isspace((int)*c) && *c != '\0')
-			c++;
-		*dest_value = c;
-		/* Whitespace is allowed, newline/carriage return is not */
-		while ((*c != '\n') && (*c != '\r') && (*c != '\0'))
-			c++;
-		*c = 0;
-	} else if (ret != NULL)
-		die("Could not read line in configuration file");
-}
-
-/*
  * Reads the configuration from the given file
  *
  */
 int load_configuration(const char *configfile) {
 	#define OPT(x) else if (strcasecmp(dest_name, x) == 0)
 
-	/* Check if the file exists */
+	/* check if the file exists */
 	struct stat buf;
 	if (stat(configfile, &buf) < 0)
 		return -1;
@@ -87,44 +44,52 @@ int load_configuration(const char *configfile) {
 	FILE *handle = fopen(configfile, "r");
 	if (handle == NULL)
 		die("Could not open configfile");
-	char *dest_name = NULL, *dest_value = NULL, whole_buffer[1026];
+	char dest_name[512], dest_value[512], whole_buffer[1026];
 	struct stat stbuf;
 	while (!feof(handle)) {
-		get_next_config_entry(handle, &dest_name, &dest_value, whole_buffer, 1024);
-		/* No more entries? We're done! */
-		if (dest_name == NULL)
-			break;
-		/* Skip comments and empty lines */
+		char *ret;
+		if ((ret = fgets(whole_buffer, 1024, handle)) == whole_buffer) {
+			/* sscanf implicitly strips whitespace */
+			if (sscanf(whole_buffer, "%s %[^\n]", dest_name, dest_value) < 1)
+				continue;
+		} else if (ret != NULL)
+			die("Could not read line in configuration file");
+
+		/* skip comments and empty lines */
 		if (dest_name[0] == '#' || strlen(dest_name) < 3)
 			continue;
 
 		OPT("wlan")
-		{
 			wlan_interface = strdup(dest_value);
-		}
 		OPT("eth")
-		{
 			eth_interface = strdup(dest_value);
-		}
+		OPT("time_format")
+			time_format = strdup(dest_value);
+		OPT("battery_path")
+			battery_path = strdup(dest_value);
+		OPT("color")
+			use_colors = true;
+		OPT("get_ethspeed")
+			get_ethspeed = true;
+		OPT("normcolors")
+			wmii_normcolors = strdup(dest_value);
+		OPT("interval")
+			interval = atoi(dest_value);
 		OPT("wmii_path")
 		{
-			char *globbed = glob_path(dest_value);
-			if ((stat(globbed, &stbuf)) == -1) {
+			static glob_t globbuf;
+			if (glob(dest_value, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+				die("glob() failed");
+			wmii_path = strdup(globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : dest_value);
+			globfree(&globbuf);
+
+			if ((stat(wmii_path, &stbuf)) == -1) {
 				fprintf(stderr, "Warning: wmii_path contains an invalid path\n");
-				free(globbed);
-				globbed = strdup(dest_value);
+				free(wmii_path);
+				wmii_path = strdup(dest_value);
 			}
-			if (globbed[strlen(globbed)-1] != '/')
+			if (wmii_path[strlen(wmii_path)-1] != '/')
 				die("wmii_path is not terminated by /");
-			wmii_path = globbed;
-		}
-		OPT("time_format")
-		{
-			time_format = strdup(dest_value);
-		}
-		OPT("battery_path")
-		{
-			battery_path = strdup(dest_value);
 		}
 		OPT("run_watch")
 		{
@@ -159,28 +124,11 @@ int load_configuration(const char *configfile) {
 					token++;
 			}
 		}
-		OPT("color")
-		{
-			use_colors = true;
-		}
-		OPT("get_ethspeed")
-		{
-			get_ethspeed = true;
-		}
-		OPT("normcolors")
-		{
-			wmii_normcolors = strdup(dest_value);
-		}
-		OPT("interval")
-		{
-			interval = atoi(dest_value);
-		}
 		else
 		{
 			result = -2;
 			die("Unknown configfile option: %s\n", dest_name);
 		}
-		dest_name = dest_value = NULL;
 	}
 	fclose(handle);
 
