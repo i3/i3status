@@ -1,4 +1,4 @@
-CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
+CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-DPREFIX=\"\"
 
@@ -6,7 +6,7 @@ ifeq ($(shell uname),Linux)
 CFLAGS+=-DLINUX
 endif
 
-wmiistatus: wmiistatus.o wmiistatus.h config.h config.o
+wmiistatus: wmiistatus.o wmiistatus.h
 
 clean:
 	rm -f *.o
@@ -24,7 +24,6 @@ install:
 	install -m 644 wmiistatus.1 $(DESTDIR)/usr/share/man/man1
 
 release:
-	tar cf wmiistatus.tar *.c *.h *.1 *.conf *.init Makefile
-	bzip2 -9 wmiistatus.tar
+	tar cjf wmiistatus.tar.bz2 *.c *.h *.1 *.conf *.init Makefile
 
 all: wmiistatus
