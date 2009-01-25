@@ -296,7 +296,7 @@ static char *get_wireless_info() {
 	memset(part, 0, sizeof(part));
 
 	if ((fd = open("/proc/net/wireless", O_RDONLY)) == -1)
-		die("Could not open /proc/net/wireless");
+		die("Could not open /proc/net/wireless\n");
 	(void)read(fd, buf, sizeof(buf));
 	(void)close(fd);
 
@@ -396,7 +396,7 @@ static bool process_runs(const char *path) {
 	memset(pidbuf, 0, sizeof(pidbuf));
 
 	if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
-		die("glob() failed");
+		die("glob() failed\n");
 	fd = open((globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path), O_RDONLY);
 	globfree(&globbuf);
 	if (fd < 0)
@@ -437,7 +437,7 @@ int main(int argc, char *argv[]) {
 	setup();
 
 	if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		die("Could not create socket");
+		die("Could not create socket\n");
 
 	while (1) {
 		for (i = 0; i < num_run_watches; i += 2) {
@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
 
 		/* Get load */
 		if ((load_avg = open("/proc/loadavg", O_RDONLY)) == -1)
-			die("Could not open /proc/loadavg");
+			die("Could not open /proc/loadavg\n");
 		(void)read(load_avg, part, sizeof(part));
 		(void)close(load_avg);
 		*skip_character(part, ' ', 3) = '\0';
