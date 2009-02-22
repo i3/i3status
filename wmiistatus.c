@@ -64,6 +64,8 @@
 
 #include "wmiistatus.h"
 
+#define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
+
 /* socket file descriptor for general purposes */
 static int general_socket;
 
@@ -90,6 +92,20 @@ static char *concat(const char *str1, const char *str2) {
 	static char concatbuf[32];
 	(void)snprintf(concatbuf, sizeof(concatbuf), "%s%s", str1, str2);
 	return concatbuf;
+}
+
+/*
+ * Returns the correct color format for dzen (^fg(color)) or wmii (color <normcolors>)
+ *
+ */
+static char *color(const char *colorstr) {
+	static char colorbuf[32];
+#ifdef DZEN
+	(void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", colorstr);
+#else
+	(void)snprintf(colorbuf, sizeof(colorbuf), "%s %s ", colorstr, wmii_normcolors);
+#endif
+	return colorbuf;
 }
 
 /*
@@ -135,7 +151,7 @@ static void create_file(const char *name) {
 	if ((fd = open(pathbuf, flags, S_IRUSR | S_IWUSR)) < 0)
 		exit(EXIT_FAILURE);
 	if (use_colors) {
-		char *tmp = concat("#888888 ", wmii_normcolors);
+		char *tmp = color("#888888");
 		if (write(fd, tmp, strlen(tmp)) != (ssize_t)strlen(tmp))
 			exit(EXIT_FAILURE);
 	}
@@ -175,7 +191,17 @@ static void setup(void) {
  * Writes the given message in the corresponding file in wmii's /rbar directory
  *
  */
-static void write_to_statusbar(const char *name, const char *message) {
+static void write_to_statusbar(const char *name, const char *message, bool final_entry) {
+#ifdef DZEN
+	if (final_entry) {
+		(void)printf("%s^p(6)\n", message);
+		fflush(stdout);
+		return;
+	}
+	(void)printf("%s" BAR, message);
+	return;
+#endif
+
 	char pathbuf[strlen(wmii_path)+256+1];
 	int fd;
 
@@ -197,7 +223,7 @@ static void write_to_statusbar(const char *name, const char *message) {
 static void write_error_to_statusbar(const char *message) {
 	cleanup_rbar_dir();
 	create_file("error");
-	write_to_statusbar("error", message);
+	write_to_statusbar("error", message, true);
 }
 
 /*
@@ -352,11 +378,10 @@ static char *get_wireless_info() {
 			continue;
 		if ((quality == UCHAR_MAX) || (quality == 0)) {
 			if (use_colors)
-				(void)snprintf(part, sizeof(part), "%s%s",
-					concat("#FF0000 ", wmii_normcolors), " W: down");
+				(void)snprintf(part, sizeof(part), "%sW: down", color("#FF0000"));
 			else (void)snprintf(part, sizeof(part), "W: down");
-		} else (void)snprintf(part, sizeof(part), "W: (%03d%%) %s",
-				quality, get_ip_address(wlan_interface));
+		} else (void)snprintf(part, sizeof(part), "%sW: (%03d%%) %s",
+				color("#00FF00"), quality, get_ip_address(wlan_interface));
 		return part;
 	}
 
@@ -580,23 +605,21 @@ int main(int argc, char *argv[]) {
 		for (i = 0; i < num_run_watches; i += 2) {
 			bool running = process_runs(run_watches[i+1]);
 			if (use_colors)
-				snprintf(part, sizeof(part), "%s %s: %s",
-					(running ?
-						concat("#00FF00 ", wmii_normcolors) :
-						concat("#FF0000 ", wmii_normcolors)),
+				snprintf(part, sizeof(part), "%s%s: %s",
+					(running ? color("#00FF00") : color("#FF0000")),
 					run_watches[i],
 					(running ? "yes" : "no"));
 			else snprintf(part, sizeof(part), "%s: %s", run_watches[i], (running ? "yes" : "no"));
 			snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
-			write_to_statusbar(pathbuf, part);
+			write_to_statusbar(pathbuf, part, false);
 		}
 
 		if (wlan_interface)
-			write_to_statusbar(concat(order[ORDER_WLAN], "wlan"), get_wireless_info());
+			write_to_statusbar(concat(order[ORDER_WLAN], "wlan"), get_wireless_info(), false);
 		if (eth_interface)
-			write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info());
+			write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info(), false);
 		if (battery_path)
-			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info());
+			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(), false);
 
 		/* Get load */
 #ifdef LINUX
@@ -619,14 +642,14 @@ int main(int argc, char *argv[]) {
 				(double)load.ldavg[1] / scale,
 				(double)load.ldavg[2] / scale);
 #endif
-		write_to_statusbar(concat(order[ORDER_LOAD], "load"), part);
+		write_to_statusbar(concat(order[ORDER_LOAD], "load"), part, !time_format);
 
 		if (time_format) {
 			/* Get date & time */
 			time_t current_time = time(NULL);
 			struct tm *current_tm = localtime(&current_time);
 			(void)strftime(part, sizeof(part), time_format, current_tm);
-			write_to_statusbar(concat(order[ORDER_TIME], "time"), part);
+			write_to_statusbar(concat(order[ORDER_TIME], "time"), part, true);
 		}
 
 		sleep(interval);
