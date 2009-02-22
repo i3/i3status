@@ -7,7 +7,7 @@ CFLAGS+=-DLINUX
 endif
 
 # Define this if you want wmiistatus to spit out dzen2-compatible output on stdout
-#CFLAGS+=-DDZEN
+CFLAGS+=-DDZEN
 
 wmiistatus: wmiistatus.o wmiistatus.h
 

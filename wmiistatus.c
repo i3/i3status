@@ -113,6 +113,9 @@ static char *color(const char *colorstr) {
  *
  */
 static void cleanup_rbar_dir() {
+#ifdef DZEN
+	return;
+#endif
 	struct dirent *ent;
 	DIR *dir;
 	char pathbuf[strlen(wmii_path)+256+1];
@@ -137,6 +140,9 @@ static void cleanup_rbar_dir() {
  *
  */
 static void create_file(const char *name) {
+#ifdef DZEN
+	return;
+#endif
 	char pathbuf[strlen(wmii_path)+256+1];
 	int fd;
 	int flags = O_CREAT | O_WRONLY;
@@ -165,11 +171,13 @@ static void create_file(const char *name) {
  */
 static void setup(void) {
 	unsigned int i;
-	struct stat statbuf;
 	char pathbuf[512];
 
+#ifndef DZEN
+	struct stat statbuf;
 	/* Wait until wmii_path/rbar exists */
 	for (; stat(wmii_path, &statbuf) < 0; sleep(interval));
+#endif
 
 	cleanup_rbar_dir();
 	if (wlan_interface)
@@ -478,7 +486,7 @@ static int load_configuration(const char *configfile) {
 	if (handle == NULL)
 		die("Could not open configfile\n");
 	char dest_name[512], dest_value[512], whole_buffer[1026];
-	struct stat stbuf;
+
 	while (!feof(handle)) {
 		char *ret;
 		if ((ret = fgets(whole_buffer, 1024, handle)) == whole_buffer) {
@@ -510,7 +518,9 @@ static int load_configuration(const char *configfile) {
 			interval = atoi(dest_value);
 		OPT("wmii_path")
 		{
+#ifndef DZEN
 			static glob_t globbuf;
+			struct stat stbuf;
 			if (glob(dest_value, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
 				die("glob() failed\n");
 			wmii_path = strdup(globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : dest_value);
@@ -523,6 +533,7 @@ static int load_configuration(const char *configfile) {
 			}
 			if (wmii_path[strlen(wmii_path)-1] != '/')
 				die("wmii_path is not terminated by /\n");
+#endif
 		}
 		OPT("run_watch")
 		{
@@ -565,8 +576,10 @@ static int load_configuration(const char *configfile) {
 	}
 	fclose(handle);
 
+#ifndef DZEN
 	if (wmii_path == NULL)
 		exit(EXIT_FAILURE);
+#endif
 
 	return result;
 }
