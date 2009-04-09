@@ -307,7 +307,10 @@ static char *get_battery_info() {
 			last = walk+1;
 	(void)close(fd);
 
-	if ((full_design != -1) && (remaining != -1) && (present_rate > 0)) {
+	if ((full_design != 1) && (remaining != -1))
+		return part;
+
+	if (present_rate > 0) {
 		float remaining_time;
 		int seconds, hours, minutes;
 		if (status == CS_CHARGING)
@@ -327,6 +330,11 @@ static char *get_battery_info() {
 			 (status == CS_DISCHARGING ? "BAT" : "FULL")),
 			(((float)remaining / (float)full_design) * 100),
 			hours, minutes, seconds);
+	} else {
+		(void)snprintf(part, sizeof(part), "%s %.02f%%",
+			(status == CS_CHARGING ? "CHR" :
+			 (status == CS_DISCHARGING ? "BAT" : "FULL")),
+			(((float)remaining / (float)full_design) * 100));
 	}
 	return part;
 }
