@@ -307,7 +307,7 @@ static char *get_battery_info() {
 			last = walk+1;
 	(void)close(fd);
 
-	if ((full_design != 1) && (remaining != -1))
+	if ((full_design == 1) || (remaining == -1))
 		return part;
 
 	if (present_rate > 0) {
