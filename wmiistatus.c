@@ -307,7 +307,7 @@ static char *get_battery_info() {
 			last = walk+1;
 	(void)close(fd);
 
-	if ((full_design != -1) && (remaining != -1) && (present_rate != -1)) {
+	if ((full_design != -1) && (remaining != -1) && (present_rate > 0)) {
 		float remaining_time;
 		int seconds, hours, minutes;
 		if (status == CS_CHARGING)
