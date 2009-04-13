@@ -11,7 +11,7 @@
 ### END INIT INFO
 
 # For the pidfile, you must be root. wmiistatus itself runs as user just fine
-[ $UID -eq 0 ] || { echo "You need to be root"; exit 1; }
+[ $(id -ru) -eq 0 ] || { echo "You need to be root"; exit 1; }
 
 . /lib/lsb/init-functions
 
