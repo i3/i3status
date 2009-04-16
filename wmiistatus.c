@@ -52,6 +52,8 @@
 #include <dirent.h>
 #include <getopt.h>
 
+#include "queue.h"
+
 #ifdef LINUX
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
@@ -65,6 +67,13 @@
 #include "wmiistatus.h"
 
 #define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
+
+struct battery {
+	const char *path;
+	SIMPLEQ_ENTRY(battery) batteries;
+};
+
+SIMPLEQ_HEAD(battery_head, battery) batteries;
 
 /* socket file descriptor for general purposes */
 static int general_socket;
@@ -274,7 +283,7 @@ static char *skip_character(char *input, char character, int amount) {
  * worn off your battery is.
  *
  */
-static char *get_battery_info() {
+static char *get_battery_info(const char *path) {
 	char buf[1024];
 	static char part[512];
 	char *walk, *last;
@@ -284,7 +293,7 @@ static char *get_battery_info() {
 	    present_rate = -1;
 	charging_status_t status = CS_DISCHARGING;
 
-	if ((fd = open(battery_path, O_RDONLY)) == -1)
+	if ((fd = open(path, O_RDONLY)) == -1)
 		return "No battery found";
 
 	memset(part, 0, sizeof(part));
@@ -514,9 +523,13 @@ static int load_configuration(const char *configfile) {
 			eth_interface = strdup(dest_value);
 		OPT("time_format")
 			time_format = strdup(dest_value);
-		OPT("battery_path")
-			battery_path = strdup(dest_value);
-		OPT("color")
+		OPT("battery_path") {
+			struct battery *new = calloc(1, sizeof(struct battery));
+			if (new == NULL)
+				die("Could not allocate memory\n");
+			new->path = strdup(dest_value);
+			SIMPLEQ_INSERT_TAIL(&batteries, new, batteries);
+		} OPT("color")
 			use_colors = true;
 		OPT("get_ethspeed")
 			get_ethspeed = true;
@@ -605,6 +618,8 @@ int main(int argc, char *argv[]) {
 		{0, 0, 0, 0}
 	};
 
+	SIMPLEQ_INIT(&batteries);
+
 	while ((o = getopt_long(argc, argv, "c:h", long_options, &option_index)) != -1)
 		if ((char)o == 'c')
 			configfile = optarg;
@@ -639,8 +654,10 @@ int main(int argc, char *argv[]) {
 			write_to_statusbar(concat(order[ORDER_WLAN], "wlan"), get_wireless_info(), false);
 		if (eth_interface)
 			write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info(), false);
-		if (battery_path)
-			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(), false);
+		struct battery *current_battery;
+		SIMPLEQ_FOREACH(current_battery, &batteries, batteries) {
+			write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(current_battery->path), false);
+		}
 
 		/* Get load */
 #ifdef LINUX
