@@ -1,8 +1,8 @@
 /*
- * Generates a status line for use with wmii or other minimal window managers
+ * i3status – Generates a status line for dzen2 or wmii
  *
  *
- * Copyright (c) 2008-2009 Michael Stapelberg and contributors
+ * Copyright © 2008-2009 Michael Stapelberg and contributors
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -64,7 +64,7 @@
 #include <sys/resource.h>
 #endif
 
-#include "wmiistatus.h"
+#include "i3status.h"
 
 #define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
 
@@ -610,7 +610,7 @@ int main(int argc, char *argv[]) {
 	     pathbuf[512];
 	unsigned int i;
 
-	char *configfile = PREFIX "/etc/wmiistatus.conf";
+	char *configfile = PREFIX "/etc/i3status.conf";
 	int o, option_index = 0;
 	struct option long_options[] = {
 		{"config", required_argument, 0, 'c'},
@@ -624,7 +624,7 @@ int main(int argc, char *argv[]) {
 		if ((char)o == 'c')
 			configfile = optarg;
 		else if ((char)o == 'h') {
-			printf("wmiistatus (c) 2008-2009 Michael Stapelberg\n"
+			printf("i3status (c) 2008-2009 Michael Stapelberg\n"
 				"Syntax: %s [-c <configfile>]\n", argv[0]);
 			return 0;
 		}

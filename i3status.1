@@ -8,68 +8,96 @@
 .fi
 ..
 
-.TH wmiistatus 1 "FEBRUARY 2009" Linux "User Manuals"
+.TH i3status 1 "APRIL 2009" Linux "User Manuals"
 
 .SH NAME
-wmiistatus \- fill wmii's status bar
+i3status \- Generates a status line for dzen2 or wmii
 .SH SYNOPSIS
-.B wmiistatus
+.B i3status
 .RB [\|\-c
 .IR configfile \|]
 
 .SH DESCRIPTION
 
-.B wmiistatus
-is a small program (around 500 SLOC) for filling wmii's status bar via its 9P pseudo filesystem. It is designed to be very efficient by issuing a very small number of systemcalls (as the bar should be updated every second or at your specified interval).
+.B i3status
+is a small program (around 500 SLOC) for filling dzen2 or wmii's status bar via
+its 9P pseudo filesystem. It is designed to be very efficient by issuing a very
+small number of systemcalls (as the bar should be updated every second or at
+your specified interval). This ensures that even under high load, your status bar
+is updated correctly and it saves a little bit of battery life by not spawning
+new processes every second like shell scripts do.
 
 .SH CONFIGURATION
 .TP
 .B wlan
-Specifies the name of your WLAN interface (e.g. wlan0 or ath0 or eth1). Don't specify if you don't have a WLAN interface or if it should not be displayed.
+Specifies the name of your WLAN interface (e.g. wlan0 or ath0 or eth1). Don't
+specify if you don't have a WLAN interface or if it should not be displayed.
 
 .TP
 .B eth
-Specifies the name of your ethernet interface (e.g. eth0). Don't specify if you don't have an ethernet interface or if it should not be displayed.
+Specifies the name of your ethernet interface (e.g. eth0). Don't specify if you
+don't have an ethernet interface or if it should not be displayed.
 
 .TP
 .B wmii_path
-Specifies the path to the rbar-folder of your mounted wmii pseudo file system (e.g. /mnt/wmii/rbar/). It has to be terminated by a slash.
+Specifies the path to the rbar-folder of your mounted wmii pseudo file system
+(e.g. /mnt/wmii/rbar/). It has to be terminated by a slash.
 
 .TP
 .B time_format
-Format for the time/date to be displayed. See strftime(3) or date(1). Don't specify it if you don't want the time to be shown.
+Format for the time/date to be displayed. See strftime(3) or date(1). Don't
+specify it if you don't want the time to be shown.
 
 .TP
 .B battery_path
-The path to your battery's uevent file in /sys, e.g. /sys/class/power_supply/BAT0/uevent. Only interesting for you if you have more than one battery. Don't specify if you don't have a battery.
+The path to your battery's uevent file in /sys, e.g.
+/sys/class/power_supply/BAT0/uevent. You can specify this directive multiple
+times to display data of more than one battery. Don't specify if you don't have
+a battery.
 
 .TP
 .B run_watch
-You can specify this directive multiple times. Each line first has a name (one word, separated by space) followed by a path (can contain wildcards, given to glob(3)). The path is the path to a PID-file which contains just the process ID of a process. wmiistatus will then check if the process is still running and displays "yes" or "no" depending on the status. This is useful for displaying if your VPN is running, or dhclient for DHCP and so on...
+You can specify this directive multiple times. Each line first has a name (one
+word, separated by space) followed by a path (can contain wildcards, given to
+glob(3)). The path is the path to a PID-file which contains just the process ID
+of a process. i3status will then check if the process is still running and
+displays "yes" or "no" depending on the status. This is useful for displaying
+if your VPN is running, or dhclient for DHCP and so on...
 
 .TP
 .B order
-Followed by a comma separated list of the modules (run, wlan, eth, battery, load, time) this directive specifies the order of the information which should be displayed. An order is accomplished by prefixing the files in wmii's /rbar directory with a number, that is 0VPN, 1DHCP, 2time and so on..
+Followed by a comma separated list of the modules (run, wlan, eth, battery,
+load, time) this directive specifies the order of the information which should
+be displayed. An order is accomplished by prefixing the files in wmii's /rbar
+directory with a number, that is 0VPN, 1DHCP, 2time and so on..
 
 .TP
 .B color
-If specified, color mode is on. This affects WLAN which will be displayed red if WLAN is down and the run_watch system which will display the status in red/green.
+If specified, color mode is on. This affects WLAN which will be displayed red
+if WLAN is down and the run_watch system which will display the status in
+red/green.
 
 .TP
 .B get_ethspeed
-Get current speed of the ethernet interface using the same mechanism as ethtool. You need to start wmiistatus with root privileges to use this.
+Get current speed of the ethernet interface using the same mechanism as
+ethtool. You need to start i3status with root privileges to use this.
 
 .TP
 .B normcolors
-Specifies the colors for background/border in the same format (html colorcodes) as wmii's configuration (just the last two values), that is #222222 #333333 for example. Text color will be determined automatically (red/green/#888888), depending on context.
+Specifies the colors for background/border in the same format (html colorcodes)
+as wmii's configuration (just the last two values), that is #222222 #333333 for
+example. Text color will be determined automatically (red/green/#888888),
+depending on context.
 
 .TP
 .B interval
-Specifies the interval in which the status bar will be updated. If you got a very slow system or feel you don't need so much information, you may want to increase it.
+Specifies the interval in which the status bar will be updated. If you got a
+very slow system or feel you don't need so much information, you may want to
+increase it.
 
 .SH FILES
 .TP
-.B /etc/wmiistatus.conf
+.B /etc/i3status.conf
 System-wide configuration file.
 
 .SH EXAMPLE CONFIGURATION
@@ -97,7 +125,9 @@ modprobe 9pnet_fd
 .Ve
 
 .SH BUGS
-Sometimes, wmiistatus crashes when the wlan interface vanishes (killswitch). I haven't yet found the bug, as it is not reproducible. If you can reproduce this, please fix it and send me a patch.
+Sometimes, i3status crashes when the wlan interface vanishes (killswitch). I
+haven't yet found the bug, as it is not reproducible. If you can reproduce
+this, please fix it and send me a patch.
 
 .SH SEE ALSO
 .BR strftime (3),
@@ -105,7 +135,7 @@ Sometimes, wmiistatus crashes when the wlan interface vanishes (killswitch). I h
 .BR glob (3)
 
 .SH AUTHOR
-Michael Stapelberg <michael+wmiistatus at stapelberg dot de>
+Michael Stapelberg <michael+i3status at stapelberg dot de>
 
 .SH WEBSITE
-See http://michael.stapelberg.de/wmiistatus for the newest release.
+See http://michael.stapelberg.de/i3status for the newest release.
