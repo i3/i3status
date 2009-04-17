@@ -21,14 +21,13 @@ distclean: clean
 
 install:
 	install -m 755 -d $(DESTDIR)/usr/bin
-	install -m 755 -d $(DESTDIR)/etc/init.d
+	install -m 755 -d $(DESTDIR)/etc
 	install -m 755 -d $(DESTDIR)/usr/share/man/man1
 	install -m 755 i3status $(DESTDIR)/usr/bin/i3status
-	install -m 755 i3status.init $(DESTDIR)/etc/init.d/i3status
 	install -m 644 i3status.conf $(DESTDIR)/etc/i3status.conf
 	install -m 644 i3status.1 $(DESTDIR)/usr/share/man/man1
 
 release:
-	tar cjf i3status.tar.bz2 *.c *.h *.1 *.conf *.init Makefile
+	tar cjf i3status.tar.bz2 *.c *.h *.1 *.conf Makefile
 
 all: i3status

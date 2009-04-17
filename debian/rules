@@ -35,9 +35,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 
-	# Add here commands to install the package into debian/wmiistatus.
-	$(MAKE) DESTDIR=$(CURDIR)/debian/wmiistatus/ install
-	cp $(CURDIR)/wmiistatus.init $(CURDIR)/debian
+	# Add here commands to install the package into debian/i3status.
+	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
 
 
 # Build architecture-independent files here.

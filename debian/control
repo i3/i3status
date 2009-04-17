@@ -1,15 +1,16 @@
-Source: wmiistatus
+Source: i3status
 Section: utils
 Priority: optional
-Maintainer: Michael Stapelberg <michael+wmiistatus@stapelberg.de>
+Maintainer: Michael Stapelberg <michael+i3status@stapelberg.de>
 Standards-Version: 3.7.3
-Homepage: http://michael.stapelberg.de/wmiistatus
+Homepage: http://michael.stapelberg.de/i3status
 
-Package: wmiistatus
+Package: i3status
 Architecture: any
 Priority: optional
 Section: utils
 Depends: ${shlibs:Depends}
-Description: little application to fill up wmii's status bar
- wmiistatus is a program running in background and filling up wmii's status bar
- using wmiis plan9 pseudo file system (therefore, you need 9pfs).
+Description: Generates a status line for dzen2 or wmii
+ i3status is a program running in background, feeding dzen2 or filling up
+ wmii's status bar using wmiis plan9 pseudo file system (therefore, you
+ need 9pfs).
