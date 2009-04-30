@@ -360,10 +360,17 @@ static const char *get_ip_address(const char *interface) {
 	socklen_t len = sizeof(struct sockaddr_in);
 	memset(part, 0, sizeof(part));
 
+	/* First check if the interface is running */
+	(void)strcpy(ifr.ifr_name, interface);
+	if (ioctl(general_socket, SIOCGIFFLAGS, &ifr) < 0 ||
+	    !(ifr.ifr_flags & IFF_RUNNING))
+		return NULL;
+
+	/* Interface is up, get the IP address */
 	(void)strcpy(ifr.ifr_name, interface);
 	ifr.ifr_addr.sa_family = AF_INET;
 	if (ioctl(general_socket, SIOCGIFADDR, &ifr) < 0)
-		return NULL;
+		return "no IP";
 
 	memcpy(&addr, &ifr.ifr_addr, len);
 	(void)inet_ntop(AF_INET, &addr.sin_addr.s_addr, part, len);
