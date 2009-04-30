@@ -1,7 +1,8 @@
 Source: i3status
 Section: utils
 Priority: optional
-Maintainer: Michael Stapelberg <michael+i3status@stapelberg.de>
+Maintainer: Michael Stapelberg <michael@stapelberg.de>
+DM-Upload-Allowed: yes
 Standards-Version: 3.7.3
 Homepage: http://michael.stapelberg.de/i3status
 
