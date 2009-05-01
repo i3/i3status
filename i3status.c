@@ -93,6 +93,10 @@ static const char **run_watches;
 static unsigned int num_run_watches;
 static unsigned int interval = 1;
 
+static int max(int a, int b) {
+        return (a > b ? a : b);
+}
+
 /*
  * This function just concats two strings in place, it should only be used
  * for concatting order to the name of a file or concatting color codes.
@@ -340,7 +344,7 @@ static char *get_battery_info(const char *path) {
                         (status == CS_CHARGING ? "CHR" :
                          (status == CS_DISCHARGING ? "BAT" : "FULL")),
                         (((float)remaining / (float)full_design) * 100),
-                        hours, minutes, seconds);
+                        max(hours, 0), max(minutes, 0), max(seconds, 0));
         } else {
                 (void)snprintf(part, sizeof(part), "%s %.02f%%",
                         (status == CS_CHARGING ? "CHR" :
