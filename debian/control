@@ -11,6 +11,7 @@ Architecture: any
 Priority: optional
 Section: utils
 Depends: ${shlibs:Depends}
+Recommends: dzen2
 Description: Generates a status line for dzen2 or wmii
  i3status is a program running in background, feeding dzen2 or filling up
  wmii's status bar using wmiis plan9 pseudo file system (therefore, you
