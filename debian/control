@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Standards-Version: 3.7.3
-Homepage: http://michael.stapelberg.de/i3status
+Homepage: http://i3.zekjur.net/i3status
 
 Package: i3status
 Architecture: any
