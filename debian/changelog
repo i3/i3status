@@ -3,4 +3,4 @@ i3status (1.0-1) unstable; urgency=low
   * Initial release
   * Closes: #526520
 
- -- Michael Stapelberg <michael+i3status@stapelberg.de>  Fri, 01 May 2009 19:52:45 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Fri, 01 May 2009 19:52:45 +0200

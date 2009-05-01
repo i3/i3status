@@ -3,6 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
+Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.3
 Homepage: http://i3.zekjur.net/i3status
 
