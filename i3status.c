@@ -71,7 +71,9 @@
 #define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
 
 struct battery {
-        const char *path;
+        char *path;
+        /* Use last full capacity instead of design capacity */
+        bool use_last_full;
         SIMPLEQ_ENTRY(battery) batteries;
 };
 
@@ -84,7 +86,6 @@ static const char *wlan_interface;
 static const char *eth_interface;
 static char *wmii_path;
 static const char *time_format;
-static const char *battery_path;
 static bool use_colors;
 static bool get_ethspeed;
 static const char *wmii_normcolors = "#222222 #333333";
@@ -199,8 +200,6 @@ static void setup(void) {
                 create_file(concat(order[ORDER_WLAN],"wlan"));
         if (eth_interface)
                 create_file(concat(order[ORDER_ETH],"eth"));
-        if (battery_path)
-                create_file(concat(order[ORDER_BATTERY],"battery"));
         create_file(concat(order[ORDER_LOAD],"load"));
         if (time_format)
                 create_file(concat(order[ORDER_TIME],"time"));
@@ -254,15 +253,16 @@ static void write_error_to_statusbar(const char *message) {
  *
  */
 void die(const char *fmt, ...) {
-        if (wmii_path != NULL) {
-                char buffer[512];
-                va_list ap;
-                va_start(ap, fmt);
-                (void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
-                va_end(ap);
+        char buffer[512];
+        va_list ap;
+        va_start(ap, fmt);
+        (void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
+        va_end(ap);
 
+        if (wmii_path != NULL)
                 write_error_to_statusbar(buffer);
-        }
+        else
+                fprintf(stderr, "%s", buffer);
         exit(EXIT_FAILURE);
 }
 
@@ -289,7 +289,7 @@ static char *skip_character(char *input, char character, int amount) {
  * worn off your battery is.
  *
  */
-static char *get_battery_info(const char *path) {
+static char *get_battery_info(struct battery *bat) {
         char buf[1024];
         static char part[512];
         char *walk, *last;
@@ -299,27 +299,44 @@ static char *get_battery_info(const char *path) {
             present_rate = -1;
         charging_status_t status = CS_DISCHARGING;
 
-        if ((fd = open(path, O_RDONLY)) == -1)
+        if ((fd = open(bat->path, O_RDONLY)) == -1)
                 return "No battery found";
 
         memset(part, 0, sizeof(part));
         (void)read(fd, buf, sizeof(buf));
-        for (walk = buf, last = buf; (walk-buf) < 1024; walk++)
-                if (*walk == '=') {
-                        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN") ||
-                            BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN"))
-                                full_design = atoi(walk+1);
-                        else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW") ||
-                                 BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW"))
-                                remaining = atoi(walk+1);
-                        else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
-                                present_rate = atoi(walk+1);
-                        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
-                                status = CS_CHARGING;
-                        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
-                                status = CS_FULL;
-                } else if (*walk == '\n')
+        for (walk = buf, last = buf; (walk-buf) < 1024; walk++) {
+                if (*walk == '\n') {
                         last = walk+1;
+                        continue;
+                }
+
+                if (*walk != '=')
+                        continue;
+
+                if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW") ||
+                    BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW"))
+                        remaining = atoi(walk+1);
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
+                        present_rate = atoi(walk+1);
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
+                        status = CS_CHARGING;
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
+                        status = CS_FULL;
+                else {
+                        /* The only thing left is the full capacity */
+                        if (bat->use_last_full) {
+                                if (!BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") &&
+                                    !BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
+                                        continue;
+                        } else {
+                                if (!BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") &&
+                                    !BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
+                                        continue;
+                        }
+
+                        full_design = atoi(walk+1);
+                }
+        }
         (void)close(fd);
 
         if ((full_design == 1) || (remaining == -1))
@@ -536,11 +553,20 @@ static int load_configuration(const char *configfile) {
                         eth_interface = strdup(dest_value);
                 OPT("time_format")
                         time_format = strdup(dest_value);
-                OPT("battery_path") {
+                OPT("battery") {
                         struct battery *new = calloc(1, sizeof(struct battery));
                         if (new == NULL)
                                 die("Could not allocate memory\n");
-                        new->path = strdup(dest_value);
+                        if (asprintf(&(new->path), "/sys/class/power_supply/BAT%d/uevent", atoi(dest_value)) == -1)
+                                die("Could not build battery path\n");
+
+                        /* check if flags were specified for this battery */
+                        if (strstr(dest_value, ",") != NULL) {
+                                char *flags = strstr(dest_value, ",");
+                                flags++;
+                                if (*flags == 'f')
+                                        new->use_last_full = true;
+                        }
                         SIMPLEQ_INSERT_TAIL(&batteries, new, batteries);
                 } OPT("color")
                         use_colors = true;
@@ -669,7 +695,7 @@ int main(int argc, char *argv[]) {
                         write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info(), false);
                 struct battery *current_battery;
                 SIMPLEQ_FOREACH(current_battery, &batteries, batteries) {
-                        write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(current_battery->path), false);
+                        write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(current_battery), false);
                 }
 
                 /* Get load */

@@ -8,7 +8,7 @@
 .fi
 ..
 
-.TH i3status 1 "APRIL 2009" Linux "User Manuals"
+.TH i3status 1 "MAY 2009" Linux "User Manuals"
 
 .SH NAME
 i3status \- Generates a status line for dzen2 or wmii
@@ -25,7 +25,7 @@ its 9P pseudo filesystem. It is designed to be very efficient by issuing a very
 small number of systemcalls (as the bar should be updated every second or at
 your specified interval). This ensures that even under high load, your status bar
 is updated correctly and it saves a little bit of battery life by not spawning
-new processes every second like shell scripts do.
+new processes every second like shell scripts does.
 
 .SH CONFIGURATION
 .TP
@@ -49,11 +49,19 @@ Format for the time/date to be displayed. See strftime(3) or date(1). Don't
 specify it if you don't want the time to be shown.
 
 .TP
-.B battery_path
-The path to your battery's uevent file in /sys, e.g.
-/sys/class/power_supply/BAT0/uevent. You can specify this directive multiple
-times to display data of more than one battery. Don't specify if you don't have
-a battery.
+.B battery
+The number of the battery you want to display. This option can be specified
+multiple times to display multiple batteries. Don't specify it if you don't
+have a battery. To get the number of the specific battery, see
+/sys/class/power_supply/BAT*
+
+If you want i3status to use the last full capacity instead of the design capacity
+of the battery, specify the f-flag, like this:
+
+.Vb 10
+# Use the last full capacity
+battery 0,f
+.Ve
 
 .TP
 .B run_watch
@@ -107,7 +115,8 @@ System-wide configuration file.
 \&eth eth0
 \&wmii_path /mnt/wmii/rbar/
 \&time_format %d.%m.%Y %H:%M:%S
-\&battery_path /sys/class/power_supply/BAT0/uevent
+\&battery 0
+\&battery 1,f
 \&run_watch DHCP /var/run/dhclient*.pid
 \&run_watch VPN /var/run/vpnc*.pid
 \&order run,wlan,eth,battery,load,time

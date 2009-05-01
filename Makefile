@@ -6,6 +6,7 @@ CFLAGS+=-DPREFIX=\"\"
 
 ifeq ($(shell uname),Linux)
 CFLAGS+=-DLINUX
+CFLAGS+=-D_GNU_SOURCE
 endif
 
 # Define this if you want i3status to spit out dzen2-compatible output on stdout
