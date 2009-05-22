@@ -1,3 +1,9 @@
+i3status (1.1-1) unstable; urgency=low
+
+  * Implement getting temperature from thermal zones (Thanks atsutane)
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Fri, 22 May 2009 21:23:44 +0200
+
 i3status (1.0-1) unstable; urgency=low
 
   * Initial release

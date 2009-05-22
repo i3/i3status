@@ -91,6 +91,11 @@ Get current speed of the ethernet interface using the same mechanism as
 ethtool. You need to start i3status with root privileges to use this.
 
 .TP
+.B get_cpu_temperature
+Gets the temperature of the first thermal zone or the specified thermal zone
+(if any). Use it to display your CPU temperature.
+
+.TP
 .B normcolors
 Specifies the colors for background/border in the same format (html colorcodes)
 as wmii's configuration (just the last two values), that is #222222 #333333 for
@@ -122,6 +127,7 @@ System-wide configuration file.
 \&order run,wlan,eth,battery,load,time
 \&normcolors #000000 #333333
 \&color
+\&get_cpu_temperature
 .Ve
 
 .SH MOUNTING WMII'S PSEUDO FILESYSTEM
@@ -143,8 +149,10 @@ this, please fix it and send me a patch.
 .BR date (1),
 .BR glob (3)
 
-.SH AUTHOR
+.SH AUTHORS
 Michael Stapelberg <michael+i3status at stapelberg dot de>
+
+Thorsten Toepper <atsutane at freethoughts dot de>
 
 .SH WEBSITE
 See http://i3.zekjur.net/i3status for the newest release.

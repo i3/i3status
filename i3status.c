@@ -5,6 +5,7 @@
  *
  *
  * Copyright © 2008-2009 Michael Stapelberg and contributors
+ * Copyright © 2009 Thorsten Toepper <atsutane at freethoughts dot de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -88,6 +89,8 @@ static char *wmii_path;
 static const char *time_format;
 static bool use_colors;
 static bool get_ethspeed;
+static bool get_cpu_temperature;
+static char *thermal_zone;
 static const char *wmii_normcolors = "#222222 #333333";
 static char order[MAX_ORDER][2];
 static const char **run_watches;
@@ -200,6 +203,8 @@ static void setup(void) {
                 create_file(concat(order[ORDER_WLAN],"wlan"));
         if (eth_interface)
                 create_file(concat(order[ORDER_ETH],"eth"));
+        if (get_cpu_temperature)
+                create_file(concat(order[ORDER_CPU_TEMPERATURE], "cpu_temperature"));
         create_file(concat(order[ORDER_LOAD],"load"));
         if (time_format)
                 create_file(concat(order[ORDER_TIME],"time"));
@@ -480,6 +485,33 @@ static char *get_eth_info() {
 }
 
 /*
+ * Reads the CPU temperature from /sys/class/thermal/thermal_zone0/temp and
+ * returns the temperature in degree celcius.
+ *
+ */
+static char *get_cpu_temperature_info() {
+        static char part[16];
+        char buf[16];
+        int temp;
+        int fd;
+
+        memset(buf, 0, sizeof(buf));
+        memset(part, 0, sizeof(part));
+
+        if ((fd = open(thermal_zone, O_RDONLY)) == -1)
+                die("Could not open %s\n", thermal_zone);
+        (void)read(fd, buf, sizeof(buf));
+        (void)close(fd);
+
+        if (sscanf(buf, "%d", &temp) != 1)
+                (void)snprintf(part, sizeof(part), "T: ? C");
+        else
+                (void)snprintf(part, sizeof(part), "T: %d C", (temp/1000));
+
+        return part;
+}
+
+/*
  * Checks if the PID in path is still valid by checking:
  *  (Linux) if /proc/<pid> exists
  *  (NetBSD) if sysctl returns process infos for this pid
@@ -572,7 +604,16 @@ static int load_configuration(const char *configfile) {
                         use_colors = true;
                 OPT("get_ethspeed")
                         get_ethspeed = true;
-                OPT("normcolors")
+                OPT("get_cpu_temperature") {
+                        get_cpu_temperature = true;
+                        if (strlen(dest_value) > 0) {
+                                if (asprintf(&thermal_zone, "/sys/class/thermal/thermal_zone%d/temp", atoi(dest_value)) == -1)
+                                        die("Could not build thermal_zone path\n");
+                        } else {
+                                 if (asprintf(&thermal_zone, "/sys/class/thermal/thermal_zone0/temp") == -1)
+                                        die("Could not build thermal_zone path\n");
+                        }
+                } OPT("normcolors")
                         wmii_normcolors = strdup(dest_value);
                 OPT("interval")
                         interval = atoi(dest_value);
@@ -621,6 +662,7 @@ static int load_configuration(const char *configfile) {
                                 SET_ORDER("wlan", ORDER_WLAN);
                                 SET_ORDER("eth", ORDER_ETH);
                                 SET_ORDER("battery", ORDER_BATTERY);
+                                SET_ORDER("cpu_temperature", ORDER_CPU_TEMPERATURE);
                                 SET_ORDER("load", ORDER_LOAD);
                                 SET_ORDER("time", ORDER_TIME);
                                 token = walk;
@@ -697,6 +739,8 @@ int main(int argc, char *argv[]) {
                 SIMPLEQ_FOREACH(current_battery, &batteries, batteries) {
                         write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(current_battery), false);
                 }
+                if (get_cpu_temperature)
+                        write_to_statusbar(concat(order[ORDER_CPU_TEMPERATURE], "cpu_temperature"), get_cpu_temperature_info(), false);
 
                 /* Get load */
 #ifdef LINUX
