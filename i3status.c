@@ -221,11 +221,18 @@ static void setup(void) {
 static void write_to_statusbar(const char *name, const char *message, bool final_entry) {
 #ifdef DZEN
         if (final_entry) {
-                (void)printf("%s^p(6)\n", message);
+                if (printf("%s^p(6)\n", message) < 0) {
+                        perror("printf");
+                        exit(1);
+                }
+
                 fflush(stdout);
                 return;
         }
-        (void)printf("%s" BAR, message);
+        if (printf("%s" BAR, message) < 0) {
+                perror("printf");
+                exit(1);
+        }
         return;
 #endif
 
