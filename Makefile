@@ -34,7 +34,7 @@ install:
 release:
 	[ -f i3status-${VERSION} ] || rm -rf i3status-${VERSION}
 	mkdir i3status-${VERSION}
-	cp *.c *.h *.1 *.conf Makefile i3status-${VERSION}
+	find . -maxdepth 1 -type f \( -regex ".*\.\(c\|conf\|1\|h\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION} \;
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
 
