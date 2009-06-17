@@ -13,7 +13,17 @@ Priority: optional
 Section: utils
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: dzen2
-Description: Generates a status line for dzen2 or wmii
- i3status is a program running in background, feeding dzen2 or filling up
- wmii's status bar using wmiis plan9 pseudo file system (therefore, you
- need 9pfs).
+Description: Generates a status line for dzen2
+ i3status is a program running in background feeding dzen2 with information
+ about your system (IP address and speed of your ethernet device, WLAN signal
+ strength, load, time, ...).
+
+Package: i3status-wmii
+Architecture: any
+Priority: optional
+Section: utils
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: wmii
+Description: Generates a status line for wmii
+ i3status is a program running in background, filling up wmii's status bar
+ using wmiis plan9 pseudo file system (therefore, you need 9pfs).

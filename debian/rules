@@ -9,65 +9,73 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-build: build-stamp
-
-build-stamp:
+build-i3status: clean
 	dh_testdir
+	$(MAKE) EXTRA_CFLAGS="-DDZEN"
+	touch $@
 
-	# Add here commands to compile the package.
+build-i3status-wmii: clean
+	dh_testdir
+	# Ensure that i3status is rebuilt
+	$(MAKE) clean
 	$(MAKE)
-
 	touch $@
 
 clean: 
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp config.status
-
-	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || $(MAKE) distclean
-
 	dh_clean 
 
-install: build
+install: install-i3status install-i3status-wmii
+
+install-i3status: build-i3status
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
 	dh_installdirs
-
-	# Add here commands to install the package into debian/i3status.
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
 
-
-# Build architecture-independent files here.
-binary-indep: build install
-# We have nothing to do by default.
-
-# Build architecture-dependent files here.
-binary-arch: build install
+install-i3status-wmii: build-i3status-wmii
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs 
+	dh_installdirs
+	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status-wmii/ install
+
+binary-indep: build install
+
+binary-arch: binary-i3status binary-i3status-wmii
+
+binary-i3status: build-stamp-i3status
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
-#	dh_install
-#	dh_installmenu
-	dh_installdebconf	
-#	dh_installlogrotate
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-#	dh_python
 	dh_installinit
-#	dh_installcron
-#	dh_installinfo
 	dh_installman
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-#	dh_perl
-#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary-i3status-wmii: build-stamp-i3status-wmii
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+	dh_installinit
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
