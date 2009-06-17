@@ -15,7 +15,8 @@ endif
 #CFLAGS+=-DDZEN
 CFLAGS+=$(EXTRA_CFLAGS)
 
-i3status.o: i3status.h
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 i3status: i3status.o
 
