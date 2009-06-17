@@ -46,7 +46,7 @@ binary-indep: build install
 
 binary-arch: binary-i3status binary-i3status-wmii
 
-binary-i3status: build-stamp-i3status
+binary-i3status: build-i3status
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs
@@ -64,7 +64,7 @@ binary-i3status: build-stamp-i3status
 	dh_md5sums
 	dh_builddeb
 
-binary-i3status-wmii: build-stamp-i3status-wmii
+binary-i3status-wmii: build-i3status-wmii
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs
