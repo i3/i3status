@@ -1,8 +1,9 @@
 i3status (1.1-1) unstable; urgency=low
 
   * Implement getting temperature from thermal zones (Thanks atsutane)
+  * debian: Build a separate package with i3status in wmii mode
 
- -- Michael Stapelberg <michael@stapelberg.de>  Fri, 22 May 2009 21:23:44 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Wed, 17 Jun 2009 21:35:37 +0200
 
 i3status (1.0-1) unstable; urgency=low
 
