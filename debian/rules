@@ -35,52 +35,74 @@ install-i3status: build-i3status
 	dh_testroot
 	dh_installdirs
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
+	# Delete files which are in i3status-common
+	rm -rf $(CURDIR)/debian/i3status/etc
+	rm -rf $(CURDIR)/debian/i3status/usr/share/man
 
 install-i3status-wmii: build-i3status-wmii
 	dh_testdir
 	dh_testroot
 	dh_installdirs
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status-wmii/ install
+	mv $(CURDIR)/debian/i3status-wmii/usr/bin/i3status $(CURDIR)/debian/i3status-wmii/usr/bin/i3status-wmii
+	mv $(CURDIR)/debian/i3status-wmii/usr/share/man/man1/i3status.1 $(CURDIR)/debian/i3status-wmii/usr/share/man/man1/i3status-wmii.1
+	# Delete files which are in i3status-common
+	rm $(CURDIR)/debian/i3status-wmii/etc/i3status.conf
+	rm -rf $(CURDIR)/debian/i3status-wmii/usr/share/man
 
 binary-indep: build install
+	mkdir -p $(CURDIR)/debian/i3status-common/etc
+	cp $(CURDIR)/i3status.conf $(CURDIR)/debian/i3status-common/etc/i3status.conf
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs -pi3status-common
+	dh_installdocs -pi3status-common
+	dh_installexamples -pi3status-common
+	dh_installinit -pi3status-common
+	dh_link -pi3status-common
+	dh_strip -pi3status-common
+	dh_compress -pi3status-common
+	dh_fixperms -pi3status-common
+	dh_installdeb -pi3status-common
+	dh_shlibdeps -pi3status-common
+	dh_gencontrol -pi3status-common
+	dh_md5sums -pi3status-common
+	dh_builddeb -pi3status-common
 
 binary-arch: binary-i3status binary-i3status-wmii
 
 binary-i3status: build-i3status
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-	dh_installinit
-	dh_installman
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+	dh_installchangelogs -pi3status
+	dh_installdocs -pi3status
+	dh_installman -pi3status
+	dh_link -pi3status
+	dh_strip -pi3status
+	dh_compress -pi3status
+	dh_fixperms -pi3status
+	dh_installdeb -pi3status
+	dh_shlibdeps -pi3status
+	dh_gencontrol -pi3status
+	dh_md5sums -pi3status
+	dh_builddeb -pi3status
 
 binary-i3status-wmii: build-i3status-wmii
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_installexamples
-	dh_installinit
-	dh_installman
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+	dh_installchangelogs -pi3status-wmii
+	dh_installdocs -pi3status-wmii
+	dh_installinit -pi3status-wmii
+	dh_installman -pi3status-wmii
+	dh_link -pi3status-wmii
+	dh_strip -pi3status-wmii
+	dh_compress -pi3status-wmii
+	dh_fixperms -pi3status-wmii
+	dh_installdeb -pi3status-wmii
+	dh_shlibdeps -pi3status-wmii
+	dh_gencontrol -pi3status-wmii
+	dh_md5sums -pi3status-wmii
+	dh_builddeb -pi3status-wmii
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install 
