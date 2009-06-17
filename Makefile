@@ -15,7 +15,9 @@ endif
 #CFLAGS+=-DDZEN
 CFLAGS+=$(EXTRA_CFLAGS)
 
-i3status: i3status.o i3status.h
+i3status.o: i3status.h
+
+i3status: i3status.o
 
 clean:
 	rm -f *.o
