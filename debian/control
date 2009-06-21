@@ -1,6 +1,6 @@
 Source: i3status
 Section: utils
-Priority: optional
+Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5)
@@ -9,7 +9,7 @@ Homepage: http://i3.zekjur.net/i3status
 
 Package: i3status
 Architecture: any
-Priority: optional
+Priority: extra
 Section: utils
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: dzen2 | wmii
