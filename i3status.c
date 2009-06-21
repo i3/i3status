@@ -54,6 +54,7 @@
 #include <glob.h>
 #include <dirent.h>
 #include <getopt.h>
+#include <signal.h>
 
 #include "queue.h"
 
@@ -693,6 +694,16 @@ static int load_configuration(const char *configfile) {
         return result;
 }
 
+/*
+ * Exit upon SIGPIPE because when we have nowhere to write to, gathering
+ * system information is pointless.
+ *
+ */
+void sigpipe(int signum) {
+        fprintf(stderr, "Received SIGPIPE, exiting\n");
+        exit(1);
+}
+
 int main(int argc, char *argv[]) {
         char part[512],
              pathbuf[512];
@@ -705,6 +716,11 @@ int main(int argc, char *argv[]) {
                 {"help", no_argument, 0, 'h'},
                 {0, 0, 0, 0}
         };
+
+        struct sigaction action;
+        memset(&action, 0, sizeof(struct sigaction));
+        action.sa_handler = sigpipe;
+        sigaction(SIGPIPE, &action, NULL);
 
         SIMPLEQ_INIT(&batteries);
 
