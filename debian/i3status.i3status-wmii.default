@@ -1,0 +1,9 @@
+### i3status-wmii settings ###
+
+## run i3status-wmii: yes, no
+## default: no
+I3STATUS_WMII_ENABLE=no
+
+## additional options:
+## -c <configfile>
+I3STATUS_WMII_OPTIONS=""
