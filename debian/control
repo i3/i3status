@@ -4,35 +4,16 @@ Priority: optional
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5)
-Standards-Version: 3.8.2
+Standards-Version: 3.7.3
 Homepage: http://i3.zekjur.net/i3status
-
-Package: i3status-common
-Architecture: all
-Priority: optional
-Section: utils
-Depends: ${misc:Depends}
-Description: Common files for i3status and i3status-wmii
- This package contains the configuration file and documentation for i3status
- and i3status-wmii.
 
 Package: i3status
 Architecture: any
 Priority: optional
 Section: utils
-Depends: ${shlibs:Depends}, ${misc:Depends}, i3status-common
-Recommends: dzen2
-Description: Generates a status line for dzen2
- i3status is a program running in background feeding dzen2 with information
- about your system (IP address and speed of your ethernet device, WLAN signal
- strength, load, time, ...).
-
-Package: i3status-wmii
-Architecture: any
-Priority: optional
-Section: utils
-Depends: ${shlibs:Depends}, ${misc:Depends}, i3status-common
-Recommends: wmii
-Description: Generates a status line for wmii
- i3status is a program running in background, filling up wmii's status bar
- using wmiis plan9 pseudo file system (therefore, you need 9pfs).
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: dzen2 | wmii
+Description: Generates a status line for dzen2 or wmii
+ i3status is a program running in background, feeding dzen2 or filling up
+ wmii's status bar using wmiis plan9 pseudo file system (therefore, you
+ need 9pfs).
