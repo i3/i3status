@@ -17,7 +17,7 @@ build-stamp:
 	$(MAKE)
 	cp $(CURDIR)/i3status $(CURDIR)/i3status-wmii
 	# Build with dzen support
-	$(MAKE) clean
+	$(MAKE) distclean
 	$(MAKE) EXTRA_CFLAGS="-DDZEN"
 	touch $@
 
