@@ -1,25 +1,21 @@
 // vim:ts=8:expandtab
 #include "i3status.h"
+#include <err.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 const char *get_load() {
         static char part[512];
 
 /* Get load */
-#ifdef LINUX
-        slurp("/proc/loadavg", part, sizeof(part));
-        *skip_character(part, ' ', 3) = '\0';
+#if defined(__FreeBSD__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun)
+        double loadavg[3];
+        if (getloadavg(loadavg, 3) == -1)
+                errx(-1, "getloadavg() failed\n");
+        (void)snprintf(part, sizeof(part), "%1.2f %1.2f %1.2f", loadavg[0], loadavg[1], loadavg[2]);
 #else
-        /* TODO: correctly check for NetBSD, check if it works the same on *BSD */
-        struct loadavg load;
-        size_t length = sizeof(struct loadavg);
-        int mib[2] = { CTL_VM, VM_LOADAVG };
-        if (sysctl(mib, 2, &load, &length, NULL, 0) < 0)
-                die("Could not sysctl({ CTL_VM, VM_LOADAVG })\n");
-        double scale = load.fscale;
-        (void)snprintf(part, sizeof(part), "%.02f %.02f %.02f",
-                        (double)load.ldavg[0] / scale,
-                        (double)load.ldavg[1] / scale,
-                        (double)load.ldavg[2] / scale);
+        part[0] = '\0';
 #endif
 
         return part;
