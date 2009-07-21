@@ -61,17 +61,18 @@ struct battery_head batteries;
 /* socket file descriptor for general purposes */
 int general_socket;
 
-const char *wlan_interface;
-const char *eth_interface;
-const char *wmii_path;
-const char *time_format;
-bool use_colors;
-bool get_ethspeed;
-bool get_cpu_temperature;
-char *thermal_zone;
+const char *wlan_interface = NULL;
+const char *eth_interface = NULL;
+const char *wmii_path = NULL;
+const char *time_format = NULL;
+bool use_colors = false;
+bool get_ethspeed = false;
+bool get_ipv6 = false;
+bool get_cpu_temperature = false;
+char *thermal_zone = NULL;
 const char *wmii_normcolors = "#222222 #333333";
-char order[MAX_ORDER][2];
-const char **run_watches;
+int order[MAX_ORDER];
+const char **run_watches = NULL;
 unsigned int num_run_watches;
 unsigned int interval = 1;
 
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]) {
         char part[512],
              pathbuf[512];
         unsigned int i;
+        int j;
 
         char *configfile = PREFIX "/etc/i3status.conf";
         int o, option_index = 0;
@@ -123,37 +125,40 @@ int main(int argc, char *argv[]) {
                 die("Could not create socket\n");
 
         while (1) {
-                for (i = 0; i < num_run_watches; i += 2) {
-                        bool running = process_runs(run_watches[i+1]);
-                        if (use_colors)
-                                snprintf(part, sizeof(part), "%s%s: %s",
-                                        (running ? color("#00FF00") : color("#FF0000")),
-                                        run_watches[i],
-                                        (running ? "yes" : "no"));
-                        else snprintf(part, sizeof(part), "%s: %s", run_watches[i], (running ? "yes" : "no"));
-                        snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
-                        write_to_statusbar(pathbuf, part, false);
-                }
+                for (j = 0; j < MAX_ORDER; j++) {
+                        generate_order(wlan_interface, ORDER_WLAN, "wlan", get_wireless_info());
+                        generate_order(eth_interface, ORDER_ETH, "eth", get_eth_info());
+                        generate_order(get_ipv6, ORDER_IPV6, "ipv6", get_ipv6_addr());
+                        generate_order(get_cpu_temperature, ORDER_CPU_TEMPERATURE, "cpu_temperature", get_cpu_temperature_info());
+                        generate_order(true, ORDER_LOAD, "load", get_load());
 
-                if (wlan_interface)
-                        write_to_statusbar(concat(order[ORDER_WLAN], "wlan"), get_wireless_info(), false);
-                if (eth_interface)
-                        write_to_statusbar(concat(order[ORDER_ETH], "eth"), get_eth_info(), false);
-                struct battery *current_battery;
-                SIMPLEQ_FOREACH(current_battery, &batteries, batteries) {
-                        write_to_statusbar(concat(order[ORDER_BATTERY], "battery"), get_battery_info(current_battery), false);
-                }
-                if (get_cpu_temperature)
-                        write_to_statusbar(concat(order[ORDER_CPU_TEMPERATURE], "cpu_temperature"), get_cpu_temperature_info(), false);
+                        if (j == order[ORDER_RUN]) {
+                                for (i = 0; i < num_run_watches; i += 2) {
+                                        bool running = process_runs(run_watches[i+1]);
+                                        if (use_colors)
+                                                snprintf(part, sizeof(part), "%s%s: %s",
+                                                        (running ? color("#00FF00") : color("#FF0000")),
+                                                        run_watches[i],
+                                                        (running ? "yes" : "no"));
+                                        else snprintf(part, sizeof(part), "%s: %s", run_watches[i], (running ? "yes" : "no"));
+                                        snprintf(pathbuf, sizeof(pathbuf), "%d%s", order[ORDER_RUN], run_watches[i]);
+                                        write_to_statusbar(pathbuf, part, false);
+                                }
+                        }
 
-                write_to_statusbar(concat(order[ORDER_LOAD], "load"), get_load(), !time_format);
+                        if (j == order[ORDER_BATTERY]) {
+                                struct battery *current;
+                                SIMPLEQ_FOREACH(current, &batteries, batteries)
+                                        generate(ORDER_BATTERY, "battery", get_battery_info(current));
+                        }
 
-                if (time_format) {
-                        /* Get date & time */
-                        time_t current_time = time(NULL);
-                        struct tm *current_tm = localtime(&current_time);
-                        (void)strftime(part, sizeof(part), time_format, current_tm);
-                        write_to_statusbar(concat(order[ORDER_TIME], "time"), part, true);
+                        if (j == order[ORDER_TIME] && time_format != NULL) {
+                                /* Get date & time */
+                                time_t current_time = time(NULL);
+                                struct tm *current_tm = localtime(&current_time);
+                                (void)strftime(part, sizeof(part), time_format, current_tm);
+                                generate(ORDER_TIME, "time", part);
+                        }
                 }
 
                 sleep(interval);

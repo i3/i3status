@@ -60,6 +60,8 @@ int load_configuration(const char *configfile) {
                         SIMPLEQ_INSERT_TAIL(&batteries, new, batteries);
                 } OPT("color")
                         use_colors = true;
+                OPT("get_ipv6")
+                        get_ipv6 = true;
                 OPT("get_ethspeed")
                         get_ethspeed = true;
                 OPT("get_cpu_temperature") {
@@ -108,7 +110,7 @@ int load_configuration(const char *configfile) {
                 }
                 OPT("order")
                 {
-                        #define SET_ORDER(opt, idx) { if (strcasecmp(token, opt) == 0) sprintf(order[idx], "%d", c++); }
+                        #define SET_ORDER(opt, idx) { if (strcasecmp(token, opt) == 0) order[idx] = c++; }
                         char *walk, *token;
                         int c = 0;
                         walk = token = dest_value;
@@ -117,6 +119,7 @@ int load_configuration(const char *configfile) {
                                         walk++;
                                 *(walk++) = '\0';
                                 SET_ORDER("run", ORDER_RUN);
+                                SET_ORDER("ipv6", ORDER_IPV6);
                                 SET_ORDER("wlan", ORDER_WLAN);
                                 SET_ORDER("eth", ORDER_ETH);
                                 SET_ORDER("battery", ORDER_BATTERY);

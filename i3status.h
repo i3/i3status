@@ -9,8 +9,20 @@
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) (a > b ? a : b)
 
+#define generate(orderidx, name, function) \
+        do { \
+                write_to_statusbar(order_to_str(order[orderidx], name), function, (j == (MAX_ORDER-1))); \
+        } while (0)
+
+#define generate_order(condition, orderidx, name, function) \
+        do { \
+                if (j == order[orderidx] && condition) \
+                        generate(orderidx, name, function); \
+        } while (0)
+
+
 typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
-enum { ORDER_RUN, ORDER_WLAN, ORDER_ETH, ORDER_BATTERY, ORDER_CPU_TEMPERATURE, ORDER_LOAD, ORDER_TIME, MAX_ORDER };
+enum { ORDER_RUN, ORDER_WLAN, ORDER_ETH, ORDER_BATTERY, ORDER_CPU_TEMPERATURE, ORDER_LOAD, ORDER_TIME, ORDER_IPV6, MAX_ORDER };
 
 struct battery {
         char *path;
@@ -22,8 +34,8 @@ struct battery {
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 void die(const char *fmt, ...);
-char *concat(const char *str1, const char *str2);
 void create_file(const char *name);
+char *order_to_str(int number, char *name);
 void setup(void);
 void write_to_statusbar(const char *name, const char *message, bool final_entry);
 void slurp(char *filename, char *destination, int size);
@@ -57,10 +69,11 @@ extern const char *wmii_path;
 extern const char *time_format;
 extern bool use_colors;
 extern bool get_ethspeed;
+extern bool get_ipv6;
 extern bool get_cpu_temperature;
 extern char *thermal_zone;
 extern const char *wmii_normcolors;
-extern char order[MAX_ORDER][2];
+extern int order[MAX_ORDER];
 extern const char **run_watches;
 extern unsigned int num_run_watches;
 extern unsigned int interval;

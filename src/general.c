@@ -63,8 +63,8 @@ void die(const char *fmt, ...) {
  * Otherwise, the buffer size would have to be increased.
  *
  */
-char *concat(const char *str1, const char *str2) {
-        static char concatbuf[32];
-        (void)snprintf(concatbuf, sizeof(concatbuf), "%s%s", str1, str2);
-        return concatbuf;
+char *order_to_str(int number, char *name) {
+        static char buf[32];
+        (void)snprintf(buf, sizeof(buf), "%d%s", number, name);
+        return buf;
 }

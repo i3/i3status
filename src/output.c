@@ -103,19 +103,20 @@ void setup(void) {
         /* Wait until wmii_path/rbar exists */
         for (; stat(wmii_path, &statbuf) < 0; sleep(interval));
 #endif
+#define cf(orderidx, name) create_file(order_to_str(order[orderidx], name));
 
         cleanup_rbar_dir();
         if (wlan_interface)
-                create_file(concat(order[ORDER_WLAN],"wlan"));
+                cf(ORDER_WLAN, "wlan");
         if (eth_interface)
-                create_file(concat(order[ORDER_ETH],"eth"));
+                cf(ORDER_ETH, "eth");
         if (get_cpu_temperature)
-                create_file(concat(order[ORDER_CPU_TEMPERATURE], "cpu_temperature"));
-        create_file(concat(order[ORDER_LOAD],"load"));
+                cf(ORDER_CPU_TEMPERATURE, "cpu_temperature");
+        cf(ORDER_LOAD, "load");
         if (time_format)
-                create_file(concat(order[ORDER_TIME],"time"));
+                cf(ORDER_TIME, "time");
         for (i = 0; i < num_run_watches; i += 2) {
-                snprintf(pathbuf, sizeof(pathbuf), "%s%s", order[ORDER_RUN], run_watches[i]);
+                snprintf(pathbuf, sizeof(pathbuf), "%d%s", order[ORDER_RUN], run_watches[i]);
                 create_file(pathbuf);
         }
 }
