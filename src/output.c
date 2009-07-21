@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>

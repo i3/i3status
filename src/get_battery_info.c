@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +20,7 @@ const char *get_battery_info(struct battery *bat) {
             present_rate = -1;
         charging_status_t status = CS_DISCHARGING;
 
-	slurp(bat->path, buf, sizeof(buf));
+        slurp(bat->path, buf, sizeof(buf));
 
         for (walk = buf, last = buf; (walk-buf) < 1024; walk++) {
                 if (*walk == '\n') {

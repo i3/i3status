@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
@@ -13,8 +14,8 @@ const char *get_cpu_temperature_info() {
         static char buf[16];
         long int temp;
 
-	slurp(thermal_zone, buf, sizeof(buf));
-	temp = strtol(buf, NULL, 10);
+        slurp(thermal_zone, buf, sizeof(buf));
+        temp = strtol(buf, NULL, 10);
 
         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
                 (void)snprintf(buf, sizeof(buf), "T: ? C");

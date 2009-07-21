@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>

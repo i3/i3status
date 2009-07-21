@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,7 @@ const char *get_wireless_info() {
         memset(buf, 0, sizeof(buf));
         memset(part, 0, sizeof(part));
 
-	slurp("/proc/net/wireless", buf, sizeof(buf));
+        slurp("/proc/net/wireless", buf, sizeof(buf));
 
         interfaces = skip_character(buf, '\n', 1) + 1;
         while ((interfaces = skip_character(interfaces, '\n', 1)+1) < buf+strlen(buf)) {

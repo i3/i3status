@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <net/if.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -32,11 +33,11 @@ const char *get_ip_addr(const char *interface) {
         if (ioctl(general_socket, SIOCGIFADDR, &ifr) < 0)
                 return "no IP";
 
-	int ret;
-	if ((ret = getnameinfo(&ifr.ifr_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
-		fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
-		return "no IP";
-	}
+        int ret;
+        if ((ret = getnameinfo(&ifr.ifr_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
+                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                return "no IP";
+        }
 
         return part;
 }

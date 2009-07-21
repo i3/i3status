@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <sys/types.h>
 #include <string.h>
 #include <stdarg.h>
@@ -13,13 +14,13 @@
  *
  */
 void slurp(char *filename, char *destination, int size) {
-	int fd;
+        int fd;
 
-	if ((fd = open(filename, O_RDONLY)) == -1)
-		die("Could not open \"%s\"\n", filename);
+        if ((fd = open(filename, O_RDONLY)) == -1)
+                die("Could not open \"%s\"\n", filename);
 
-	(void)read(fd, destination, size);
-	(void)close(fd);
+        (void)read(fd, destination, size);
+        (void)close(fd);
 }
 
 /*

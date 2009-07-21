@@ -1,3 +1,4 @@
+// vim:ts=8:expandtab
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
