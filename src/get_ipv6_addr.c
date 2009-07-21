@@ -21,19 +21,28 @@ const char *get_ipv6_addr() {
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET6;
 
+        /* We resolve the K root server to get a public IPv6 address. You can
+         * replace this with any other host which has an AAAA record, but the
+         * K root server is a pretty safe bet. */
         if (getaddrinfo("k.root-servers.net", "domain", &hints, &result) != 0) {
                 perror("getaddrinfo()");
                 return "no IP";
         }
 
         for (resp = result; resp != NULL; resp = resp->ai_next) {
-                if ((fd = socket(resp->ai_family, SOCK_STREAM, 0)) == -1) {
+                if ((fd = socket(resp->ai_family, SOCK_DGRAM, 0)) == -1) {
                         perror("socket()");
                         continue;
                 }
 
+                /* Since the socket was created with SOCK_DGRAM, this is
+                 * actually not establishing a connection or generating
+                 * any other network traffic. Instead, as a side-effect,
+                 * it saves the local address with which packets would
+                 * be sent to the destination. */
                 if (connect(fd, resp->ai_addr, resp->ai_addrlen) == -1) {
                         perror("connect()");
+                        (void)close(fd);
                         continue;
                 }
 
@@ -41,17 +50,20 @@ const char *get_ipv6_addr() {
                 socklen_t local_len = sizeof(struct sockaddr_storage);
                 if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
                         perror("getsockname()");
-                        return "no IP";
-                }
-
-                memset(buf, 0, INET6_ADDRSTRLEN + 1);
-                int ret;
-                if ((ret = getnameinfo((struct sockaddr*)&local, local_len, buf, sizeof(buf), NULL, 0, NI_NUMERICHOST)) != 0) {
-                        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                        (void)close(fd);
                         return "no IP";
                 }
 
                 (void)close(fd);
+
+                memset(buf, 0, INET6_ADDRSTRLEN + 1);
+                int ret;
+                if ((ret = getnameinfo((struct sockaddr*)&local, local_len,
+                                       buf, sizeof(buf), NULL, 0,
+                                       NI_NUMERICHOST)) != 0) {
+                        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                        return "no IP";
+                }
 
                 free(result);
                 return buf;
