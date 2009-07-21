@@ -16,13 +16,17 @@ endif
 CFLAGS+=-DDZEN
 CFLAGS+=$(EXTRA_CFLAGS)
 
-src/%.o: src/%.c src/%.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+src/%.o: src/%.c
+	@$(CC) $(CFLAGS) -c -o $@ $<
+	@echo " CC $<"
 
 %.o: %.c %.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
+	@echo " CC $<"
 
 i3status: src/general.o src/config.o src/get_load.o src/output.o src/get_cpu_temperature.o src/process_runs.o src/get_eth_info.o src/get_ip_addr.o src/get_wireless_info.o src/get_battery_info.o src/get_ipv6_addr.o i3status.o
+	@$(CC) $(LDFLAGS) -o $@ src/*.o *.o
+	@echo " LD $@"
 
 clean:
 	rm -f *.o src/*.o
