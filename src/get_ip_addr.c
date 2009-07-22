@@ -42,19 +42,25 @@ const char *get_ip_addr(const char *interface) {
              addrp = addrp->ifa_next) {
                 /* Check if the interface is down */
                 if (strcmp(addrp->ifa_name, eth_interface) == 0 &&
-                    (addrp->ifa_flags & IFF_RUNNING) == 0)
+                    (addrp->ifa_flags & IFF_RUNNING) == 0) {
+                        freeifaddrs(ifaddr);
                         return NULL;
+                }
         }
 
-        if (addrp == NULL)
+        if (addrp == NULL) {
+                freeifaddrs(ifaddr);
                 return "no IP";
+        }
 
         int ret;
         if ((ret = getnameinfo(addrp->ifa_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
                 fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                freeifaddrs(ifaddr);
                 return "no IP";
         }
 
+        freeifaddrs(ifaddr);
         return part;
 }
 
