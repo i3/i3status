@@ -1,12 +1,12 @@
 // vim:ts=8:expandtab
 #include <net/if.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
+#include <ifaddrs.h>
 
 #include "i3status.h"
 
@@ -17,24 +17,40 @@
  */
 const char *get_ip_addr(const char *interface) {
         static char part[512];
-        struct ifreq ifr;
         socklen_t len = sizeof(struct sockaddr_in);
         memset(part, 0, sizeof(part));
 
-        /* First check if the interface is running */
-        (void)strcpy(ifr.ifr_name, interface);
-        if (ioctl(general_socket, SIOCGIFFLAGS, &ifr) < 0 ||
-            !(ifr.ifr_flags & IFF_RUNNING))
-                return NULL;
+        struct ifaddrs *ifaddr, *addrp;
 
-        /* Interface is up, get the IP address */
-        (void)strcpy(ifr.ifr_name, interface);
-        ifr.ifr_addr.sa_family = AF_INET;
-        if (ioctl(general_socket, SIOCGIFADDR, &ifr) < 0)
+        getifaddrs(&ifaddr);
+
+        if (ifaddr == NULL) {
+                (void)snprintf(part, sizeof(part), "E: down");
+                return part;
+        }
+
+        addrp = ifaddr;
+
+        /* Skip until we are at the AF_INET address of eth_interface */
+        for (addrp = ifaddr;
+
+             (addrp != NULL &&
+              (strcmp(addrp->ifa_name, eth_interface) != 0 ||
+               addrp->ifa_addr == NULL ||
+               addrp->ifa_addr->sa_family != AF_INET));
+
+             addrp = addrp->ifa_next) {
+                /* Check if the interface is down */
+                if (strcmp(addrp->ifa_name, eth_interface) == 0 &&
+                    (addrp->ifa_flags & IFF_RUNNING) == 0)
+                        return NULL;
+        }
+
+        if (addrp == NULL)
                 return "no IP";
 
         int ret;
-        if ((ret = getnameinfo(&ifr.ifr_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
+        if ((ret = getnameinfo(addrp->ifa_addr, len, part, sizeof(part), NULL, 0, NI_NUMERICHOST)) != 0) {
                 fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
                 return "no IP";
         }
