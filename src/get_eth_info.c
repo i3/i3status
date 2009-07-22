@@ -24,20 +24,6 @@
 
 #define PART_ETHSPEED  "E: %s (%s)"
 
-struct ifmedia_type_to_subtype {
-    struct {
-        struct ifmedia_description *desc;
-        int alias;
-    } subtypes[5];
-    struct {
-        struct ifmedia_description *desc;
-        int alias;
-    } options[3];
-    struct {
-        struct ifmedia_description *desc;
-        int alias;
-    } modes[3];
-};
 #endif
 
 /*
