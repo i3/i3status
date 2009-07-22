@@ -74,7 +74,7 @@ const char *get_eth_info() {
 #elif defined(__FreeBSD__)
                 struct ifmediareq ifm;
                 (void)memset(&ifm, 0, sizeof(ifm));
-                (void)strncpy(ifm.ifm_name, ifaddr->ifa_name, sizeof(ifm.ifm_name));
+                (void)strncpy(ifm.ifm_name, eth_interface, sizeof(ifm.ifm_name));
                 int ret = ioctl(general_socket, SIOCGIFMEDIA, (caddr_t)&ifm);
 
                 /* Get the description of the media type, partially taken from
