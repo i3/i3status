@@ -7,6 +7,8 @@
 
 #include "i3status.h"
 
+int highest_order = 0;
+
 /*
  * Reads the configuration from the given file
  *
@@ -111,9 +113,8 @@ int load_configuration(const char *configfile) {
                 }
                 OPT("order")
                 {
-                        #define SET_ORDER(opt, idx) { if (strcasecmp(token, opt) == 0) order[idx] = c++; }
+                        #define SET_ORDER(opt, idx) { if (strcasecmp(token, opt) == 0) order[idx] = highest_order++; }
                         char *walk, *token;
-                        int c = 0;
                         walk = token = dest_value;
                         while (*walk != '\0') {
                                 while ((*walk != ',') && (*walk != '\0'))

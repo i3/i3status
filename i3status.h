@@ -11,7 +11,7 @@
 
 #define generate(orderidx, name, function) \
         do { \
-                write_to_statusbar(order_to_str(order[orderidx], name), function, (j == (MAX_ORDER-1))); \
+                write_to_statusbar(order_to_str(order[orderidx], name), function, (j == (highest_order-1))); \
         } while (0)
 
 #define generate_order(condition, orderidx, name, function) \
@@ -62,6 +62,8 @@ extern struct battery_head batteries;
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
+
+extern int highest_order;
 
 extern const char *wlan_interface;
 extern const char *eth_interface;
