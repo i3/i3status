@@ -32,17 +32,17 @@ const char *get_ip_addr(const char *interface) {
 
         addrp = ifaddr;
 
-        /* Skip until we are at the AF_INET address of eth_interface */
+        /* Skip until we are at the AF_INET address of interface */
         for (addrp = ifaddr;
 
              (addrp != NULL &&
-              (strcmp(addrp->ifa_name, eth_interface) != 0 ||
+              (strcmp(addrp->ifa_name, interface) != 0 ||
                addrp->ifa_addr == NULL ||
                addrp->ifa_addr->sa_family != AF_INET));
 
              addrp = addrp->ifa_next) {
                 /* Check if the interface is down */
-                if (strcmp(addrp->ifa_name, eth_interface) == 0 &&
+                if (strcmp(addrp->ifa_name, interface) == 0 &&
                     (addrp->ifa_flags & IFF_RUNNING) == 0) {
                         freeifaddrs(ifaddr);
                         return NULL;
