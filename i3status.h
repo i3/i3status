@@ -20,6 +20,18 @@
                         generate(orderidx, name, function); \
         } while (0)
 
+#if defined(LINUX)
+
+#define THERMAL_ZONE "/sys/class/thermal/thermal_zone%d/temp"
+
+#elif defined(__FreeBSD__)
+
+#define THERMAL_ZONE "hw.acpi.thermal.tz%d.temperature"
+#define BATT_LIFE "hw.acpi.battery.life"
+#define BATT_TIME "hw.acpi.battery.time"
+#define BATT_STATE "hw.acpi.battery.state"
+
+#endif
 
 typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
 enum { ORDER_RUN, ORDER_WLAN, ORDER_ETH, ORDER_BATTERY, ORDER_CPU_TEMPERATURE, ORDER_LOAD, ORDER_TIME, ORDER_IPV6, MAX_ORDER };

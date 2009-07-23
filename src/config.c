@@ -69,13 +69,11 @@ int load_configuration(const char *configfile) {
                         get_ethspeed = true;
                 OPT("get_cpu_temperature") {
                         get_cpu_temperature = true;
-                        if (strlen(dest_value) > 0) {
-                                if (asprintf(&thermal_zone, "/sys/class/thermal/thermal_zone%d/temp", atoi(dest_value)) == -1)
-                                        die("Could not build thermal_zone path\n");
-                        } else {
-                                 if (asprintf(&thermal_zone, "/sys/class/thermal/thermal_zone0/temp") == -1)
-                                        die("Could not build thermal_zone path\n");
-                        }
+                        int zone = 0;
+                        if (strlen(dest_value) > 0)
+                            zone = atoi(dest_value);
+                        if (asprintf(&thermal_zone, THERMAL_ZONE, zone) == -1)
+                            die("Could not build thermal_zone path\n");
                 } OPT("normcolors")
                         wmii_normcolors = strdup(dest_value);
                 OPT("interval")

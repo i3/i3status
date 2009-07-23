@@ -5,6 +5,11 @@
 
 #include "i3status.h"
 
+#if defined(__FreeBSD__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
+
 /*
  * Get battery information from /sys. Note that it uses the design capacity to
  * calculate the percentage, not the last full capacity, so you can see how
@@ -20,6 +25,7 @@ const char *get_battery_info(struct battery *bat) {
             present_rate = -1;
         charging_status_t status = CS_DISCHARGING;
 
+#if defined(LINUX)
         slurp(bat->path, buf, sizeof(buf));
 
         for (walk = buf, last = buf; (walk-buf) < 1024; walk++) {
@@ -85,5 +91,48 @@ const char *get_battery_info(struct battery *bat) {
                          (status == CS_DISCHARGING ? "BAT" : "FULL")),
                         (((float)remaining / (float)full_design) * 100));
         }
+#elif defined(__FreeBSD__)
+        int state;
+        int sysctl_rslt;
+        size_t sysctl_size = sizeof(sysctl_rslt);
+
+        if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0)
+                return "No battery";
+
+        present_rate = sysctl_rslt;
+        if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0)
+                return "No battery";
+
+        remaining = sysctl_rslt;
+        if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL,0) != 0)
+                return "No battery";
+
+        state = sysctl_rslt;
+        if (state == 0 && present_rate == 100)
+                status = CS_FULL;
+        else if (state == 0 && present_rate < 100)
+                status = CS_CHARGING;
+        else
+                status = CS_DISCHARGING;
+
+        full_design = sysctl_rslt;
+
+        if (state == 1) {
+                int hours, minutes;
+                minutes = remaining;
+                hours = minutes / 60;
+                minutes -= (hours * 60);
+                (void)snprintf(part, sizeof(part), "%s %02d%% %02dh%02d",
+                               (status == CS_CHARGING ? "CHR" :
+                                (status == CS_DISCHARGING ? "BAT" : "FULL")),
+                               present_rate,
+                               max(hours, 0), max(minutes, 0));
+        } else {
+                (void)snprintf(part, sizeof(part), "%s %02d%%",
+                               (status == CS_CHARGING ? "CHR" :
+                                (status == CS_DISCHARGING ? "BAT" : "FULL")),
+                               present_rate);
+        }
+#endif
         return part;
 }
