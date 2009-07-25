@@ -50,7 +50,7 @@ void create_file(const char *name);
 char *order_to_str(int number, char *name);
 void setup(void);
 void write_to_statusbar(const char *name, const char *message, bool final_entry);
-void slurp(char *filename, char *destination, int size);
+bool slurp(char *filename, char *destination, int size);
 
 /* src/output.c */
 void write_error_to_statusbar(const char *message);

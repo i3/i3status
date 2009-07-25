@@ -13,14 +13,16 @@
  * Reads size bytes into the destination buffer from filename.
  *
  */
-void slurp(char *filename, char *destination, int size) {
+bool slurp(char *filename, char *destination, int size) {
         int fd;
 
         if ((fd = open(filename, O_RDONLY)) == -1)
-                die("Could not open \"%s\"\n", filename);
+                return false;
 
         (void)read(fd, destination, size);
         (void)close(fd);
+
+        return true;
 }
 
 /*

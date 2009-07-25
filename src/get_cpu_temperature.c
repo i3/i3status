@@ -24,7 +24,8 @@ const char *get_cpu_temperature_info() {
 
 #if defined(LINUX)
         long int temp;
-        slurp(thermal_zone, buf, sizeof(buf));
+        if (!slurp(thermal_zone, buf, sizeof(buf)))
+                die("Could not open \"%s\"\n", thermal_zone);
         temp = strtol(buf, NULL, 10);
         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
                 (void)snprintf(buf, sizeof(buf), "T: ? C");

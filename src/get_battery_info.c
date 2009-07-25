@@ -26,7 +26,8 @@ const char *get_battery_info(struct battery *bat) {
         charging_status_t status = CS_DISCHARGING;
 
 #if defined(LINUX)
-        slurp(bat->path, buf, sizeof(buf));
+        if (!slurp(bat->path, buf, sizeof(buf)))
+                return "No battery";
 
         for (walk = buf, last = buf; (walk-buf) < 1024; walk++) {
                 if (*walk == '\n') {

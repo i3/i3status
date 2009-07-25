@@ -20,7 +20,8 @@ const char *get_wireless_info() {
         memset(buf, 0, sizeof(buf));
         memset(part, 0, sizeof(part));
 
-        slurp("/proc/net/wireless", buf, sizeof(buf));
+        if (!slurp("/proc/net/wireless", buf, sizeof(buf)))
+                die("Could not open \"/proc/net/wireless\"\n");
 
         interfaces = skip_character(buf, '\n', 1) + 1;
         while ((interfaces = skip_character(interfaces, '\n', 1)+1) < buf+strlen(buf)) {
