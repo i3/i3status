@@ -41,7 +41,10 @@ const char *get_ipv6_addr() {
                  * it saves the local address with which packets would
                  * be sent to the destination. */
                 if (connect(fd, resp->ai_addr, resp->ai_addrlen) == -1) {
-                        perror("connect()");
+                        /* We don’t display the error here because most
+                         * likely, there just is no IPv6 connectivity.
+                         * Thus, don’t spam the user’s console but just
+                         * try the next address. */
                         (void)close(fd);
                         continue;
                 }
