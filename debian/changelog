@@ -1,10 +1,12 @@
-i3status (1.3-1) unstable; urgency=low
+i3status (1.2-3) unstable; urgency=low
 
-  * Correctly handle order of items when running for dzen2
-  * Implement getting the IPv6 address which currently has connectivity
-  * Lots of fixes for FreeBSD
+  * debian: Correct dependencies in /etc/init.d/i3status-wmii (Closes: #541626)
+  * debian: init script should not require root priviledges even to get the
+    usage information (Closes: #541627)
+  * debian: better error message when i3status-wmii is not enabled using
+    /etc/defaults/i3status-wmii (Closes: #541628)
 
- -- Michael Stapelberg <michael@stapelberg.de>  Sun, 02 Aug 2009 19:59:51 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Mon, 17 Aug 2009 14:57:49 +0200
 
 i3status (1.2-2) unstable; urgency=low
 

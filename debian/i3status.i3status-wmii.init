@@ -2,37 +2,43 @@
 #
 ### BEGIN INIT INFO
 # Provides:          i3status-wmii
-# Required-Start:
-# Required-Stop:
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Generates a status line for wmii
-# Description:       Generates a status line for wmii
+# Description:       Combines several system information into a status line for
+#                    wmii.
 ### END INIT INFO
 
-# For the pidfile, you must be root. i3status itself runs as user just fine
-[ $(id -ru) -eq 0 ] || { echo "You need to be root"; exit 1; }
+need_root() {
+	# For the pidfile, you must be root. i3status itself works as user
+	[ $(id -ru) -eq 0 ] || { echo "You need to be root"; exit 1; }
+}
 
 [ -f /etc/default/i3status-wmii ] && . /etc/default/i3status-wmii
 
 if [ "$I3STATUS_WMII_ENABLE" != "yes" ]
 then
-	echo "Not starting i3status-wmii (Disabled in /etc/default/i3status-wmii)"
+	echo "Not starting i3status-wmii (Not enabled in /etc/default/i3status-wmii)"
 	exit 0
 fi
 
 . /lib/lsb/init-functions
 
 case "$1" in
-start)	log_daemon_msg "Starting wmii status bar filler" "i3status-wmii"
+start)	need_root
+	log_daemon_msg "Starting wmii status bar filler" "i3status-wmii"
 	start-stop-daemon --start --background --quiet --make-pidfile --pidfile /var/run/i3status-wmii.pid --name i3status-wmii --startas /usr/bin/i3status-wmii
 	log_end_msg $?
 	;;
-stop)	log_daemon_msg "Stopping wmii status bar filler" "i3status-wmii"
+stop)	need_root
+	log_daemon_msg "Stopping wmii status bar filler" "i3status-wmii"
 	start-stop-daemon --stop --quiet --pidfile /var/run/i3status-wmii.pid --name i3status-wmii
 	log_end_msg $?
 	;;
-restart|reload|force-reload)	log_daemon_msg "Restarting wmii status bar filler" "i3status-wmii"
+restart|reload|force-reload)	need_root
+	log_daemon_msg "Restarting wmii status bar filler" "i3status-wmii"
 	start-stop-daemon --stop --retry 5 --quiet --pidfile /var/run/i3status-wmii.pid --name i3status-wmii
 	start-stop-daemon --start --background --quiet --make-pidfile --pidfile /var/run/i3status-wmii.pid --name i3status-wmii --startas /usr/bin/i3status-wmii
 	;;

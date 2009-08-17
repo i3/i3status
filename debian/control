@@ -16,4 +16,5 @@ Recommends: dzen2 | wmii
 Description: Generates a status line for dzen2 or wmii
  i3status is a program running in background, feeding dzen2 or filling up
  wmii's status bar using wmiis plan9 pseudo file system (therefore, you
- need 9pfs).
+ need 9pfs) by combining several system information (current IP addresses,
+ battery status, date/time, system load, etc.).
