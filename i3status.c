@@ -152,12 +152,16 @@ int main(int argc, char *argv[]) {
                                         generate(ORDER_BATTERY, "battery", get_battery_info(current));
                         }
 
-                        if (j == order[ORDER_TIME] && time_format != NULL) {
-                                /* Get date & time */
-                                time_t current_time = time(NULL);
-                                struct tm *current_tm = localtime(&current_time);
-                                (void)strftime(part, sizeof(part), time_format, current_tm);
-                                generate(ORDER_TIME, "time", part);
+                        if (j == order[ORDER_TIME]) {
+                                if (time_format != NULL) {
+                                        /* Get date & time */
+                                        time_t current_time = time(NULL);
+                                        struct tm *current_tm = localtime(&current_time);
+                                        (void)strftime(part, sizeof(part), time_format, current_tm);
+                                        generate(ORDER_TIME, "time", part);
+                                } else {
+                                        generate(ORDER_TIME, "time", "");
+                                }
                         }
                 }
 
