@@ -136,10 +136,10 @@ int main(int argc, char *argv[]) {
                                 for (i = 0; i < num_run_watches; i += 2) {
                                         bool running = process_runs(run_watches[i+1]);
                                         if (use_colors)
-                                                snprintf(part, sizeof(part), "%s%s: %s",
+                                                snprintf(part, sizeof(part), "%s%s: %s%s",
                                                         (running ? color("#00FF00") : color("#FF0000")),
                                                         run_watches[i],
-                                                        (running ? "yes" : "no"));
+                                                        (running ? "yes" : "no"), endcolor());
                                         else snprintf(part, sizeof(part), "%s: %s", run_watches[i], (running ? "yes" : "no"));
                                         snprintf(pathbuf, sizeof(pathbuf), "%d%s", order[ORDER_RUN], run_watches[i]);
                                         write_to_statusbar(pathbuf, part, false);

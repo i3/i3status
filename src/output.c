@@ -28,6 +28,8 @@ char *color(const char *colorstr) {
         static char colorbuf[32];
 #ifdef DZEN
         (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", colorstr);
+#elif XMOBAR
+        (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", colorstr);
 #else
         (void)snprintf(colorbuf, sizeof(colorbuf), "%s %s ", colorstr, wmii_normcolors);
 #endif
@@ -35,11 +37,23 @@ char *color(const char *colorstr) {
 }
 
 /*
+ * Some color formats (xmobar) require to terminate colors again
+ *
+ */
+char *endcolor() {
+#ifdef XMOBAR
+        return "</fc>";
+#else
+        return "";
+#endif
+}
+
+/*
  * Cleans wmii's /rbar directory by deleting all regular files
  *
  */
 void cleanup_rbar_dir() {
-#ifdef DZEN
+#if defined(DZEN) || defined(XMOBAR)
         return;
 #endif
         struct dirent *ent;
@@ -66,7 +80,7 @@ void cleanup_rbar_dir() {
  *
  */
 void create_file(const char *name) {
-#ifdef DZEN
+#if defined(DZEN) || defined(XMOBAR)
         return;
 #endif
         char pathbuf[strlen(wmii_path)+256+1];
@@ -99,7 +113,7 @@ void setup(void) {
         unsigned int i;
         char pathbuf[512];
 
-#ifndef DZEN
+#if !defined(DZEN) && !defined(XMOBAR)
         struct stat statbuf;
         /* Wait until wmii_path/rbar exists */
         for (; stat(wmii_path, &statbuf) < 0; sleep(interval));
@@ -142,6 +156,22 @@ void write_to_statusbar(const char *name, const char *message, bool final_entry)
                 exit(1);
         }
         return;
+#elif XMOBAR
+        if (final_entry) {
+                if (printf("%s\n", message) < 0) {
+                        perror("printf");
+                        exit(1);
+                }
+
+                fflush(stdout);
+                return;
+        }
+        if (printf("%s" BAR, message) < 0) {
+                perror("printf");
+                exit(1);
+        }
+        return;
+
 #endif
 
         char pathbuf[strlen(wmii_path)+256+1];

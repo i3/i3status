@@ -34,10 +34,10 @@ const char *get_wireless_info() {
                         continue;
                 if ((quality == UCHAR_MAX) || (quality == 0)) {
                         if (use_colors)
-                                (void)snprintf(part, sizeof(part), "%sW: down", color("#FF0000"));
+                                (void)snprintf(part, sizeof(part), "%sW: down%s", color("#FF0000"), endcolor());
                         else (void)snprintf(part, sizeof(part), "W: down");
-                } else (void)snprintf(part, sizeof(part), "%sW: (%03d%%) %s",
-                                color("#00FF00"), quality, get_ip_addr(wlan_interface));
+                } else (void)snprintf(part, sizeof(part), "%sW: (%03d%%) %s%s",
+                                color("#00FF00"), quality, get_ip_addr(wlan_interface), endcolor());
                 return part;
         }
 

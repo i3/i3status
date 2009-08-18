@@ -5,7 +5,11 @@
 
 #include "queue.h"
 
-#define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
+#ifdef DZEN
+	#define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
+#elif XMOBAR
+	#define BAR "<fc=#333333> | </fc>"
+#endif
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) (a > b ? a : b)
 
@@ -55,6 +59,7 @@ bool slurp(char *filename, char *destination, int size);
 /* src/output.c */
 void write_error_to_statusbar(const char *message);
 char *color(const char *colorstr);
+char *endcolor() __attribute__ ((pure));
 void cleanup_rbar_dir();
 
 /* src/config.c */

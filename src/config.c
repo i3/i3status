@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <glob.h>
 
 #include "i3status.h"
 
@@ -80,7 +81,7 @@ int load_configuration(const char *configfile) {
                         interval = atoi(dest_value);
                 OPT("wmii_path")
                 {
-#ifndef DZEN
+#if !defined(DZEN) && !defined(XMOBAR)
                         static glob_t globbuf;
                         struct stat stbuf;
                         if (glob(dest_value, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
@@ -139,7 +140,7 @@ int load_configuration(const char *configfile) {
         }
         fclose(handle);
 
-#ifndef DZEN
+#if !defined(DZEN) && !defined(XMOBAR)
         if (wmii_path == NULL)
                 exit(EXIT_FAILURE);
 #endif

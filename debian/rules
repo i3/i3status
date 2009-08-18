@@ -16,6 +16,10 @@ build-stamp:
 	# Build with wmii support
 	$(MAKE)
 	cp $(CURDIR)/i3status $(CURDIR)/i3status-wmii
+	# Build with xmobar support
+	$(MAKE) distclean
+	$(MAKE) EXTRA_CFLAGS="-DXMOBAR"
+	cp $(CURDIR)/i3status $(CURDIR)/i3status-xmobar
 	# Build with dzen support
 	$(MAKE) distclean
 	$(MAKE) EXTRA_CFLAGS="-DDZEN"
@@ -36,6 +40,7 @@ install: build
 	dh_installdirs
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
 	install -m 755 $(CURDIR)/i3status-wmii $(CURDIR)/debian/i3status/usr/bin/i3status-wmii
+	install -m 755 $(CURDIR)/i3status-xmobar $(CURDIR)/debian/i3status/usr/bin/i3status-xmobar
 	dh_link usr/share/man/man1/i3status.1 usr/share/man/man1/i3status-wmii.1
 
 # Build architecture-independent files here.
