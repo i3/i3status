@@ -25,7 +25,9 @@ const char *get_ipv6_addr() {
          * replace this with any other host which has an AAAA record, but the
          * K root server is a pretty safe bet. */
         if (getaddrinfo("k.root-servers.net", "domain", &hints, &result) != 0) {
-                perror("getaddrinfo()");
+                /* We don’t display the error here because most
+                 * likely, there just is no connectivity.
+                 * Thus, don’t spam the user’s console. */
                 return "no IPv6";
         }
 
