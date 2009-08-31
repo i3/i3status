@@ -28,12 +28,19 @@
 
 #define THERMAL_ZONE "/sys/class/thermal/thermal_zone%d/temp"
 
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 
 #define THERMAL_ZONE "hw.acpi.thermal.tz%d.temperature"
 #define BATT_LIFE "hw.acpi.battery.life"
 #define BATT_TIME "hw.acpi.battery.time"
 #define BATT_STATE "hw.acpi.battery.state"
+
+#endif
+
+#if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
+
+#include <sys/stat.h>
+#include <sys/param.h>
 
 #endif
 

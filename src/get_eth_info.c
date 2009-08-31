@@ -17,7 +17,7 @@
 #define PART_ETHSPEED  "E: %s (%d Mbit/s)"
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <net/if_media.h>
 #define IFM_TYPE_MATCH(dt, t)                       \
         (IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
@@ -34,7 +34,7 @@ const char *get_eth_info() {
         static char part[512];
 #if defined(LINUX)
         int ethspeed=0;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         char *ethspeed;
 #endif
         const char *ip_address = get_ip_addr(eth_interface);
@@ -57,7 +57,7 @@ const char *get_eth_info() {
                 if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0)
                         ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
                 else get_ethspeed = false;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
                 struct ifmediareq ifm;
                 (void)memset(&ifm, 0, sizeof(ifm));
                 (void)strncpy(ifm.ifm_name, eth_interface, sizeof(ifm.ifm_name));

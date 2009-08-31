@@ -5,7 +5,7 @@
 
 #include "i3status.h"
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <err.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -31,7 +31,7 @@ const char *get_cpu_temperature_info() {
                 (void)snprintf(buf, sizeof(buf), "T: ? C");
         else
                 (void)snprintf(buf, sizeof(buf), "T: %ld C", (temp/1000));
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int sysctl_rslt;
         size_t sysctl_size = sizeof (sysctl_rslt);
         if (sysctlbyname(thermal_zone,&sysctl_rslt,&sysctl_size,NULL,0))

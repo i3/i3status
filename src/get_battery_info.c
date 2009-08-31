@@ -5,7 +5,7 @@
 
 #include "i3status.h"
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -92,7 +92,7 @@ const char *get_battery_info(struct battery *bat) {
                          (status == CS_DISCHARGING ? "BAT" : "FULL")),
                         (((float)remaining / (float)full_design) * 100));
         }
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
         int sysctl_rslt;
         size_t sysctl_size = sizeof(sysctl_rslt);

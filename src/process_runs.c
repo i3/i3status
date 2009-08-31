@@ -39,7 +39,7 @@ bool process_runs(const char *path) {
         (void)read(fd, pidbuf, sizeof(pidbuf));
         (void)close(fd);
 
-#ifdef LINUX
+#if defined(LINUX) || defined(__GNU__) || defined(__GLIBC__)
         struct stat statbuf;
         char procbuf[512];
         (void)snprintf(procbuf, sizeof(procbuf), "/proc/%ld", strtol(pidbuf, NULL, 10));

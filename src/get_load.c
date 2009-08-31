@@ -9,7 +9,7 @@ const char *get_load() {
         static char part[512];
 
 /* Get load */
-#if defined(__FreeBSD__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun)
         double loadavg[3];
         if (getloadavg(loadavg, 3) == -1)
                 errx(-1, "getloadavg() failed\n");
