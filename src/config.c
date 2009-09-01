@@ -112,6 +112,10 @@ int load_configuration(const char *configfile) {
                 }
                 OPT("order")
                 {
+
+                        for (int c = 0; c < MAX_ORDER; c++)
+                                order[c] = -1;
+
                         #define SET_ORDER(opt, idx) { if (strcasecmp(token, opt) == 0) order[idx] = highest_order++; }
                         char *walk, *token;
                         walk = token = dest_value;
