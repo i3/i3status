@@ -63,7 +63,7 @@ int general_socket;
 
 const char *wlan_interface = NULL;
 const char *eth_interface = NULL;
-const char *wmii_path = NULL;
+char *wmii_path = NULL;
 const char *time_format = NULL;
 bool use_colors = false;
 bool get_ethspeed = false;

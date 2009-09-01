@@ -91,7 +91,7 @@ extern int highest_order;
 
 extern const char *wlan_interface;
 extern const char *eth_interface;
-extern const char *wmii_path;
+extern char *wmii_path;
 extern const char *time_format;
 extern bool use_colors;
 extern bool get_ethspeed;
