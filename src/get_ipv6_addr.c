@@ -26,7 +26,7 @@ const char *get_ipv6_addr() {
          * K root server is a pretty safe bet. */
         if (getaddrinfo("k.root-servers.net", "domain", &hints, &result) != 0) {
                 perror("getaddrinfo()");
-                return "no IP";
+                return "no IPv6";
         }
 
         for (resp = result; resp != NULL; resp = resp->ai_next) {
@@ -54,7 +54,7 @@ const char *get_ipv6_addr() {
                 if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
                         perror("getsockname()");
                         (void)close(fd);
-                        return "no IP";
+                        return "no IPv6";
                 }
 
                 (void)close(fd);
@@ -65,7 +65,7 @@ const char *get_ipv6_addr() {
                                        buf, sizeof(buf), NULL, 0,
                                        NI_NUMERICHOST)) != 0) {
                         fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
-                        return "no IP";
+                        return "no IPv6";
                 }
 
                 free(result);
@@ -73,5 +73,5 @@ const char *get_ipv6_addr() {
         }
 
         free(result);
-        return "no IP";
+        return "no IPv6";
 }
