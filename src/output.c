@@ -26,6 +26,10 @@ void write_error_to_statusbar(const char *message) {
  */
 char *color(const char *colorstr) {
         static char colorbuf[32];
+        if (!use_colors) {
+                colorbuf[0] = '\0';
+                return colorbuf;
+        }
 #ifdef DZEN
         (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", colorstr);
 #elif XMOBAR

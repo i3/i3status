@@ -33,9 +33,7 @@ const char *get_wireless_info() {
                 if (sscanf(interfaces, "%*[^:]: 0000 %d", &quality) != 1)
                         continue;
                 if ((quality == UCHAR_MAX) || (quality == 0)) {
-                        if (use_colors)
-                                (void)snprintf(part, sizeof(part), "%sW: down%s", color("#FF0000"), endcolor());
-                        else (void)snprintf(part, sizeof(part), "W: down");
+                        (void)snprintf(part, sizeof(part), "%sW: down%s", color("#FF0000"), endcolor());
                 } else (void)snprintf(part, sizeof(part), "%sW: (%03d%%) %s%s",
                                 color("#00FF00"), quality, get_ip_addr(wlan_interface), endcolor());
                 return part;
