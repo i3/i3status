@@ -20,6 +20,7 @@ const char *get_wireless_essid() {
         if (iw_get_basic_config(skfd, wlan_interface, &cfg) >= 0)
                 snprintf(part, sizeof(part), "%s", cfg.essid);
         else part[0] = '\0';
+        (void)close(skfd);
 #else
         part[0] = '\0';
 #endif
