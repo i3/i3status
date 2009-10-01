@@ -4,8 +4,27 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <iwlib.h>
 
 #include "i3status.h"
+
+const char *get_wireless_essid() {
+        static char part[512];
+#ifdef LINUX
+        int skfd;
+        if ((skfd = iw_sockets_open()) < 0) {
+                perror("socket");
+                exit(-1);
+        }
+        struct wireless_config cfg;
+        if (iw_get_basic_config(skfd, wlan_interface, &cfg) >= 0)
+                snprintf(part, sizeof(part), "%s", cfg.essid);
+        else part[0] = '\0';
+#else
+        part[0] = '\0';
+#endif
+        return part;
+}
 
 /*
  * Just parses /proc/net/wireless looking for lines beginning with
@@ -34,8 +53,8 @@ const char *get_wireless_info() {
                         continue;
                 if ((quality == UCHAR_MAX) || (quality == 0)) {
                         (void)snprintf(part, sizeof(part), "%sW: down%s", color("#FF0000"), endcolor());
-                } else (void)snprintf(part, sizeof(part), "%sW: (%03d%%) %s%s",
-                                color("#00FF00"), quality, get_ip_addr(wlan_interface), endcolor());
+                } else (void)snprintf(part, sizeof(part), "%sW: (%03d%% at %s) %s%s",
+                                color("#00FF00"), quality, get_wireless_essid(), get_ip_addr(wlan_interface), endcolor());
                 return part;
         }
 

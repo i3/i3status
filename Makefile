@@ -10,6 +10,7 @@ VERSION=$(shell git describe --tags --abbrev=0)
 ifeq ($(shell uname),Linux)
 CFLAGS+=-DLINUX
 CFLAGS+=-D_GNU_SOURCE
+LDFLAGS+=-liw
 endif
 
 ifeq ($(shell uname),GNU/kFreeBSD)
