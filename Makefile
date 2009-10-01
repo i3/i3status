@@ -30,7 +30,7 @@ src/%.o: src/%.c
 	@echo " CC $<"
 
 i3status: src/general.o src/config.o src/get_load.o src/output.o src/get_cpu_temperature.o src/process_runs.o src/get_eth_info.o src/get_ip_addr.o src/get_wireless_info.o src/get_battery_info.o src/get_ipv6_addr.o i3status.o
-	@$(CC) $(LDFLAGS) -o $@ src/*.o *.o
+	@$(CC) -o $@ src/*.o *.o $(LDFLAGS)
 	@echo " LD $@"
 
 clean:
