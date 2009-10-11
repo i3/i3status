@@ -14,8 +14,11 @@
 #define MEGABYTE (1024ULL * 1024)
 #define KILOBYTE (1024ULL)
 
-void print_bytes_human(uint64_t bytes) {
-        /* 1 TB */
+/*
+ * Prints the given amount of bytes in a human readable manner.
+ *
+ */
+static void print_bytes_human(uint64_t bytes) {
         if (bytes > TERABYTE)
                 printf("%f TB", (double)bytes / TERABYTE);
         else if (bytes > GIGABYTE)
@@ -27,13 +30,11 @@ void print_bytes_human(uint64_t bytes) {
         else {
                 printf("%.01f B", (double)bytes);
         }
-
 }
 
 /*
- * Just parses /proc/net/wireless looking for lines beginning with
- * wlan_interface, extracting the quality of the link and adding the
- * current IP address of wlan_interface.
+ * Does a statvfs and prints either free, used or total amounts of bytes in a
+ * human readable manner.
  *
  */
 void print_disk_info(const char *path, const char *format) {
