@@ -114,6 +114,11 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
+        cfg_opt_t disk_opts[] = {
+                CFG_STR("format", "%free", CFGF_NONE),
+                CFG_END()
+        };
+
         cfg_opt_t opts[] = {
                 CFG_STR_LIST("order", "{ipv6,\"run_watch DHCP\",\"wireless wlan0\",\"ethernet eth0\",\"battery 0\",\"cpu_temperature 0\",load,time}", CFGF_NONE),
                 CFG_SEC("general", general_opts, CFGF_NONE),
@@ -122,6 +127,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("ethernet", ethernet_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("battery", battery_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
+                CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("ipv6", ipv6_opts, CFGF_TITLE),
                 CFG_SEC("time", time_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
@@ -180,6 +186,9 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("run_watch")
                                 print_run_watch(title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"));
+
+                        CASE_SEC_TITLE("disk")
+                                print_disk_info(title, cfg_getstr(sec, "format"));
 
                         CASE_SEC("load")
                                 print_load(cfg_getstr(sec, "format"));

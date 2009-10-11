@@ -62,6 +62,7 @@ char *color(const char *colorstr);
 char *endcolor() __attribute__ ((pure));
 
 void print_ipv6_info(const char *format);
+void print_disk_info(const char *path, const char *format);
 void print_battery_info(int number, const char *format);
 void print_time(const char *format);
 const char *get_ip_addr();
