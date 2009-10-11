@@ -12,7 +12,7 @@
  * Returns the IPv6 address with which you have connectivity at the moment.
  *
  */
-const char *get_ipv6_addr() {
+static void print_ipv6_addr() {
         static char buf[INET6_ADDRSTRLEN+1];
         struct addrinfo hints;
         struct addrinfo *result, *resp;
@@ -28,7 +28,8 @@ const char *get_ipv6_addr() {
                 /* We don’t display the error here because most
                  * likely, there just is no connectivity.
                  * Thus, don’t spam the user’s console. */
-                return "no IPv6";
+                printf("no IPv6");
+                return;
         }
 
         for (resp = result; resp != NULL; resp = resp->ai_next) {
@@ -56,7 +57,8 @@ const char *get_ipv6_addr() {
                 if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
                         perror("getsockname()");
                         (void)close(fd);
-                        return "no IPv6";
+                        printf("no IPv6");
+                        return;
                 }
 
                 (void)close(fd);
@@ -67,13 +69,31 @@ const char *get_ipv6_addr() {
                                        buf, sizeof(buf), NULL, 0,
                                        NI_NUMERICHOST)) != 0) {
                         fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
-                        return "no IPv6";
+                        printf("no IPv6");
+                        return;
                 }
 
                 free(result);
-                return buf;
+                printf("%s", buf);
+                return;
         }
 
         free(result);
-        return "no IPv6";
+        printf("no IPv6");
+}
+
+void print_ipv6_info(const char *format) {
+        const char *walk;
+
+        for (walk = format; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        putchar(*walk);
+                        continue;
+                }
+
+                if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
+                        print_ipv6_addr();
+                        walk += strlen("ip");
+                }
+        }
 }

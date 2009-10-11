@@ -16,9 +16,8 @@
  * worn off your battery is.
  *
  */
-const char *get_battery_info(struct battery *bat) {
+void print_battery_info(int number, const char *format) {
         char buf[1024];
-        static char part[512];
         char *walk, *last;
         int full_design = -1,
             remaining = -1,
@@ -26,8 +25,12 @@ const char *get_battery_info(struct battery *bat) {
         charging_status_t status = CS_DISCHARGING;
 
 #if defined(LINUX)
-        if (!slurp(bat->path, buf, sizeof(buf)))
-                return "No battery";
+        static char batpath[512];
+        sprintf(batpath, "/sys/class/power_supply/BAT%d/uevent", number);
+        if (!slurp(batpath, buf, sizeof(buf))) {
+                printf("No battery");
+                return;
+        }
 
         for (walk = buf, last = buf; (walk-buf) < 1024; walk++) {
                 if (*walk == '\n') {
@@ -49,22 +52,24 @@ const char *get_battery_info(struct battery *bat) {
                         status = CS_FULL;
                 else {
                         /* The only thing left is the full capacity */
+#if 0
                         if (bat->use_last_full) {
                                 if (!BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") &&
                                     !BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
                                         continue;
                         } else {
+#endif
                                 if (!BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") &&
                                     !BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
                                         continue;
-                        }
+                        //}
 
                         full_design = atoi(walk+1);
                 }
         }
 
         if ((full_design == 1) || (remaining == -1))
-                return part;
+                return;
 
         if (present_rate > 0) {
                 float remaining_time;
@@ -81,13 +86,13 @@ const char *get_battery_info(struct battery *bat) {
                 minutes = seconds / 60;
                 seconds -= (minutes * 60);
 
-                (void)snprintf(part, sizeof(part), "%s %.02f%% %02d:%02d:%02d",
+                (void)printf("%s %.02f%% %02d:%02d:%02d",
                         (status == CS_CHARGING ? "CHR" :
                          (status == CS_DISCHARGING ? "BAT" : "FULL")),
                         (((float)remaining / (float)full_design) * 100),
                         max(hours, 0), max(minutes, 0), max(seconds, 0));
         } else {
-                (void)snprintf(part, sizeof(part), "%s %.02f%%",
+                (void)printf("%s %.02f%%",
                         (status == CS_CHARGING ? "CHR" :
                          (status == CS_DISCHARGING ? "BAT" : "FULL")),
                         (((float)remaining / (float)full_design) * 100));
@@ -97,16 +102,22 @@ const char *get_battery_info(struct battery *bat) {
         int sysctl_rslt;
         size_t sysctl_size = sizeof(sysctl_rslt);
 
-        if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0)
-                return "No battery";
+        if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
+                printf("No battery");
+                return;
+        }
 
         present_rate = sysctl_rslt;
-        if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0)
-                return "No battery";
+        if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
+                printf("No battery");
+                return;
+        }
 
         remaining = sysctl_rslt;
-        if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL,0) != 0)
-                return "No battery";
+        if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL,0) != 0) {
+                printf("No battery");
+                return;
+        }
 
         state = sysctl_rslt;
         if (state == 0 && present_rate == 100)
@@ -123,17 +134,16 @@ const char *get_battery_info(struct battery *bat) {
                 minutes = remaining;
                 hours = minutes / 60;
                 minutes -= (hours * 60);
-                (void)snprintf(part, sizeof(part), "%s %02d%% %02dh%02d",
+                (void)printf("%s %02d%% %02dh%02d",
                                (status == CS_CHARGING ? "CHR" :
                                 (status == CS_DISCHARGING ? "BAT" : "FULL")),
                                present_rate,
                                max(hours, 0), max(minutes, 0));
         } else {
-                (void)snprintf(part, sizeof(part), "%s %02d%%",
+                (void)printf("%s %02d%%",
                                (status == CS_CHARGING ? "CHR" :
                                 (status == CS_DISCHARGING ? "BAT" : "FULL")),
                                present_rate);
         }
 #endif
-        return part;
 }

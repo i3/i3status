@@ -53,21 +53,6 @@ void die(const char *fmt, ...) {
         (void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
         va_end(ap);
 
-        if (wmii_path != NULL)
-                write_error_to_statusbar(buffer);
-        else
-                fprintf(stderr, "%s", buffer);
+        fprintf(stderr, "%s", buffer);
         exit(EXIT_FAILURE);
-}
-
-/*
- * This function just concats two strings in place, it should only be used
- * for concatting order to the name of a file or concatting color codes.
- * Otherwise, the buffer size would have to be increased.
- *
- */
-char *order_to_str(int number, char *name) {
-        static char buf[32];
-        (void)snprintf(buf, sizeof(buf), "%d%s", number, name);
-        return buf;
 }

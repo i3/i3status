@@ -2,8 +2,7 @@
 #define _I3STATUS_H
 
 #include <stdbool.h>
-
-#include "queue.h"
+#include <confuse.h>
 
 #ifdef DZEN
 	#define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
@@ -11,18 +10,7 @@
 	#define BAR "<fc=#333333> | </fc>"
 #endif
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
-#define max(a, b) (a > b ? a : b)
-
-#define generate(orderidx, name, function) \
-        do { \
-                write_to_statusbar(order_to_str(order[orderidx], name), function, (j == (highest_order-1))); \
-        } while (0)
-
-#define generate_order(condition, orderidx, name, function) \
-        do { \
-                if (j == order[orderidx] && condition) \
-                        generate(orderidx, name, function); \
-        } while (0)
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 #if defined(LINUX)
 
@@ -44,64 +32,49 @@
 
 #endif
 
-typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
-enum { ORDER_RUN, ORDER_WLAN, ORDER_ETH, ORDER_BATTERY, ORDER_CPU_TEMPERATURE, ORDER_LOAD, ORDER_TIME, ORDER_IPV6, MAX_ORDER };
+/* Allows for the definition of a variable without opening a new scope, thus
+ * suited for usage in a macro. Idea from wmii. */
+#define with(type, var, init) \
+        for (type var = (type)-1; (var == (type)-1) && ((var=(init)) || 1); )
 
-struct battery {
-        char *path;
-        /* Use last full capacity instead of design capacity */
-        bool use_last_full;
-        SIMPLEQ_ENTRY(battery) batteries;
-};
+#define CASE_SEC(name) \
+        if (BEGINS_WITH(current, name)) \
+                with(cfg_t *, sec, cfg_getsec(cfg, name)) \
+                        if (sec != NULL)
+
+#define CASE_SEC_TITLE(name) \
+        if (BEGINS_WITH(current, name)) \
+                with(const char *, title, current + strlen(name) + 1) \
+                        with(cfg_t *, sec, cfg_gettsec(cfg, name, title)) \
+                                if (sec != NULL)
+
+
+typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
 
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 void die(const char *fmt, ...);
-void create_file(const char *name);
-char *order_to_str(int number, char *name);
-void setup(void);
-void write_to_statusbar(const char *name, const char *message, bool final_entry);
 bool slurp(char *filename, char *destination, int size);
 
 /* src/output.c */
-void write_error_to_statusbar(const char *message);
+void print_seperator();
 char *color(const char *colorstr);
 char *endcolor() __attribute__ ((pure));
-void cleanup_rbar_dir();
 
-/* src/config.c */
-int load_configuration(const char *configfile);
-
-const char *get_ipv6_addr();
-const char *get_battery_info(struct battery *bat);
+void print_ipv6_info(const char *format);
+void print_battery_info(int number, const char *format);
+void print_time(const char *format);
 const char *get_ip_addr();
-const char *get_wireless_info();
-const char *get_cpu_temperature_info();
-const char *get_eth_info();
-const char *get_load();
+void print_wireless_info(const char *interface, const char *format_up, const char *format_down);
+void print_run_watch(const char *title, const char *pidfile, const char *format);
+void print_cpu_temperature_info(int zone, const char *format);
+void print_eth_info(const char *interface, const char *format);
+void print_load();
 bool process_runs(const char *path);
-
-SIMPLEQ_HEAD(battery_head, battery);
-extern struct battery_head batteries;
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
 
-extern int highest_order;
-
-extern const char *wlan_interface;
-extern const char *eth_interface;
-extern char *wmii_path;
-extern const char *time_format;
-extern bool use_colors;
-extern bool get_ethspeed;
-extern bool get_ipv6;
-extern bool get_cpu_temperature;
-extern char *thermal_zone;
-extern const char *wmii_normcolors;
-extern int order[MAX_ORDER];
-extern const char **run_watches;
-extern unsigned int num_run_watches;
-extern unsigned int interval;
+extern cfg_t *cfg, *cfg_general;
 
 #endif

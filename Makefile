@@ -4,6 +4,7 @@ CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
 CFLAGS+=-DPREFIX=\"\"
 CFLAGS+=-I.
+LDFLAGS+=-lconfuse
 
 VERSION=$(shell git describe --tags --abbrev=0)
 
@@ -18,8 +19,11 @@ CFLAGS+=-lbsd
 endif
 
 # Define this if you want i3status to spit out dzen2-compatible output on stdout
-#CFLAGS+=-DDZEN
+CFLAGS+=-DDZEN
 CFLAGS+=$(EXTRA_CFLAGS)
+
+OBJS:=$(wildcard src/*.c *.c)
+OBJS:=$(OBJS:.c=.o)
 
 src/%.o: src/%.c
 	@$(CC) $(CFLAGS) -c -o $@ $<
@@ -29,7 +33,7 @@ src/%.o: src/%.c
 	@$(CC) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
 
-i3status: src/general.o src/config.o src/get_load.o src/output.o src/get_cpu_temperature.o src/process_runs.o src/get_eth_info.o src/get_ip_addr.o src/get_wireless_info.o src/get_battery_info.o src/get_ipv6_addr.o i3status.o
+i3status: ${OBJS}
 	@$(CC) -o $@ src/*.o *.o $(LDFLAGS)
 	@echo " LD $@"
 
