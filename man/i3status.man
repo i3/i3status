@@ -1,0 +1,209 @@
+i3status(1)
+===========
+Michael Stapelberg <michael+i3@stapelberg.de>
+v2, October 2009
+
+== NAME
+
+i3status - Generates a status line for dzen2 or xmobar
+
+== SYNOPSIS
+
+i3status [-c configfile]
+
+== OPTIONS
+
+-c::
+Specifies an alternate configuration file path (default is /etc/i3status.conf
+or ~/.i3status.conf).
+
+== DESCRIPTION
+
+i3status is a small program (less than 1000 SLOC) for generating a status bar
+for dzen2, xmobar or similar programs. It is designed to be very efficient by
+issuing a very small number of systemcalls, as one generally wants to update
+such a status line every second. This ensures that even under high load, your
+status bar is updated correctly. Also, it saves a bit of energy by not hogging
+your CPU as much as spawning the corresponding amount of shell commands would.
+
+== CONFIGURATION
+
+Since version 2, the configuration file for i3status will be parsed using
+libconfuse. This makes configuration easier in the programmer’s point of
+view and more flexible for the user at the same time.
+
+The basic idea of i3status is that you can specify which "modules" should
+be used (the order directive). You can then configure each module with its
+own section. For every module, you can specify the output format. See below
+for a complete reference.
+
+.Sample configuration
+-------------------------------------------------------------
+general {
+        colors = true
+	interval = 5
+}
+
+order  = "ipv6"
+order += "disk /"
+order += "run_watch DHCP"
+order += "run_watch VPN"
+order += "wireless wlan0"
+order += "ethernet eth0"
+order += "battery 0"
+order += "cpu_temperature 0"
+order += "load"
+order += "time"
+
+wireless wlan0 {
+        format_up = "W: (%quality at %essid) %ip"
+        format_down = "W: down"
+}
+
+ethernet eth0 {
+        # if you use %speed, i3status requires root privileges
+        format = "E: %ip (%speed)"
+}
+
+battery 0 {
+        format = "%status %remaining"
+}
+
+run_watch DHCP {
+        pidfile = "/var/run/dhclient*.pid"
+}
+
+run_watch VPN {
+        pidfile = "/var/run/vpnc/pid"
+}
+
+time {
+	format = "%Y-%m-%d %H:%M:%S"
+}
+
+load {
+	format = "%5min"
+}
+
+cpu_temperature 0 {
+	format = "T: %degrees °C"
+}
+
+disk "/" {
+	format = "%free"
+}
+-------------------------------------------------------------
+
+=== General
+
+The colors directive will disable all colors if you set it to +false+.
++interval+ is the time in seconds which i3status will sleep until printing
+the next status line.
+
+=== IPv6
+
+This module gets the IPv6 address used for outgoing connections (that is, the
+best available public IPv6 address on your computer).
+
+*Example format*: +%ip+
+
+=== Disk
+
+Gets used, free and total amount of bytes on the given mounted filesystem.
+
+*Example order*: +disk /mnt/usbstick+
+
+*Example format*: +%free / %total+
+
+=== Run-watch
+
+Expands the given path to a pidfile and checks if the process ID found inside
+is valid (that is, if the process is running). You can use this to check if
+a specific application, such as a VPN client or your DHCP client is running.
+
+*Example order*: +run_watch DHCP+
+
+=== Wireless
+
+Gets the link quality and ESSID of the given wireless network interface. You
+can specify different format strings for the network being connected or not
+connected.
+
+*Example order*: +wireless wlan0+
+
+*Example format*: +W: (%quality at %essid) %ip+
+
+=== Ethernet
+
+Gets the IP address and (if possible) the link speed of the given ethernet
+interface. Getting the link speed requires root privileges.
+
+*Example order*: +ethernet eth0+
+
+*Example format*: +E: %ip (%speed)+
+
+=== Battery
+
+Gets the status (charging, discharging, running), percentage and remaining
+time of the given battery.
+
+*Example order*: +battery 0+
+
+*Example format*: +%status %remaining+
+
+=== CPU-Temperature
+
+Gets the temperature of the given thermal zone.
+
+*Example order*: +cpu_temperature 0+
+
+*Example format*: +T: %degrees °C+
+
+=== Load
+
+Gets the system load (number of processes waiting for CPU time in the last
+5, 10 and 15 minutes).
+
+*Example order*: +load+
+
+*Example format*: +%5min %10min %15min+
+
+=== Time
+
+Formats the current system time. See +strftime(3)+ for the format.
+
+*Example order*: +time+
+
+*Example format*: +%Y-%m-%d %H:%M:%S+
+
+== Using i3status with dzen2
+
+After installing dzen2, you can directly use it with i3status:
+
+*Example for usage of i3status with dzen2*:
+--------------------------------------------------------------
+i3status | dzen2 -fg white -ta r -w 1280 \
+-fn "-misc-fixed-medium-r-normal--13-120-75-75-C-70-iso8859-1"
+--------------------------------------------------------------
+
+== Using i3status with xmobar
+
+To get xmobar to start, you might need to copy the default configuration
+file to +~/.xmobarrc+.
+
+*Example for usage of i3status with xmobar*:
+---------------------------------------------------------------------
+i3status-xmobar | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
+---------------------------------------------------------------------
+
+== SEE ALSO
+
++strftime(3)+, +date(1)+, +glob(3)+, +dzen2(1)+, +xmobar(1)+
+
+== AUTHORS
+
+Michael Stapelberg and contributors
+
+Thorsten Toepper
+
+Baptiste Daroussin
