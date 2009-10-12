@@ -33,6 +33,8 @@ src/%.o: src/%.c
 	@$(CC) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
 
+all: i3status manpage
+
 i3status: ${OBJS}
 	@$(CC) -o $@ src/*.o *.o $(LDFLAGS)
 	@echo " LD $@"
@@ -42,6 +44,9 @@ clean:
 
 distclean: clean
 	rm -f i3status
+
+manpage:
+	make -C man
 
 install:
 	install -m 755 -d $(DESTDIR)/usr/bin
@@ -57,5 +62,3 @@ release:
 	find . -maxdepth 1 -type f \( -regex ".*\.\(c\|conf\|1\|h\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION} \;
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
-
-all: i3status
