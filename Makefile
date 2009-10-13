@@ -54,7 +54,7 @@ install:
 	install -m 755 -d $(DESTDIR)/usr/share/man/man1
 	install -m 755 i3status $(DESTDIR)/usr/bin/i3status
 	install -m 644 i3status.conf $(DESTDIR)/etc/i3status.conf
-	install -m 644 i3status.1 $(DESTDIR)/usr/share/man/man1
+	install -m 644 man/i3status.1 $(DESTDIR)/usr/share/man/man1
 
 release:
 	[ -f i3status-${VERSION} ] || rm -rf i3status-${VERSION}
