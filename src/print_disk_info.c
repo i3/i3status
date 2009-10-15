@@ -51,17 +51,17 @@ void print_disk_info(const char *path, const char *format) {
                 }
 
                 if (BEGINS_WITH(walk+1, "free")) {
-                        print_bytes_human(buf.f_bsize * buf.f_bfree);
+                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree);
                         walk += strlen("free");
                 }
 
                 if (BEGINS_WITH(walk+1, "used")) {
-                        print_bytes_human(buf.f_bsize * (buf.f_blocks - buf.f_bfree));
+                        print_bytes_human((uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree));
                         walk += strlen("used");
                 }
 
                 if (BEGINS_WITH(walk+1, "total")) {
-                        print_bytes_human(buf.f_bsize * buf.f_blocks);
+                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks);
                         walk += strlen("total");
                 }
         }
