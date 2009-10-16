@@ -74,11 +74,16 @@ static void print_eth_speed(const char *interface) {
  * Combines ethernet IP addresses and speed (if requested) for displaying
  *
  */
-void print_eth_info(const char *interface, const char *format) {
+void print_eth_info(const char *interface, const char *format_up, const char *format_down) {
         const char *walk;
         const char *ip_address = get_ip_addr(interface);
 
-        for (walk = format; *walk != '\0'; walk++) {
+        if (ip_address == NULL) {
+                printf("%s", format_down);
+                return;
+        }
+
+        for (walk = format_up; *walk != '\0'; walk++) {
                 if (*walk != '%') {
                         putchar(*walk);
                         continue;

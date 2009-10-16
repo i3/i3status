@@ -69,7 +69,7 @@ const char *get_ip_addr();
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down);
 void print_run_watch(const char *title, const char *pidfile, const char *format);
 void print_cpu_temperature_info(int zone, const char *format);
-void print_eth_info(const char *interface, const char *format);
+void print_eth_info(const char *interface, const char *format_up, const char *format_down);
 void print_load();
 bool process_runs(const char *path);
 

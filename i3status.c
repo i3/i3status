@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t ethernet_opts[] = {
-                CFG_STR("format", "E: %ip (%speed)", CFGF_NONE),
+                CFG_STR("format_up", "E: %ip (%speed)", CFGF_NONE),
+                CFG_STR("format_down", "E: down", CFGF_NONE),
                 CFG_END()
         };
 
@@ -153,7 +154,7 @@ int main(int argc, char *argv[]) {
                                 print_wireless_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
 
                         CASE_SEC_TITLE("ethernet")
-                                print_eth_info(title, cfg_getstr(sec, "format"));
+                                print_eth_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
 
                         CASE_SEC_TITLE("battery")
                                 print_battery_info(atoi(title), cfg_getstr(sec, "format"));
