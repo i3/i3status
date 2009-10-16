@@ -16,7 +16,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(int number, const char *format) {
+void print_battery_info(int number, const char *format, bool last_full_capacity) {
         char buf[1024];
         char *walk, *last;
         int full_design = -1,
@@ -52,17 +52,15 @@ void print_battery_info(int number, const char *format) {
                         status = CS_FULL;
                 else {
                         /* The only thing left is the full capacity */
-#if 0
-                        if (bat->use_last_full) {
+                        if (last_full_capacity) {
                                 if (!BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") &&
                                     !BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
                                         continue;
                         } else {
-#endif
                                 if (!BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") &&
                                     !BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
                                         continue;
-                        //}
+                        }
 
                         full_design = atoi(walk+1);
                 }

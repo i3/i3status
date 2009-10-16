@@ -145,7 +145,11 @@ interface. Getting the link speed requires root privileges.
 === Battery
 
 Gets the status (charging, discharging, running), percentage and remaining
-time of the given battery.
+time of the given battery. If you want to use the last full capacity instead
+of the design capacity (when using the design capacity, it may happen that
+your battery is at 23% when fully charged because it’s old. In general, I
+want to see it this way, because it tells me how worn off my battery is.),
+just specify +last_full_capacity = true+.
 
 *Example order*: +battery 0+
 

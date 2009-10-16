@@ -63,7 +63,7 @@ char *endcolor() __attribute__ ((pure));
 
 void print_ipv6_info(const char *format);
 void print_disk_info(const char *path, const char *format);
-void print_battery_info(int number, const char *format);
+void print_battery_info(int number, const char *format, bool last_full_capacity);
 void print_time(const char *format);
 const char *get_ip_addr();
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down);
