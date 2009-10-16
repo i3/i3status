@@ -59,6 +59,10 @@ install:
 release:
 	[ -f i3status-${VERSION} ] || rm -rf i3status-${VERSION}
 	mkdir i3status-${VERSION}
-	find . -maxdepth 1 -type f \( -regex ".*\.\(c\|conf\|1\|h\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION} \;
+	find . -maxdepth 1 -type f \( -regex ".*\.\(c\|conf\|h\)" -or -name "Makefile" -or -name "LICENSE" \) -exec cp '{}' i3status-${VERSION} \;
+	mkdir i3status-${VERSION}/src
+	mkdir i3status-${VERSION}/man
+	find src -maxdepth 1 -type f \( -regex ".*\.\(c\|h\)" \) -exec cp '{}' i3status-${VERSION}/src \;
+	find man -maxdepth 1 -type f \( -regex ".*\.\(1\)" \) -exec cp '{}' i3status-${VERSION}/man \;
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
