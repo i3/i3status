@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t battery_opts[] = {
-                CFG_STR("format", "%status %remaining", CFGF_NONE),
+                CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
                 CFG_END()
         };
