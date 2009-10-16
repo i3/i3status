@@ -18,11 +18,16 @@
  */
 void print_battery_info(int number, const char *format, bool last_full_capacity) {
         char buf[1024];
-        char *walk, *last;
+        char statusbuf[16];
+        char remainingbuf[256];
+        const char *walk, *last;
         int full_design = -1,
             remaining = -1,
             present_rate = -1;
         charging_status_t status = CS_DISCHARGING;
+
+        memset(statusbuf, '\0', sizeof(statusbuf));
+        memset(remainingbuf, '\0', sizeof(remainingbuf));
 
 #if defined(LINUX)
         static char batpath[512];
@@ -69,6 +74,10 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
         if ((full_design == 1) || (remaining == -1))
                 return;
 
+        (void)snprintf(statusbuf, sizeof(statusbuf), "%s",
+                        (status == CS_CHARGING ? "CHR" :
+                         (status == CS_DISCHARGING ? "BAT" : "FULL")));
+
         if (present_rate > 0) {
                 float remaining_time;
                 int seconds, hours, minutes;
@@ -84,16 +93,11 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
                 minutes = seconds / 60;
                 seconds -= (minutes * 60);
 
-                (void)printf("%s %.02f%% %02d:%02d:%02d",
-                        (status == CS_CHARGING ? "CHR" :
-                         (status == CS_DISCHARGING ? "BAT" : "FULL")),
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%.02f%% %02d:%02d:%02d",
                         (((float)remaining / (float)full_design) * 100),
                         max(hours, 0), max(minutes, 0), max(seconds, 0));
         } else {
-                (void)printf("%s %.02f%%",
-                        (status == CS_CHARGING ? "CHR" :
-                         (status == CS_DISCHARGING ? "BAT" : "FULL")),
-                        (((float)remaining / (float)full_design) * 100));
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%.02f%%", (((float)remaining / (float)full_design) * 100));
         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
@@ -127,21 +131,36 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
 
         full_design = sysctl_rslt;
 
+        (void)snprintf(statusbuf, sizeof(statusbuf), "%s",
+                        (status == CS_CHARGING ? "CHR" :
+                         (status == CS_DISCHARGING ? "BAT" : "FULL")));
+
         if (state == 1) {
                 int hours, minutes;
                 minutes = remaining;
                 hours = minutes / 60;
                 minutes -= (hours * 60);
-                (void)printf("%s %02d%% %02dh%02d",
-                               (status == CS_CHARGING ? "CHR" :
-                                (status == CS_DISCHARGING ? "BAT" : "FULL")),
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d%% %02dh%02d",
                                present_rate,
                                max(hours, 0), max(minutes, 0));
         } else {
-                (void)printf("%s %02d%%",
-                               (status == CS_CHARGING ? "CHR" :
-                                (status == CS_DISCHARGING ? "BAT" : "FULL")),
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d%%",
                                present_rate);
         }
 #endif
+
+        for (walk = format; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        putchar(*walk);
+                        continue;
+                }
+
+                if (strncmp(walk+1, "status", strlen("status")) == 0) {
+                        printf("%s", statusbuf);
+                        walk += strlen("status");
+                } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
+                        printf("%s", remainingbuf);
+                        walk += strlen("remaining");
+                }
+        }
 }
