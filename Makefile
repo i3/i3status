@@ -19,7 +19,7 @@ CFLAGS+=-lbsd
 endif
 
 # Define this if you want i3status to spit out dzen2-compatible output on stdout
-CFLAGS+=-DDZEN
+#CFLAGS+=-DDZEN
 CFLAGS+=$(EXTRA_CFLAGS)
 
 OBJS:=$(wildcard src/*.c *.c)
