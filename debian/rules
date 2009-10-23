@@ -13,9 +13,6 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
-	# Build with wmii support
-	$(MAKE)
-	cp $(CURDIR)/i3status $(CURDIR)/i3status-wmii
 	# Build with xmobar support
 	$(MAKE) distclean
 	$(MAKE) EXTRA_CFLAGS="-DXMOBAR"
@@ -30,7 +27,6 @@ clean:
 	dh_testroot
 	rm -f build-stamp config.status
 	[ ! -f Makefile ] || $(MAKE) distclean
-	rm -f $(CURDIR)/i3status-wmii
 	dh_clean 
 
 install: build
@@ -39,9 +35,7 @@ install: build
 	dh_clean -k
 	dh_installdirs
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
-	install -m 755 $(CURDIR)/i3status-wmii $(CURDIR)/debian/i3status/usr/bin/i3status-wmii
 	install -m 755 $(CURDIR)/i3status-xmobar $(CURDIR)/debian/i3status/usr/bin/i3status-xmobar
-	dh_link usr/share/man/man1/i3status.1 usr/share/man/man1/i3status-wmii.1
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -54,7 +48,6 @@ binary-arch: build install
 	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
-	dh_installinit --name i3status-wmii
 	dh_installman
 	dh_link
 	dh_strip

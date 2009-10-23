@@ -3,7 +3,7 @@ Section: utils
 Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 5), libiw-dev
+Build-Depends: debhelper (>= 5), libiw-dev, libconfuse-dev
 Standards-Version: 3.8.2
 Homepage: http://i3.zekjur.net/i3status
 
@@ -12,9 +12,10 @@ Architecture: any
 Priority: extra
 Section: utils
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: dzen2 | wmii
-Description: Generates a status line for dzen2 or wmii
- i3status is a program running in background, feeding dzen2 or filling up
- wmii's status bar using wmiis plan9 pseudo file system (therefore, you
- need 9pfs) by combining several system information (current IP addresses,
- battery status, date/time, system load, etc.).
+Recommends: dzen2 | xmobar
+Enhances: dzen2, xmobar
+Description: Generates a status line for dzen2 or xmobar
+ i3status is a small program (less than 1000 SLOC) for generating a status bar
+ for dzen2, xmobar or similar programs by combining several information about
+ your system (IP addresses of your interfaces, load, current date/time, ESSID
+ of the network you are associated to, disk status, and so on).
