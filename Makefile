@@ -63,6 +63,6 @@ release:
 	mkdir i3status-${VERSION}/src
 	mkdir i3status-${VERSION}/man
 	find src -maxdepth 1 -type f \( -regex ".*\.\(c\|h\)" \) -exec cp '{}' i3status-${VERSION}/src \;
-	find man -maxdepth 1 -type f \( -regex ".*\.\(1\)" \) -exec cp '{}' i3status-${VERSION}/man \;
+	find man -maxdepth 1 -type f \( -regex ".*\.\(1\|man\|conf\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION}/man \;
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
