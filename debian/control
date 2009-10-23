@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5), libiw-dev, libconfuse-dev
-Standards-Version: 3.8.2
+Standards-Version: 3.8.3
 Homepage: http://i3.zekjur.net/i3status
 
 Package: i3status
