@@ -36,6 +36,7 @@ install: build
 	dh_installdirs
 	$(MAKE) DESTDIR=$(CURDIR)/debian/i3status/ install
 	install -m 755 $(CURDIR)/i3status-xmobar $(CURDIR)/debian/i3status/usr/bin/i3status-xmobar
+	ln -s i3status.1.gz $(CURDIR)/debian/i3status/usr/share/man/man1/i3status-xmobar.1.gz
 
 # Build architecture-independent files here.
 binary-indep: build install
