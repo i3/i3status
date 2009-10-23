@@ -1,6 +1,10 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
+#if !defined(DZEN) && !defined(XMOBAR)
+	#error "You have to enable either -DDZEN or -DXMOBAR"
+#endif
+
 #include <stdbool.h>
 #include <confuse.h>
 
