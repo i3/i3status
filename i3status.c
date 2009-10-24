@@ -45,7 +45,7 @@ void sigpipe(int signum) {
  * full path if so or NULL if there is no file.
  *
  */
-char *file_exists(const char *path) {
+static char *file_exists(char *path) {
         static glob_t globbuf;
         struct stat buf;
         char *full_path = NULL;
