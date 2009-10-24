@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
         unsigned int j;
 
         cfg_opt_t general_opts[] = {
+                CFG_STR("output_format", "dzen2", CFGF_NONE),
                 CFG_BOOL("colors", 1, CFGF_NONE),
                 CFG_INT("interval", 1, CFGF_NONE),
                 CFG_END()
@@ -137,6 +138,17 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
 
         cfg_general = cfg_getsec(cfg, "general");
+        if (cfg_general == NULL)
+                die("Could not get section \"general\"\n");
+
+        char *output_str = cfg_getstr(cfg_general, "output_format");
+        if (strcasecmp(output_str, "dzen2") == 0)
+                output_format = O_DZEN2;
+        else if (strcasecmp(output_str, "xmobar") == 0)
+                output_format = O_XMOBAR;
+        else if (strcasecmp(output_str, "none") == 0)
+                output_format = O_NONE;
+        else die("Unknown output format: \"%s\"\n", output_str);
 
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");

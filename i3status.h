@@ -1,18 +1,11 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
-#if !defined(DZEN) && !defined(XMOBAR)
-	#error "You have to enable either -DDZEN or -DXMOBAR"
-#endif
+enum { O_DZEN2, O_XMOBAR, O_NONE } output_format;
 
 #include <stdbool.h>
 #include <confuse.h>
 
-#ifdef DZEN
-	#define BAR "^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)"
-#elif XMOBAR
-	#define BAR "<fc=#333333> | </fc>"
-#endif
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
