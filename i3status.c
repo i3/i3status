@@ -19,6 +19,9 @@
 #include <getopt.h>
 #include <signal.h>
 #include <confuse.h>
+#include <glob.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "i3status.h"
 
@@ -35,6 +38,27 @@ cfg_t *cfg, *cfg_general;
 void sigpipe(int signum) {
         fprintf(stderr, "Received SIGPIPE, exiting\n");
         exit(1);
+}
+
+/*
+ * Checks if there is a file at the given path (expanding ~) and returns the
+ * full path if so or NULL if there is no file.
+ *
+ */
+char *file_exists(const char *path) {
+        static glob_t globbuf;
+        struct stat buf;
+        char *full_path = NULL;
+
+        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+                return NULL;
+
+        full_path = (globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path);
+
+        if (stat(full_path, &buf) < 0)
+                return NULL;
+
+        return full_path;
 }
 
 int main(int argc, char *argv[]) {
@@ -111,7 +135,7 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
-        char *configfile = PREFIX "/etc/i3status.conf";
+        char *configfile;
         int o, option_index = 0;
         struct option long_options[] = {
                 {"config", required_argument, 0, 'c'},
@@ -124,6 +148,12 @@ int main(int argc, char *argv[]) {
         action.sa_handler = sigpipe;
         sigaction(SIGPIPE, &action, NULL);
 
+        /* Figure out which configuration file to use before the user may
+         * override this setting using -c */
+
+        if ((configfile = file_exists("~/.i3status.conf")) == NULL)
+                configfile = file_exists(PREFIX "/etc/i3status.conf");
+
         while ((o = getopt_long(argc, argv, "c:h", long_options, &option_index)) != -1)
                 if ((char)o == 'c')
                         configfile = optarg;
@@ -132,6 +162,9 @@ int main(int argc, char *argv[]) {
                                 "Syntax: %s [-c <configfile>]\n", argv[0]);
                         return 0;
                 }
+
+        if (configfile == NULL)
+                die("No configuration file found\n");
 
         cfg = cfg_init(opts, CFGF_NONE);
         if (cfg_parse(cfg, configfile) == CFG_PARSE_ERROR)
