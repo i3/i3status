@@ -19,7 +19,7 @@ build-stamp:
 clean: 
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp config.status
+	rm -f build-stamp config.status man/*.xml
 	[ ! -f Makefile ] || $(MAKE) distclean
 	dh_clean 
 

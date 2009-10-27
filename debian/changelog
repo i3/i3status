@@ -1,8 +1,14 @@
-i3status (2.0-0) unstable; urgency=low
+i3status (2.0-1) unstable; urgency=low
 
-  * Not yet released
+  * add support for disk info (free/used/ins)
+  * add support for displaying the ESSID of the wireless interface
+  * add support for getting the public IPv6 address of the system
+  * all "modules" now support format strings
+  * switch to libconfuse for parsing the config file
+  * merge support for FreeBSD for many "modules"
+  * drop support for wmii, add support for xmobar
 
- -- Michael Stapelberg <michael@stapelberg.de>  Fri, 02 Oct 2009 21:17:49 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Tue, 27 Oct 2009 20:07:58 +0100
 
 i3status (1.2-3) unstable; urgency=low
 
