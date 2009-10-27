@@ -40,8 +40,9 @@ for a complete reference.
 .Sample configuration
 -------------------------------------------------------------
 general {
+        output_format = "dzen2"
         colors = true
-	interval = 5
+        interval = 5
 }
 
 order  = "ipv6"
@@ -99,6 +100,19 @@ disk "/" {
 The colors directive will disable all colors if you set it to +false+.
 +interval+ is the time in seconds which i3status will sleep until printing
 the next status line.
+
+Using +output_format+ you can chose which format strings i3status should
+use in its output. Currently available are:
+
+dzen2::
+Dzen is a general purpose messaging, notification and menuing program for X11.
+It was designed to be scriptable in any language and integrate well with window
+managers like dwm, wmii and xmonad though it will work with any windowmanger
+xmobar::
+xmobar is a minimalistic, text based, status bar. It was designed to work
+with the xmonad Window Manager.
+none::
+Does not use any color codes. Separates values by the pipe symbol.
 
 === IPv6
 
