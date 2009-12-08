@@ -1,4 +1,5 @@
 // vim:ts=8:expandtab
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,10 +18,13 @@
  *
  */
 void print_battery_info(int number, const char *format, bool last_full_capacity) {
+        time_t empty_time;
+        struct tm *empty_tm;
         char buf[1024];
         char statusbuf[16];
         char percentagebuf[16];
         char remainingbuf[256];
+        char emptytimebuf[256];
         const char *walk, *last;
         int full_design = -1,
             remaining = -1,
@@ -30,6 +34,7 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
         memset(statusbuf, '\0', sizeof(statusbuf));
         memset(percentagebuf, '\0', sizeof(percentagebuf));
         memset(remainingbuf, '\0', sizeof(remainingbuf));
+        memset(emptytimebuf, '\0', sizeof(emptytimebuf));
 
 #if defined(LINUX)
         static char batpath[512];
@@ -85,21 +90,29 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
 
         if (present_rate > 0) {
                 float remaining_time;
-                int seconds, hours, minutes;
+                int seconds, hours, minutes, seconds_remaining;
                 if (status == CS_CHARGING)
                         remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
                 else if (status == CS_DISCHARGING)
                         remaining_time = ((float)remaining / (float)present_rate);
                 else remaining_time = 0;
 
-                seconds = (int)(remaining_time * 3600.0);
-                hours = seconds / 3600;
-                seconds -= (hours * 3600);
+                seconds_remaining = (int)(remaining_time * 3600.0);
+
+                hours = seconds_remaining / 3600;
+                seconds = seconds_remaining - (hours * 3600);
                 minutes = seconds / 60;
                 seconds -= (minutes * 60);
 
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
                         max(hours, 0), max(minutes, 0), max(seconds, 0));
+                
+                empty_time = time(NULL);
+                empty_time += seconds_remaining;
+                empty_tm = localtime(&empty_time);
+
+                (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
+                        max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
@@ -165,6 +178,9 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
                 } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
                         printf("%s", remainingbuf);
                         walk += strlen("remaining");
+                } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
+                        printf("%s", emptytimebuf);
+                        walk += strlen("emptytime");
                 }
         }
 }
