@@ -20,14 +20,14 @@ void print_load(const char *format) {
                         continue;
                 }
 
-                if (BEGINS_WITH(walk+1, "5min")) {
+                if (BEGINS_WITH(walk+1, "1min")) {
                         (void)printf("%1.2f", loadavg[0]);
-                        walk += strlen("5min");
+                        walk += strlen("1min");
                 }
 
-                if (BEGINS_WITH(walk+1, "10min")) {
+                if (BEGINS_WITH(walk+1, "5min")) {
                         (void)printf("%1.2f", loadavg[1]);
-                        walk += strlen("10min");
+                        walk += strlen("5min");
                 }
 
                 if (BEGINS_WITH(walk+1, "15min")) {
