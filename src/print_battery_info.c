@@ -106,7 +106,7 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
 
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
                         max(hours, 0), max(minutes, 0), max(seconds, 0));
-                
+
                 empty_time = time(NULL);
                 empty_time += seconds_remaining;
                 empty_tm = localtime(&empty_time);
