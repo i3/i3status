@@ -8,15 +8,46 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+static void print_sockname(int fd) {
+        static char buf[INET6_ADDRSTRLEN+1];
+        struct sockaddr_storage local;
+        int ret;
+
+        socklen_t local_len = sizeof(struct sockaddr_storage);
+        if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
+                perror("getsockname()");
+                (void)close(fd);
+                printf("no IPv6");
+                return;
+        }
+
+        memset(buf, 0, INET6_ADDRSTRLEN + 1);
+        if ((ret = getnameinfo((struct sockaddr*)&local, local_len,
+                               buf, sizeof(buf), NULL, 0,
+                               NI_NUMERICHOST)) != 0) {
+                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                printf("no IPv6");
+                return;
+        }
+
+        printf("%s", buf);
+}
+
 /*
  * Returns the IPv6 address with which you have connectivity at the moment.
  *
  */
 static void print_ipv6_addr() {
-        static char buf[INET6_ADDRSTRLEN+1];
         struct addrinfo hints;
         struct addrinfo *result, *resp;
-        int fd;
+        static int fd = -1;
+
+        /* To save dns lookups (if they are not cached locally) and creating
+         * sockets, we save the fd and keep it open. */
+        if (fd > -1) {
+                print_sockname(fd);
+                return;
+        }
 
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET6;
@@ -52,29 +83,10 @@ static void print_ipv6_addr() {
                         continue;
                 }
 
-                struct sockaddr_storage local;
-                socklen_t local_len = sizeof(struct sockaddr_storage);
-                if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
-                        perror("getsockname()");
-                        (void)close(fd);
-                        printf("no IPv6");
-                        return;
-                }
-
-                (void)close(fd);
-
-                memset(buf, 0, INET6_ADDRSTRLEN + 1);
-                int ret;
-                if ((ret = getnameinfo((struct sockaddr*)&local, local_len,
-                                       buf, sizeof(buf), NULL, 0,
-                                       NI_NUMERICHOST)) != 0) {
-                        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
-                        printf("no IPv6");
-                        return;
-                }
-
                 free(result);
-                printf("%s", buf);
+
+                print_sockname(fd);
+
                 return;
         }
 
