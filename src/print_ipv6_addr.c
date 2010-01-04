@@ -1,5 +1,6 @@
 // vim:ts=8:expandtab
 #include <stdio.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -8,17 +9,38 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-static void print_sockname(int fd) {
+static bool print_sockname(struct addrinfo *addr) {
         static char buf[INET6_ADDRSTRLEN+1];
         struct sockaddr_storage local;
         int ret;
+        int fd;
+
+        if ((fd = socket(addr->ai_family, SOCK_DGRAM, 0)) == -1) {
+                perror("socket()");
+                return false;
+        }
+
+        /* Since the socket was created with SOCK_DGRAM, this is
+         * actually not establishing a connection or generating
+         * any other network traffic. Instead, as a side-effect,
+         * it saves the local address with which packets would
+         * be sent to the destination. */
+        if (connect(fd, addr->ai_addr, addr->ai_addrlen) == -1) {
+                /* We don’t display the error here because most
+                 * likely, there just is no IPv6 connectivity.
+                 * Thus, don’t spam the user’s console but just
+                 * try the next address. */
+                (void)close(fd);
+                return false;
+        }
+
 
         socklen_t local_len = sizeof(struct sockaddr_storage);
         if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
                 perror("getsockname()");
                 (void)close(fd);
                 printf("no IPv6");
-                return;
+                return true;
         }
 
         memset(buf, 0, INET6_ADDRSTRLEN + 1);
@@ -26,11 +48,14 @@ static void print_sockname(int fd) {
                                buf, sizeof(buf), NULL, 0,
                                NI_NUMERICHOST)) != 0) {
                 fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                (void)close(fd);
                 printf("no IPv6");
-                return;
+                return true;
         }
 
+        (void)close(fd);
         printf("%s", buf);
+        return true;
 }
 
 /*
@@ -40,14 +65,13 @@ static void print_sockname(int fd) {
 static void print_ipv6_addr() {
         struct addrinfo hints;
         struct addrinfo *result, *resp;
-        static int fd = -1;
+        static struct addrinfo *cached = NULL;
 
         /* To save dns lookups (if they are not cached locally) and creating
          * sockets, we save the fd and keep it open. */
-        if (fd > -1) {
-                print_sockname(fd);
-                return;
-        }
+        if (cached != NULL)
+                if (print_sockname(cached))
+                        return;
 
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET6;
@@ -64,33 +88,22 @@ static void print_ipv6_addr() {
         }
 
         for (resp = result; resp != NULL; resp = resp->ai_next) {
-                if ((fd = socket(resp->ai_family, SOCK_DGRAM, 0)) == -1) {
-                        perror("socket()");
+                if (!print_sockname(resp))
                         continue;
+
+                if ((cached = malloc(sizeof(struct addrinfo))) == NULL)
+                        return;
+                memcpy(cached, resp, sizeof(struct addrinfo));
+                if ((cached->ai_addr = malloc(resp->ai_addrlen)) == NULL) {
+                        cached = NULL;
+                        return;
                 }
-
-                /* Since the socket was created with SOCK_DGRAM, this is
-                 * actually not establishing a connection or generating
-                 * any other network traffic. Instead, as a side-effect,
-                 * it saves the local address with which packets would
-                 * be sent to the destination. */
-                if (connect(fd, resp->ai_addr, resp->ai_addrlen) == -1) {
-                        /* We don’t display the error here because most
-                         * likely, there just is no IPv6 connectivity.
-                         * Thus, don’t spam the user’s console but just
-                         * try the next address. */
-                        (void)close(fd);
-                        continue;
-                }
-
-                free(result);
-
-                print_sockname(fd);
-
+                memcpy(cached->ai_addr, resp->ai_addr, resp->ai_addrlen);
+                freeaddrinfo(result);
                 return;
         }
 
-        free(result);
+        freeaddrinfo(result);
         printf("no IPv6");
 }
 
