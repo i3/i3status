@@ -20,7 +20,7 @@
  */
 static void print_bytes_human(uint64_t bytes) {
         if (bytes > TERABYTE)
-                printf("%f TB", (double)bytes / TERABYTE);
+                printf("%.02f TB", (double)bytes / TERABYTE);
         else if (bytes > GIGABYTE)
                 printf("%.01f GB", (double)bytes / GIGABYTE);
         else if (bytes > MEGABYTE)
