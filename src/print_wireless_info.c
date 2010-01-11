@@ -4,7 +4,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+
+#ifdef LINUX
 #include <iwlib.h>
+#endif
 
 #include "i3status.h"
 

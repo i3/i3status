@@ -3,7 +3,7 @@ Section: utils
 Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 5), libiw-dev, libconfuse-dev, asciidoc, xmlto
+Build-Depends: debhelper (>= 5), libiw-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libconfuse-dev, asciidoc, xmlto
 Standards-Version: 3.8.3
 Homepage: http://i3.zekjur.net/i3status
 
