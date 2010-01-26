@@ -25,10 +25,8 @@ const char *get_ip_addr(const char *interface) {
 
         getifaddrs(&ifaddr);
 
-        if (ifaddr == NULL) {
-                (void)snprintf(part, sizeof(part), "E: down");
-                return part;
-        }
+        if (ifaddr == NULL)
+                return NULL;
 
         addrp = ifaddr;
 
