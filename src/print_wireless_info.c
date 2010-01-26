@@ -86,7 +86,10 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                 }
 
                 if (BEGINS_WITH(walk+1, "ip")) {
-                        (void)printf("%s", get_ip_addr(interface));
+                        const char *ip_address = get_ip_addr(interface);
+                        if (ip_address != NULL)
+                                (void)printf("%s", get_ip_addr(interface));
+                        else (void)printf("no IP");
                         walk += strlen("ip");
                 }
         }
