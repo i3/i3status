@@ -22,6 +22,8 @@
 #include <glob.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "i3status.h"
 
@@ -186,6 +188,8 @@ int main(int argc, char *argv[]) {
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");
 
+        int interval = cfg_getint(cfg_general, "interval");
+
         while (1) {
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
@@ -223,6 +227,13 @@ int main(int argc, char *argv[]) {
                 printf("\n");
                 fflush(stdout);
 
-                sleep(cfg_getint(cfg_general, "interval"));
+                /* To provide updates on every full second (as good as possible)
+                 * we don’t use sleep(interval) but we sleep until the next
+                 * second (with microsecond precision) plus (interval-1)
+                 * seconds. */
+                struct timeval current_time;
+                gettimeofday(&current_time, NULL);
+                struct timespec ts = {interval - 1, (10e5 - current_time.tv_usec) * 1000};
+                nanosleep(&ts, NULL);
         }
 }
