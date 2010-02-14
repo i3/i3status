@@ -79,8 +79,12 @@ void print_eth_info(const char *interface, const char *format_up, const char *fo
         const char *ip_address = get_ip_addr(interface);
 
         if (ip_address == NULL) {
+                printf("%s", color("#FF0000"));
                 printf("%s", format_down);
+                (void)printf("%s", endcolor());
                 return;
+        } else {
+                printf("%s", color("#00FF00"));
         }
 
         for (walk = format_up; *walk != '\0'; walk++) {
@@ -97,4 +101,6 @@ void print_eth_info(const char *interface, const char *format_up, const char *fo
                         walk += strlen("speed");
                 }
         }
+
+        (void)printf("%s", endcolor());
 }
