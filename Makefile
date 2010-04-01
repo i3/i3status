@@ -53,6 +53,8 @@ install:
 	install -m 755 -d $(DESTDIR)/etc
 	install -m 755 -d $(DESTDIR)/usr/share/man/man1
 	install -m 755 i3status $(DESTDIR)/usr/bin/i3status
+	# Allow network configuration for getting the link speed
+	which setcap && setcap cap_net_admin=ep $(DESTDIR)/usr/bin/i3status
 	install -m 644 i3status.conf $(DESTDIR)/etc/i3status.conf
 	install -m 644 man/i3status.1 $(DESTDIR)/usr/share/man/man1
 

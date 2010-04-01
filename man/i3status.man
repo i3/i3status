@@ -62,7 +62,7 @@ wireless wlan0 {
 }
 
 ethernet eth0 {
-        # if you use %speed, i3status requires root privileges
+        # if you use %speed, i3status requires the cap_net_admin capability
         format = "E: %ip (%speed)"
 }
 
@@ -150,7 +150,8 @@ connected.
 === Ethernet
 
 Gets the IP address and (if possible) the link speed of the given ethernet
-interface. Getting the link speed requires root privileges.
+interface. Getting the link speed requires the cap_net_admin capability. Set
+it using +setcap cap_net_admin=ep $(which i3status)+.
 
 *Example order*: +ethernet eth0+
 
