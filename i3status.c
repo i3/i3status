@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("battery", battery_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
-                CFG_SEC("ipv6", ipv6_opts, CFGF_TITLE),
+                CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
                 CFG_SEC("time", time_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_END()
