@@ -92,7 +92,8 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t ipv6_opts[] = {
-                CFG_STR("format", "%ip", CFGF_NONE),
+                CFG_STR("format_up", "%ip", CFGF_NONE),
+                CFG_STR("format_down", "no IPv6", CFGF_NONE),
                 CFG_END()
         };
 
@@ -198,7 +199,7 @@ int main(int argc, char *argv[]) {
                         const char *current = cfg_getnstr(cfg, "order", j);
 
                         CASE_SEC("ipv6")
-                                print_ipv6_info(cfg_getstr(sec, "format"));
+                                print_ipv6_info(cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
 
                         CASE_SEC_TITLE("wireless")
                                 print_wireless_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
