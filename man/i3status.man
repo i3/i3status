@@ -119,7 +119,9 @@ Does not use any color codes. Separates values by the pipe symbol.
 This module gets the IPv6 address used for outgoing connections (that is, the
 best available public IPv6 address on your computer).
 
-*Example format*: +%ip+
+*Example format_up*: +%ip+
+
+*Example format_down* +no IPv6+
 
 === Disk
 
