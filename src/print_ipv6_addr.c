@@ -9,7 +9,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-static char * get_sockname(struct addrinfo *addr) {
+static char *get_sockname(struct addrinfo *addr) {
         static char buf[INET6_ADDRSTRLEN+1];
         struct sockaddr_storage local;
         int ret;
@@ -33,7 +33,6 @@ static char * get_sockname(struct addrinfo *addr) {
                 (void)close(fd);
                 return NULL;
         }
-
 
         socklen_t local_len = sizeof(struct sockaddr_storage);
         if (getsockname(fd, (struct sockaddr*)&local, &local_len) == -1) {
@@ -105,21 +104,22 @@ static char *get_ipv6_addr() {
 
 void print_ipv6_info(const char *format_up, const char *format_down) {
         const char *walk;
-        char * addr_string = get_ipv6_addr();
-        
+        char *addr_string = get_ipv6_addr();
+
         if (addr_string == NULL) {
                 printf("%s", format_down);
-        } else {
-                for (walk = format_up; *walk != '\0'; walk++) {
-                        if (*walk != '%') {
-                                putchar(*walk);
-                                continue;
-                        }
-                        
-                        if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
-                                printf("%s", addr_string);
-                                walk += strlen("ip");
-                        }
+                return;
+        }
+
+        for (walk = format_up; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        putchar(*walk);
+                        continue;
+                }
+
+                if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
+                        printf("%s", addr_string);
+                        walk += strlen("ip");
                 }
         }
 }
