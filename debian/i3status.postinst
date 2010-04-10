@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # Allow users to get the speed of ethernet interfaces. This is not a security
 # issue as i3status only queries the speed, it does not change any
 # configuration.

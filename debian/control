@@ -4,13 +4,11 @@ Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5), libiw-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libconfuse-dev, asciidoc, xmlto
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 Homepage: http://i3.zekjur.net/i3status
 
 Package: i3status
 Architecture: any
-Priority: extra
-Section: utils
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: dzen2 | xmobar
 Enhances: dzen2, xmobar
