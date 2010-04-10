@@ -1,7 +1,7 @@
 i3status(1)
 ===========
 Michael Stapelberg <michael+i3@stapelberg.de>
-v2, October 2009
+v2.1, April 2010
 
 == NAME
 

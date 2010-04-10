@@ -1,3 +1,18 @@
+i3status (2.1-1) unstable; urgency=low
+
+  * battery: implement %emptytime, the time of day when your battery is empty
+  * ipv6: cache DNS query lookups (for finding the K root server)
+  * disk: also round when printing TB
+  * wireless: display no IP instead of (null)
+  * instead of a relative sleep(1), sleep until the full second
+  * colorize ethernet output
+  * use cap_net_admin instead of running i3status as root for getting
+    ethernet link speed
+  * ipv6: don't require a title for config option
+  * ipv6: provide format strings for ipv6 up and ipv6 down
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sat, 10 Apr 2010 23:48:52 +0200
+
 i3status (2.0-1) unstable; urgency=low
 
   * add support for disk info (free/used/ins)
