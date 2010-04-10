@@ -10,7 +10,7 @@ Homepage: http://i3.zekjur.net/i3status
 Package: i3status
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: dzen2 | xmobar
+Recommends: dzen2 | xmobar, libcap2-bin
 Enhances: dzen2, xmobar
 Description: Generates a status line for dzen2 or xmobar
  i3status is a small program (less than 1000 SLOC) for generating a status bar
