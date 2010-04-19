@@ -38,7 +38,7 @@ static const char *get_wireless_essid(const char *interface) {
  */
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down) {
         char buf[1024];
-        int quality = -1;
+        int quality = 0;
         char *interfaces;
         const char *walk;
         memset(buf, 0, sizeof(buf));
@@ -56,10 +56,6 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                         continue;
                 break;
         }
-
-        /* Interface could not be found */
-        if (quality == -1)
-                return;
 
         if ((quality == UCHAR_MAX) || (quality == 0)) {
                 walk = format_down;
