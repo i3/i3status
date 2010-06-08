@@ -21,7 +21,7 @@ or ~/.i3status.conf).
 
 i3status is a small program (less than 1000 SLOC) for generating a status bar
 for dzen2, xmobar or similar programs. It is designed to be very efficient by
-issuing a very small number of systemcalls, as one generally wants to update
+issuing a very small number of system calls, as one generally wants to update
 such a status line every second. This ensures that even under high load, your
 status bar is updated correctly. Also, it saves a bit of energy by not hogging
 your CPU as much as spawning the corresponding amount of shell commands would.
