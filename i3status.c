@@ -5,6 +5,7 @@
  *
  * Copyright © 2008-2009 Michael Stapelberg and contributors
  * Copyright © 2009 Thorsten Toepper <atsutane at freethoughts dot de>
+ * Copyright © 2010 Axel Wagner <mail at merovius dot de>
  *
  * See file LICENSE for license information.
  *
@@ -108,6 +109,11 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
+        cfg_opt_t ddate_opts[] = {
+                CFG_STR("format", "%{%a, %b %d%}, %Y%N - %H", CFGF_NONE),
+                CFG_END()
+        };
+
         cfg_opt_t load_opts[] = {
                 CFG_STR("format", "%5min %10min %15min", CFGF_NONE),
                 CFG_END()
@@ -134,6 +140,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
                 CFG_SEC("time", time_opts, CFGF_NONE),
+                CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_END()
         };
@@ -221,6 +228,9 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC("time")
                                 print_time(cfg_getstr(sec, "format"));
+
+                        CASE_SEC("ddate")
+                                print_ddate(cfg_getstr(sec, "format"));
 
                         CASE_SEC_TITLE("cpu_temperature")
                                 print_cpu_temperature_info(atoi(title), cfg_getstr(sec, "format"));

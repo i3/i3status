@@ -197,6 +197,16 @@ Formats the current system time. See +strftime(3)+ for the format.
 
 *Example format*: +%Y-%m-%d %H:%M:%S+
 
+=== DDate
+
+Outputs the current discordian date in user-specified format. See +ddate(1)+ for
+details on the format string.
+*Note*: Neither *%.* nor *%X* are implemented yet.
+
+*Example order*: +ddate+
+
+*Example format*: +%{%a, %b %d%}, %Y%N - %H+
+
 == Using i3status with dzen2
 
 After installing dzen2, you can directly use it with i3status:
