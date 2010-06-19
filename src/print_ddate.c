@@ -165,48 +165,46 @@ int format_output(char *format, struct disc_time *dt) {
 
 /* Get the current date and convert it to discordian */
 struct disc_time *get_ddate() {
-        time_t current_time = time(NULL);
+        time_t current_time;
+        struct tm *current_tm;
+        static struct disc_time dt;
 
-        if (current_time == (time_t) -1) {
+        if ((current_time = time(NULL)) == (time_t)-1)
                 return NULL;
-        }
 
-        struct tm *current_tm = localtime(&current_time);
-
-        if (current_tm == NULL) {
+        if ((current_tm = localtime(&current_time)) == NULL)
                 return NULL;
-        }
 
         /* We have to know, whether we have to insert St. Tib's Day, so whether it's a leap
            year in gregorian calendar */
         int is_leap_year = !(current_tm->tm_year % 4) &&
                             (!(current_tm->tm_year % 400) || current_tm->tm_year % 100);
 
-        struct disc_time *dt = malloc(sizeof(dt));
         if (is_leap_year && current_tm->tm_yday == 59) {
                 /* On St. Tibs Day we don't have to define a date */
-                dt->st_tibs_day = 1;
+                dt.st_tibs_day = 1;
         } else {
-                dt->st_tibs_day = 0;
-                dt->season_day = current_tm->tm_yday % 73;
+                dt.st_tibs_day = 0;
+                dt.season_day = current_tm->tm_yday % 73;
                 if (is_leap_year && current_tm->tm_yday > 59) {
-                        dt->week_day = (current_tm->tm_yday - 1) % 5;
+                        dt.week_day = (current_tm->tm_yday - 1) % 5;
                 } else {
-                        dt->week_day = current_tm->tm_yday % 5;
+                        dt.week_day = current_tm->tm_yday % 5;
                 }
         }
-        dt->year = current_tm->tm_year + 3066;
-        dt->season = current_tm->tm_yday / 73;
-        return dt;
+        dt.year = current_tm->tm_year + 3066;
+        dt.season = current_tm->tm_yday / 73;
+        return &dt;
 }
 
 void print_ddate(const char *format) {
-        struct disc_time *dt = get_ddate();
-        if (dt == NULL) {
+        static char *form = NULL;
+        struct disc_time *dt;
+        if ((dt = get_ddate()) == NULL)
                 return;
-        }
-        char *form = strdup(format);
+        if (form == NULL)
+                if ((form = malloc(strlen(format) + 1)) == NULL)
+                        return;
+        strcpy(form, format);
         format_output(form, dt);
-        free(dt);
-        free(form);
 }
