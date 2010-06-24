@@ -101,7 +101,7 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                 if (BEGINS_WITH(walk+1, "quality")) {
                         int max_qual = get_wireless_quality_max(interface);
                         if (max_qual && max_qual >= quality)
-                                printf("%d/%d", quality, max_qual);
+                                printf("%d%%", (int)(quality * (100.0 / max_qual)));
                         else
                                 printf("%d", quality);
                         walk += strlen("quality");
