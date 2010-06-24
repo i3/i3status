@@ -64,5 +64,10 @@ void print_disk_info(const char *path, const char *format) {
                         print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks);
                         walk += strlen("total");
                 }
+
+                if (BEGINS_WITH(walk+1, "avail")) {
+                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail);
+                        walk += strlen("avail");
+                }
         }
 }

@@ -125,11 +125,11 @@ best available public IPv6 address on your computer).
 
 === Disk
 
-Gets used, free and total amount of bytes on the given mounted filesystem.
+Gets used, free, available and total amount of bytes on the given mounted filesystem.
 
 *Example order*: +disk /mnt/usbstick+
 
-*Example format*: +%free / %total+
+*Example format*: +%free (%avail)/ %total+
 
 === Run-watch
 
