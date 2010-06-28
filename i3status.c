@@ -6,6 +6,7 @@
  * Copyright © 2008-2009 Michael Stapelberg and contributors
  * Copyright © 2009 Thorsten Toepper <atsutane at freethoughts dot de>
  * Copyright © 2010 Axel Wagner <mail at merovius dot de>
+ * Copyright © 2010 Fernando Tarlá Cardoso Lemos <fernandotcl at gmail dot com>
  *
  * See file LICENSE for license information.
  *
