@@ -39,7 +39,7 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
 
         wireless_config wcfg;
         if (iw_get_basic_config(skfd, interface, &wcfg) < 0) {
-            perror("iw_get_basic_config");
+            close(skfd);
             return 0;
         }
 
