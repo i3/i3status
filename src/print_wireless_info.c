@@ -143,11 +143,11 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
         if (get_wireless_info(interface, &info)) {
                 walk = format_up;
                 if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
-                        printf("%s", info.quality < info.quality_average ? color("#FFFF00") : color("#00FF00"));
+                        printf("%s", info.quality < info.quality_average ? color("color_degraded") : color("color_good"));
         }
         else {
                 walk = format_down;
-                printf("%s", color("#FF0000"));
+                printf("%s", color("color_bad"));
         }
 
         for (; *walk != '\0'; walk++) {

@@ -21,9 +21,9 @@ char *color(const char *colorstr) {
                 return colorbuf;
         }
         if (output_format == O_DZEN2)
-                (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", colorstr);
+                (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", cfg_getstr(cfg_general, colorstr));
         else if (output_format == O_XMOBAR)
-                (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", colorstr);
+                (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", cfg_getstr(cfg_general, colorstr));
 
         return colorbuf;
 }
@@ -40,9 +40,9 @@ char *endcolor() {
 
 void print_seperator() {
         if (output_format == O_DZEN2)
-                printf("^fg(#333333)^p(5;-2)^ro(2)^p()^fg()^p(5)");
+                printf("^fg(%s)^p(5;-2)^ro(2)^p()^fg()^p(5)", cfg_getstr(cfg_general, "color_separator"));
         else if (output_format == O_XMOBAR)
-                printf("<fc=#333333> | </fc>");
+                printf("<fc=%s> | </fc>", cfg_getstr(cfg_general, "color_separator"));
         else if (output_format == O_NONE)
                 printf(" | ");
 }

@@ -6,7 +6,7 @@ void print_run_watch(const char *title, const char *pidfile, const char *format)
 	bool running = process_runs(pidfile);
 	const char *walk;
 
-	printf("%s", (running ? color("#00FF00") : color("#FF0000")));
+	printf("%s", (running ? color("color_good") : color("color_bad")));
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
