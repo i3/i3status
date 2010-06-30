@@ -97,9 +97,22 @@ disk "/" {
 
 === General
 
-The colors directive will disable all colors if you set it to +false+.
-+interval+ is the time in seconds which i3status will sleep until printing
-the next status line.
+The +colors+ directive will disable all colors if you set it to +false+. You can
+also specify the colors that will be used to display "good", "degraded" or "bad"
+values using the +color_good+, +color_degraded+ or +color_bad+ directives,
+respectively. Those directives are only used if color support is not disabled by
+the +colors+ directive. The input format for color values is the canonical RGB
+hexadecimal triplet (with no separators between the colors), prefixed by a hash
+character ("#").
+
+*Example color_good*: +#00FF00+
+
+Likewise, you can use the +color_separator+ directive to specify the color that
+will be used to paint the separator bar. The separator is always output in
+color, even when colors are disabled by the +colors+ directive.
+
+The +interval+ directive specifies the time in seconds for which i3status will
+sleep before printing the next status line.
 
 Using +output_format+ you can chose which format strings i3status should
 use in its output. Currently available are:
