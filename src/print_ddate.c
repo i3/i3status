@@ -143,12 +143,12 @@ int format_output(char *format, struct disc_time *dt) {
                                         printf("St. Tib's Day");
                                 } else {
                                         /* ...or parse the substring between %{ and %} ... */
-                                        *i = '\0';
+                                        *tibs_end = '\0';
                                         if (!format_output(i + 2, dt)) return 0;
-                                        *i = '%';
+                                        *tibs_end = '%';
                                 }
                                 /* ...and continue with the rest */
-                                i = tibs_end + 2;
+                                i = tibs_end;
                                 break;
                         case '}':
                                 i++;
