@@ -69,6 +69,7 @@ void print_run_watch(const char *title, const char *pidfile, const char *format)
 void print_cpu_temperature_info(int zone, const char *format);
 void print_eth_info(const char *interface, const char *format_up, const char *format_down);
 void print_load();
+void print_volume(const char *fmt, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
 
 /* socket file descriptor for general purposes */

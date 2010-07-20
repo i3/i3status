@@ -151,6 +151,14 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
+        cfg_opt_t volume_opts[] = {
+                CFG_STR("format", "♪: %volume", CFGF_NONE),
+                CFG_STR("device", "default", CFGF_NONE),
+                CFG_STR("mixer", "Master", CFGF_NONE),
+                CFG_INT("mixer_idx", 0, CFGF_NONE),
+                CFG_END()
+        };
+
         cfg_opt_t opts[] = {
                 CFG_STR_LIST("order", "{ipv6,\"run_watch DHCP\",\"wireless wlan0\",\"ethernet eth0\",\"battery 0\",\"cpu_temperature 0\",load,time}", CFGF_NONE),
                 CFG_SEC("general", general_opts, CFGF_NONE),
@@ -160,6 +168,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("battery", battery_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
+                CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
                 CFG_SEC("time", time_opts, CFGF_NONE),
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
@@ -259,6 +268,12 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC("ddate")
                                 print_ddate(cfg_getstr(sec, "format"));
+
+                        CASE_SEC("volume")
+                                print_volume(cfg_getstr(sec, "format"),
+                                             cfg_getstr(sec, "device"),
+                                             cfg_getstr(sec, "mixer"),
+                                             cfg_getint(sec, "mixer_idx"));
 
                         CASE_SEC_TITLE("cpu_temperature")
                                 print_cpu_temperature_info(atoi(title), cfg_getstr(sec, "format"));

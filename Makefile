@@ -3,7 +3,7 @@ CFLAGS+=-g
 CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
 CFLAGS+=-DPREFIX=\"\"
-CFLAGS+=-I.
+CFLAGS+=-Iinclude
 LDFLAGS+=-lconfuse
 
 VERSION=$(shell git describe --tags --abbrev=0)
@@ -11,7 +11,7 @@ VERSION=$(shell git describe --tags --abbrev=0)
 ifeq ($(shell uname),Linux)
 CFLAGS+=-DLINUX
 CFLAGS+=-D_GNU_SOURCE
-LDFLAGS+=-liw
+LDFLAGS+=-liw -lasound
 endif
 
 ifeq ($(shell uname),GNU/kFreeBSD)

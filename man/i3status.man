@@ -220,6 +220,25 @@ details on the format string.
 
 *Example format*: +%{%a, %b %d%}, %Y%N - %H+
 
+=== Volume
+
+Outputs the volume of the specified mixer on the specified device. Works only
+on Linux because it uses ALSA.
+
+*Example order*: +volume master+
+
+*Example format*: +♪: %volume+
+
+*Example configuration*:
+-------------------------------------------------------------
+volume master {
+	format = "♪: %volume"
+	device = "default"
+	mixer = "Master"
+	mixer_idx = 0
+}
+-------------------------------------------------------------
+
 == Using i3status with dzen2
 
 After installing dzen2, you can directly use it with i3status:
