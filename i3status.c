@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
                         CASE_SEC("ddate")
                                 print_ddate(cfg_getstr(sec, "format"));
 
-                        CASE_SEC("volume")
+                        CASE_SEC_TITLE("volume")
                                 print_volume(cfg_getstr(sec, "format"),
                                              cfg_getstr(sec, "device"),
                                              cfg_getstr(sec, "mixer"),
