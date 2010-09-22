@@ -1,3 +1,17 @@
+i3status (2.2-1) unstable; urgency=low
+
+  * Implement a discordian date module (like ddate(1))
+  * Implement ALSA volume support
+  * disk: implement %avail (different from %free with regard to the reserved
+    space of your filesystem)
+  * wireless: display quality relative to the wireless maximum quality.
+  * wireless: display connection speed (bitrate)
+  * wireless: custom colors for link quality
+  * Bugfix: Treat an interface as 'down' when it cannot be found in /proc/net/wireless
+  * Bugfix: Correctly check for interface up/down status
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Wed, 22 Sep 2010 20:07:48 +0200
+
 i3status (2.1-1) unstable; urgency=low
 
   * battery: implement %emptytime, the time of day when your battery is empty
