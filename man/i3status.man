@@ -57,7 +57,7 @@ order += "load"
 order += "time"
 
 wireless wlan0 {
-        format_up = "W: (%quality at %essid) %ip"
+        format_up = "W: (%quality at %essid, %bitrate) %ip"
         format_down = "W: down"
 }
 
@@ -160,7 +160,7 @@ connected.
 
 *Example order*: +wireless wlan0+
 
-*Example format*: +W: (%quality at %essid) %ip+
+*Example format*: +W: (%quality at %essid, %bitrate) %ip+
 
 === Ethernet
 

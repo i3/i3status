@@ -25,6 +25,7 @@ typedef struct {
         int signal_level_max;
         int noise_level;
         int noise_level_max;
+        int bitrate;
 } wireless_info_t;
 
 static int get_wireless_info(const char *interface, wireless_info_t *info) {
@@ -132,6 +133,10 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
                 }
         }
 
+        struct iwreq wrq;
+        if (iw_get_ext(skfd, interface, SIOCGIWRATE, &wrq) >= 0)
+                info->bitrate = wrq.u.bitrate.value;
+
         close(skfd);
         return 1;
 #endif
@@ -209,6 +214,15 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                                 (void)printf("%s", get_ip_addr(interface));
                         else (void)printf("no IP");
                         walk += strlen("ip");
+                }
+
+                if (BEGINS_WITH(walk+1, "bitrate")) {
+                        char buffer[128];
+
+                        iw_print_bitrate(buffer, sizeof(buffer), info.bitrate);
+
+                        printf("%s", buffer);
+                        walk += strlen("bitrate");
                 }
         }
 
