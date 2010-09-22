@@ -3,10 +3,12 @@ CFLAGS+=-g
 CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
 CFLAGS+=-DPREFIX=\"\"
+CFLAGS+=-DVERSION=\"${GIT_VERSION}\"
 CFLAGS+=-Iinclude
 LDFLAGS+=-lconfuse
 
-VERSION=$(shell git describe --tags --abbrev=0)
+VERSION:=$(shell git describe --tags --abbrev=0)
+GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
 
 ifeq ($(shell uname),Linux)
 CFLAGS+=-DLINUX
@@ -64,5 +66,6 @@ release:
 	mkdir i3status-${VERSION}/man
 	find src -maxdepth 1 -type f \( -regex ".*\.\(c\|h\)" \) -exec cp '{}' i3status-${VERSION}/src \;
 	find man -maxdepth 1 -type f \( -regex ".*\.\(1\|man\|conf\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION}/man \;
+	sed -e 's/^GIT_VERSION:=\(.*\)/GIT_VERSION=${GIT_VERSION}/g;s/^VERSION:=\(.*\)/VERSION=${VERSION}/g' Makefile > i3status-${VERSION}/Makefile
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
