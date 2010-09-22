@@ -246,7 +246,8 @@ volume master {
 
 == Using i3status with dzen2
 
-After installing dzen2, you can directly use it with i3status:
+After installing dzen2, you can directly use it with i3status. Just ensure that
++output_format+ is set to +dzen2+.
 
 *Example for usage of i3status with dzen2*:
 --------------------------------------------------------------
@@ -257,11 +258,12 @@ i3status | dzen2 -fg white -ta r -w 1280 \
 == Using i3status with xmobar
 
 To get xmobar to start, you might need to copy the default configuration
-file to +~/.xmobarrc+.
+file to +~/.xmobarrc+. Also, ensure that the +output_format+ option for i3status
+is set to +xmobar+.
 
 *Example for usage of i3status with xmobar*:
 ---------------------------------------------------------------------
-i3status-xmobar | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
+i3status | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
 ---------------------------------------------------------------------
 
 == SEE ALSO
