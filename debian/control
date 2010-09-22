@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5), libiw-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libconfuse-dev, asciidoc, xmlto, libcap2-bin, libasound2-dev
-Standards-Version: 3.8.4
+Standards-Version: 3.9.1
 Homepage: http://i3.zekjur.net/i3status
 
 Package: i3status

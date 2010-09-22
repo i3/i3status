@@ -7,7 +7,8 @@ i3status (2.2-1) unstable; urgency=low
   * wireless: display quality relative to the wireless maximum quality.
   * wireless: display connection speed (bitrate)
   * wireless: custom colors for link quality
-  * Bugfix: Treat an interface as 'down' when it cannot be found in /proc/net/wireless
+  * Bugfix: Treat an interface as 'down' when it cannot be found in
+    /proc/net/wireless
   * Bugfix: Correctly check for interface up/down status
 
  -- Michael Stapelberg <michael@stapelberg.de>  Wed, 22 Sep 2010 20:07:48 +0200
