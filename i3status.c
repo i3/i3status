@@ -29,6 +29,8 @@
 
 #include "i3status.h"
 
+#define exit_if_null(pointer, ...) { if (pointer == NULL) die(__VA_ARGS__); }
+
 /* socket file descriptor for general purposes */
 int general_socket;
 
@@ -45,25 +47,26 @@ void sigpipe(int signum) {
 }
 
 /*
- * Checks if there is a file at the given path (expanding ~) and returns the
- * full path if so or NULL if there is no file.
+ * Checks if the given path exists by calling stat().
  *
  */
-static char *file_exists(char *path) {
-        static glob_t globbuf;
+static bool path_exists(const char *path) {
         struct stat buf;
-        char *full_path = NULL;
-
-        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
-                return NULL;
-
-        full_path = (globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path);
-
-        if (stat(full_path, &buf) < 0)
-                return NULL;
-
-        return full_path;
+        return (stat(path, &buf) == 0);
 }
+
+static void *scalloc(size_t size) {
+        void *result = calloc(size, 1);
+        exit_if_null(result, "Error: out of memory (calloc(%zd))\n", size);
+        return result;
+}
+
+static char *sstrdup(const char *str) {
+        char *result = strdup(str);
+        exit_if_null(result, "Error: out of memory (strdup())\n");
+        return result;
+}
+
 
 /*
  * Validates a color in "#RRGGBB" format
@@ -80,6 +83,87 @@ static int valid_color(const char *value)
                 return 0;
         }
         return 1;
+}
+
+/*
+ * This function resolves ~ in pathnames.
+ * It may resolve wildcards in the first part of the path, but if no match
+ * or multiple matches are found, it just returns a copy of path as given.
+ *
+ */
+static char *resolve_tilde(const char *path) {
+        static glob_t globbuf;
+        char *head, *tail, *result;
+
+        tail = strchr(path, '/');
+        head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
+
+        int res = glob(head, GLOB_TILDE, NULL, &globbuf);
+        free(head);
+        /* no match, or many wildcard matches are bad */
+        if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
+                result = sstrdup(path);
+        else if (res != 0) {
+                die("glob() failed");
+        } else {
+                head = globbuf.gl_pathv[0];
+                result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
+                strncpy(result, head, strlen(head));
+                strncat(result, tail, strlen(tail));
+        }
+        globfree(&globbuf);
+
+        return result;
+}
+
+static char *get_config_path() {
+        /* 1: check for $XDG_CONFIG_HOME/i3/config */
+        char *xdg_config_home, *xdg_config_dirs, *config_path;
+
+        if ((xdg_config_home = getenv("XDG_CONFIG_HOME")) == NULL)
+                xdg_config_home = "~/.config";
+
+        xdg_config_home = resolve_tilde(xdg_config_home);
+        if (asprintf(&config_path, "%s/i3status/config", xdg_config_home) == -1)
+                die("asprintf() failed");
+        free(xdg_config_home);
+
+        if (path_exists(config_path))
+                return config_path;
+        free(config_path);
+
+        /* 2: check for $XDG_CONFIG_DIRS/i3/config */
+        if ((xdg_config_dirs = getenv("XDG_CONFIG_DIRS")) == NULL)
+                xdg_config_dirs = "/etc/xdg";
+
+        char *buf = strdup(xdg_config_dirs);
+        char *tok = strtok(buf, ":");
+        while (tok != NULL) {
+                tok = resolve_tilde(tok);
+                if (asprintf(&config_path, "%s/i3status/config", tok) == -1)
+                        die("asprintf() failed");
+                free(tok);
+                if (path_exists(config_path)) {
+                        free(buf);
+                        return config_path;
+                }
+                free(config_path);
+                tok = strtok(NULL, ":");
+        }
+        free(buf);
+
+        /* 3: check traditional paths */
+        config_path = resolve_tilde("~/.i3status.conf");
+        if (path_exists(config_path))
+                return config_path;
+
+        config_path = strdup(SYSCONFDIR "/i3status.conf");
+        if (!path_exists(config_path))
+                die("Neither $XDG_CONFIG_HOME/i3status/config, nor "
+                    "$XDG_CONFIG_DIRS/i3status/config, nor ~/.i3status.conf nor "
+                    SYSCONFDIR "/i3status.conf exist.");
+
+        return config_path;
 }
 
 int main(int argc, char *argv[]) {
@@ -176,7 +260,7 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
-        char *configfile;
+        char *configfile = NULL;
         int o, option_index = 0;
         struct option long_options[] = {
                 {"config", required_argument, 0, 'c'},
@@ -189,12 +273,6 @@ int main(int argc, char *argv[]) {
         memset(&action, 0, sizeof(struct sigaction));
         action.sa_handler = sigpipe;
         sigaction(SIGPIPE, &action, NULL);
-
-        /* Figure out which configuration file to use before the user may
-         * override this setting using -c */
-
-        if ((configfile = file_exists("~/.i3status.conf")) == NULL)
-                configfile = file_exists(PREFIX "/etc/i3status.conf");
 
         while ((o = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1)
                 if ((char)o == 'c')
@@ -210,7 +288,7 @@ int main(int argc, char *argv[]) {
 
 
         if (configfile == NULL)
-                die("No configuration file found\n");
+                configfile = get_config_path();
 
         cfg = cfg_init(opts, CFGF_NONE);
         if (cfg_parse(cfg, configfile) == CFG_PARSE_ERROR)

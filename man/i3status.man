@@ -9,13 +9,18 @@ i3status - Generates a status line for dzen2 or xmobar
 
 == SYNOPSIS
 
-i3status [-c configfile]
+i3status [-c configfile] [-h] [-v]
 
 == OPTIONS
 
 -c::
-Specifies an alternate configuration file path (default is /etc/i3status.conf
-or ~/.i3status.conf).
+Specifies an alternate configuration file path. By default, i3status looks for
+configuration files in the following order:
+
+1. ~/.config/i3status/config (or $XDG_CONFIG_HOME/i3status/config if set)
+2. /etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
+3. ~/.i3status.conf
+4. /etc/i3status.conf (or SYSCONFDIR/i3status.conf if set at compile-time)
 
 == DESCRIPTION
 

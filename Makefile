@@ -1,8 +1,19 @@
+ifndef PREFIX
+  PREFIX=/usr
+endif
+ifndef SYSCONFDIR
+  ifeq ($(PREFIX),/usr)
+    SYSCONFDIR=/etc
+  else
+    SYSCONFDIR=$(PREFIX)/etc
+  endif
+endif
+
 CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
-CFLAGS+=-DPREFIX=\"\"
+CFLAGS+=-DSYSCONFDIR=\"$(SYSCONFDIR)\"
 CFLAGS+=-DVERSION=\"${GIT_VERSION}\"
 CFLAGS+=-Iinclude
 LDFLAGS+=-lconfuse
