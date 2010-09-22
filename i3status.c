@@ -181,6 +181,7 @@ int main(int argc, char *argv[]) {
         struct option long_options[] = {
                 {"config", required_argument, 0, 'c'},
                 {"help", no_argument, 0, 'h'},
+                {"version", no_argument, 0, 'v'},
                 {0, 0, 0, 0}
         };
 
@@ -195,14 +196,18 @@ int main(int argc, char *argv[]) {
         if ((configfile = file_exists("~/.i3status.conf")) == NULL)
                 configfile = file_exists(PREFIX "/etc/i3status.conf");
 
-        while ((o = getopt_long(argc, argv, "c:h", long_options, &option_index)) != -1)
+        while ((o = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1)
                 if ((char)o == 'c')
                         configfile = optarg;
                 else if ((char)o == 'h') {
-                        printf("i3status © 2008-2009 Michael Stapelberg\n"
-                                "Syntax: %s [-c <configfile>]\n", argv[0]);
+                        printf("i3status " VERSION " © 2008-2010 Michael Stapelberg and contributors\n"
+                                "Syntax: %s [-c <configfile>] [-h] [-v]\n", argv[0]);
+                        return 0;
+                } else if ((char)o == 'v') {
+                        printf("i3status " VERSION " © 2008-2010 Michael Stapelberg and contributors\n");
                         return 0;
                 }
+
 
         if (configfile == NULL)
                 die("No configuration file found\n");
