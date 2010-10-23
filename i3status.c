@@ -117,9 +117,14 @@ static char *resolve_tilde(const char *path) {
 }
 
 static char *get_config_path() {
-        /* 1: check for $XDG_CONFIG_HOME/i3/config */
         char *xdg_config_home, *xdg_config_dirs, *config_path;
 
+        /* 1: check the traditional path under the home directory */
+        config_path = resolve_tilde("~/.i3status.conf");
+        if (path_exists(config_path))
+                return config_path;
+
+        /* 2: check for $XDG_CONFIG_HOME/i3status/config */
         if ((xdg_config_home = getenv("XDG_CONFIG_HOME")) == NULL)
                 xdg_config_home = "~/.config";
 
@@ -132,7 +137,12 @@ static char *get_config_path() {
                 return config_path;
         free(config_path);
 
-        /* 2: check for $XDG_CONFIG_DIRS/i3/config */
+        /* 3: check the traditional path under /etc */
+        config_path = SYSCONFDIR "/i3status.conf";
+        if (path_exists(config_path))
+            return sstrdup(config_path);
+
+        /* 4: check for $XDG_CONFIG_DIRS/i3status/config */
         if ((xdg_config_dirs = getenv("XDG_CONFIG_DIRS")) == NULL)
                 xdg_config_dirs = "/etc/xdg";
 
@@ -152,18 +162,10 @@ static char *get_config_path() {
         }
         free(buf);
 
-        /* 3: check traditional paths */
-        config_path = resolve_tilde("~/.i3status.conf");
-        if (path_exists(config_path))
-                return config_path;
-
-        config_path = strdup(SYSCONFDIR "/i3status.conf");
-        if (!path_exists(config_path))
-                die("Neither $XDG_CONFIG_HOME/i3status/config, nor "
-                    "$XDG_CONFIG_DIRS/i3status/config, nor ~/.i3status.conf nor "
-                    SYSCONFDIR "/i3status.conf exist.");
-
-        return config_path;
+        die("Unable to find the configuration file (looked at "
+                "~/.i3status/config, $XDG_CONFIG_HOME/i3status/config, "
+                "/etc/i3status/config and $XDG_CONFIG_DIRS/i3status/config)");
+        return NULL;
 }
 
 int main(int argc, char *argv[]) {
