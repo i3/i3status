@@ -58,6 +58,8 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
                         remaining = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
                         present_rate = atoi(walk+1);
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
+                        present_rate = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
                         status = CS_CHARGING;
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
