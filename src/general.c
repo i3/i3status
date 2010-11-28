@@ -13,7 +13,7 @@
  * Reads size bytes into the destination buffer from filename.
  *
  */
-bool slurp(char *filename, char *destination, int size) {
+bool slurp(const char *filename, char *destination, int size) {
         int fd;
 
         if ((fd = open(filename, O_RDONLY)) == -1)

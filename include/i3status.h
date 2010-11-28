@@ -51,7 +51,7 @@ typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 void die(const char *fmt, ...);
-bool slurp(char *filename, char *destination, int size);
+bool slurp(const char *filename, char *destination, int size);
 
 /* src/output.c */
 void print_seperator();
