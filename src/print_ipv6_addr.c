@@ -70,6 +70,7 @@ static char *get_ipv6_addr() {
 
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_INET6;
+        hints.ai_socktype = SOCK_DGRAM;
 
         /* We resolve the K root server to get a public IPv6 address. You can
          * replace this with any other host which has an AAAA record, but the
@@ -83,7 +84,11 @@ static char *get_ipv6_addr() {
 
         for (resp = result; resp != NULL; resp = resp->ai_next) {
                 char *addr_string = get_sockname(resp);
-                if (!addr_string)
+                /* If we could not get our own address and there is more than
+                 * one result for resolving k.root-servers.net, we cannot
+                 * cache. Otherwise, no matter if we got IPv6 connectivity or
+                 * not, we will cache the (single) result and are done. */
+                if (!addr_string && result->ai_next != NULL)
                         continue;
 
                 if ((cached = malloc(sizeof(struct addrinfo))) == NULL)
