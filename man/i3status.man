@@ -68,7 +68,8 @@ wireless wlan0 {
 
 ethernet eth0 {
         # if you use %speed, i3status requires the cap_net_admin capability
-        format = "E: %ip (%speed)"
+        format_up = "E: %ip (%speed)"
+        format_down = "E: down"
 }
 
 battery 0 {
