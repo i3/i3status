@@ -226,6 +226,11 @@ int main(int argc, char *argv[]) {
                 CFG_STR("format", "%5min %10min %15min", CFGF_NONE),
                 CFG_END()
         };
+        
+        cfg_opt_t usage_opts[] = {
+                CFG_STR("format", "%usage", CFGF_NONE),
+                CFG_END()
+        };
 
         cfg_opt_t temp_opts[] = {
                 CFG_STR("format", "%degrees C", CFGF_NONE),
@@ -260,6 +265,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("time", time_opts, CFGF_NONE),
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
+                CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
                 CFG_END()
         };
 
@@ -370,6 +376,9 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("cpu_temperature")
                                 print_cpu_temperature_info(atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"));
+                        
+                        CASE_SEC("cpu_usage")
+                                print_cpu_usage(cfg_getstr(sec, "format"));
                 }
                 printf("\n");
                 fflush(stdout);
