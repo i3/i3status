@@ -164,15 +164,10 @@ int format_output(char *format, struct disc_time *dt) {
 }
 
 /* Get the current date and convert it to discordian */
-struct disc_time *get_ddate() {
-        time_t current_time;
-        struct tm *current_tm;
+struct disc_time *get_ddate(struct tm *current_tm) {
         static struct disc_time dt;
 
-        if ((current_time = time(NULL)) == (time_t)-1)
-                return NULL;
-
-        if ((current_tm = localtime(&current_time)) == NULL)
+        if (current_tm == NULL)
                 return NULL;
 
         /* We have to know, whether we have to insert St. Tib's Day, so whether it's a leap
@@ -197,10 +192,10 @@ struct disc_time *get_ddate() {
         return &dt;
 }
 
-void print_ddate(const char *format) {
+void print_ddate(const char *format, struct tm *current_tm) {
         static char *form = NULL;
         struct disc_time *dt;
-        if ((dt = get_ddate()) == NULL)
+        if ((dt = get_ddate(current_tm)) == NULL)
                 return;
         if (form == NULL)
                 if ((form = malloc(strlen(format) + 1)) == NULL)

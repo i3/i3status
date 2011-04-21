@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) {
                                 print_time(cfg_getstr(sec, "format"), current_tm);
 
                         CASE_SEC("ddate")
-                                print_ddate(cfg_getstr(sec, "format"));
+                                print_ddate(cfg_getstr(sec, "format"), current_tm);
 
                         CASE_SEC_TITLE("volume")
                                 print_volume(cfg_getstr(sec, "format"),
