@@ -321,11 +321,14 @@ int main(int argc, char *argv[]) {
 
         int interval = cfg_getint(cfg_general, "interval");
 
+        struct tm tm;
         while (1) {
                 time_t current_time = time(NULL);
                 struct tm *current_tm = NULL;
-                if (current_time != (time_t) -1)
-                        current_tm = localtime(&current_time);
+                if (current_time != (time_t) -1) {
+                        localtime_r(&current_time, &tm);
+                        current_tm = &tm;
+                }
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();
