@@ -3,14 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void print_time(const char *format) {
+void print_time(const char *format, struct tm *current_tm) {
         static char part[512];
         /* Get date & time */
-        time_t current_time = time(NULL);
-        if (current_time == (time_t) -1) {
-                return;
-        }
-        struct tm *current_tm = localtime(&current_time);
         if (current_tm == NULL) {
                 return;
         }

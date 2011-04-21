@@ -322,6 +322,10 @@ int main(int argc, char *argv[]) {
         int interval = cfg_getint(cfg_general, "interval");
 
         while (1) {
+                time_t current_time = time(NULL);
+                struct tm *current_tm = NULL;
+                if (current_time != (time_t) -1)
+                        current_tm = localtime(&current_time);
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();
@@ -350,7 +354,7 @@ int main(int argc, char *argv[]) {
                                 print_load(cfg_getstr(sec, "format"));
 
                         CASE_SEC("time")
-                                print_time(cfg_getstr(sec, "format"));
+                                print_time(cfg_getstr(sec, "format"), current_tm);
 
                         CASE_SEC("ddate")
                                 print_ddate(cfg_getstr(sec, "format"));
@@ -371,9 +375,9 @@ int main(int argc, char *argv[]) {
                  * we don’t use sleep(interval) but we sleep until the next
                  * second (with microsecond precision) plus (interval-1)
                  * seconds. */
-                struct timeval current_time;
-                gettimeofday(&current_time, NULL);
-                struct timespec ts = {interval - 1, (10e5 - current_time.tv_usec) * 1000};
+                struct timeval current_timeval;
+                gettimeofday(&current_timeval, NULL);
+                struct timespec ts = {interval - 1, (10e5 - current_timeval.tv_usec) * 1000};
                 nanosleep(&ts, NULL);
         }
 }

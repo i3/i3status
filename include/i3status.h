@@ -5,6 +5,7 @@ enum { O_DZEN2, O_XMOBAR, O_NONE } output_format;
 
 #include <stdbool.h>
 #include <confuse.h>
+#include <time.h>
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -61,7 +62,7 @@ char *endcolor() __attribute__ ((pure));
 void print_ipv6_info(const char *format_up, const char *format_down);
 void print_disk_info(const char *path, const char *format);
 void print_battery_info(int number, const char *format, bool last_full_capacity);
-void print_time(const char *format);
+void print_time(const char *format, struct tm *current_tm);
 void print_ddate(const char *format);
 const char *get_ip_addr();
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down);
