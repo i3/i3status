@@ -200,6 +200,14 @@ Gets the temperature of the given thermal zone.
 
 *Example format*: +T: %degrees °C+
 
+=== CPU Usage
+
+Gets the percentual CPU usage from +/proc/stat+.
+
+*Example order*: +cpu_usage+
+
+*Example format*: +%usage+
+
 === Load
 
 Gets the system load (number of processes waiting for CPU time in the last

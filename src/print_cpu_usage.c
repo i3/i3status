@@ -14,7 +14,7 @@ static int prev_idle  = 0;
  * percentage.
  *
  */
-void print_cpu_usage(const char *format) { 
+void print_cpu_usage(const char *format) {
         const char *walk;
         char buf[1024];
         int curr_user, curr_nice, curr_system, curr_idle, curr_total;
