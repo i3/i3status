@@ -112,7 +112,10 @@ the +colors+ directive. The input format for color values is the canonical RGB
 hexadecimal triplet (with no separators between the colors), prefixed by a hash
 character ("#").
 
-*Example color_good*: +#00FF00+
+*Example configuration*:
+-------------------------------------------------------------
+color_good = "#00FF00"
+-------------------------------------------------------------
 
 Likewise, you can use the +color_separator+ directive to specify the color that
 will be used to paint the separator bar. The separator is always output in
