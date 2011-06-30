@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <sys/time.h>
+#include <locale.h>
 
 #include "i3status.h"
 
@@ -282,6 +283,9 @@ int main(int argc, char *argv[]) {
         memset(&action, 0, sizeof(struct sigaction));
         action.sa_handler = sigpipe;
         sigaction(SIGPIPE, &action, NULL);
+
+        if (setlocale(LC_ALL, "") == NULL)
+                die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.");
 
         while ((o = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1)
                 if ((char)o == 'c')
