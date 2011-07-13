@@ -4,8 +4,8 @@ Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
 Build-Depends: debhelper (>= 5), libiw-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libconfuse-dev, asciidoc, xmlto, libcap2-bin, libasound2-dev
-Standards-Version: 3.9.1
-Homepage: http://i3.zekjur.net/i3status
+Standards-Version: 3.9.2
+Homepage: http://i3wm.org/i3status
 
 Package: i3status
 Architecture: any
@@ -13,7 +13,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: dzen2 | xmobar, libcap2-bin
 Enhances: dzen2, xmobar
 Description: Generates a status line for dzen2 or xmobar
- i3status is a small program (less than 1000 SLOC) for generating a status bar
- for dzen2, xmobar or similar programs by combining several information about
- your system (IP addresses of your interfaces, load, current date/time, ESSID
- of the network you are associated to, disk status, and so on).
+ i3status is a small (about 1500 SLOC) and light-weight program for generating
+ a status bar for i3bar, dzen2, xmobar or similar programs by combining several
+ information about your system (IP addresses of your interfaces, load, current
+ date/time, ESSID of the network you are associated to, disk status, and so on).

@@ -6,3 +6,7 @@ set -e
 # issue as i3status only queries the speed, it does not change any
 # configuration.
 setcap cap_net_admin=ep /usr/bin/i3status || true
+
+#DEBHELPER#
+
+exit 0

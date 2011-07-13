@@ -1,3 +1,18 @@
+i3status (2.3-1) unstable; urgency=low
+
+  * config search order is now ~/.i3status.conf, ~/.config/i3status/config,
+    /etc/i3status/config, then /etc/xdg/i3status/config
+  * battery: use POWER_NOW if CURRENT_NOW is not available (linux >= 2.6.36)
+  * use kill(0, pid) instead of /proc to check if a process is alive
+  * cache DNS query results also if there is no IPv6 connectivity
+  * implement the 'path' option for cpu_temperature
+  * add cpu_usage module
+  * automatically detect the output format unless configured specifically
+  * Bugfix: get time at the beginning of the loop
+  * Bugfix: respect locale settings (for %c in date format)
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Wed, 13 Jul 2011 16:25:53 +0200
+
 i3status (2.2-1) unstable; urgency=low
 
   * Implement a discordian date module (like ddate(1))
