@@ -19,7 +19,9 @@ bool slurp(const char *filename, char *destination, int size) {
         if ((fd = open(filename, O_RDONLY)) == -1)
                 return false;
 
-        (void)read(fd, destination, size);
+        int n = read(fd, destination, size);
+        if (n != -1)
+                destination[n] = '\0';
         (void)close(fd);
 
         return true;
