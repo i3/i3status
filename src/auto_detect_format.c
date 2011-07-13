@@ -74,6 +74,19 @@ char *auto_detect_format() {
     if (!parentname)
         goto out;
 
+    /* Some shells, for example zsh, open a pipe in a way which will make the
+     * pipe target the parent process of i3status. If we detect that, we set
+     * the format and we are done. */
+    if (strcasecmp(parentname, "i3bar") == 0)
+        format = "none";
+    else if (strcasecmp(parentname, "dzen2") == 0)
+        format = "dzen2";
+    else if (strcasecmp(parentname, "xmobar") == 0)
+        format = "xmobar";
+
+    if (format)
+        goto out;
+
     rewinddir(dir);
 
     while ((entry = readdir(dir)) != NULL) {
