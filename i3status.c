@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
         unsigned int j;
 
         cfg_opt_t general_opts[] = {
-                CFG_STR("output_format", "dzen2", CFGF_NONE),
+                CFG_STR("output_format", "auto", CFGF_NONE),
                 CFG_BOOL("colors", 1, CFGF_NONE),
                 CFG_STR("color_good", "#00FF00", CFGF_NONE),
                 CFG_STR("color_degraded", "#FFFF00", CFGF_NONE),
@@ -312,6 +312,17 @@ int main(int argc, char *argv[]) {
                 die("Could not get section \"general\"\n");
 
         char *output_str = cfg_getstr(cfg_general, "output_format");
+        if (strcasecmp(output_str, "auto") == 0) {
+                fprintf(stderr, "i3status: trying to auto-detect output_format setting\n");
+                output_str = auto_detect_format();
+                if (!output_str) {
+                        output_str = "none";
+                        fprintf(stderr, "i3status: falling back to \"none\"\n");
+                } else {
+                        fprintf(stderr, "i3status: auto-detected \"%s\"\n", output_str);
+                }
+        }
+
         if (strcasecmp(output_str, "dzen2") == 0)
                 output_format = O_DZEN2;
         else if (strcasecmp(output_str, "xmobar") == 0)
