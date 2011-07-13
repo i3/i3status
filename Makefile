@@ -13,22 +13,23 @@ CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
-CFLAGS+=-DSYSCONFDIR=\"$(SYSCONFDIR)\"
-CFLAGS+=-DVERSION=\"${GIT_VERSION}\"
+CPPFLAGS+=-DSYSCONFDIR=\"$(SYSCONFDIR)\"
+CPPFLAGS+=-DVERSION=\"${GIT_VERSION}\"
 CFLAGS+=-Iinclude
-LDFLAGS+=-lconfuse
+LIBS+=-lconfuse
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
 
 ifeq ($(shell uname),Linux)
-CFLAGS+=-DLINUX
-CFLAGS+=-D_GNU_SOURCE
-LDFLAGS+=-liw -lasound
+CPPFLAGS+=-DLINUX
+CPPFLAGS+=-D_GNU_SOURCE
+LIBS+=-liw
+LIBS+=-lasound
 endif
 
 ifeq ($(shell uname),GNU/kFreeBSD)
-CFLAGS+=-lbsd
+LIBS+=-lbsd
 endif
 
 CFLAGS+=$(EXTRA_CFLAGS)
@@ -37,17 +38,17 @@ OBJS:=$(wildcard src/*.c *.c)
 OBJS:=$(OBJS:.c=.o)
 
 src/%.o: src/%.c
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
 
-%.o: %.c %.h
-	@$(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c include/%.h
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
 
 all: i3status manpage
 
 i3status: ${OBJS}
-	@$(CC) -o $@ src/*.o *.o $(LDFLAGS)
+	@$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	@echo " LD $@"
 
 clean:
@@ -57,7 +58,7 @@ distclean: clean
 	rm -f i3status
 
 manpage:
-	make -C man
+	$(MAKE) -C man
 
 install:
 	install -m 755 -d $(DESTDIR)/usr/bin
