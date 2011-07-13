@@ -136,6 +136,9 @@ char *auto_detect_format() {
     }
 
 out:
+    if (parentname)
+        free(parentname);
+
     closedir(dir);
 
     return format;
