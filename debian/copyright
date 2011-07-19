@@ -1,7 +1,7 @@
 This Debian package is based on a tarball downloaded from
-http://i3.zekjur.net/i3status
+http://i3wm.org/i3status
 
-Copyright: (C) 2008 Michael Stapelberg <michael+i3status at stapelberg dot de>
+Copyright: (C) 2008-2011 Michael Stapelberg <michael+i3status at stapelberg dot de>
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
