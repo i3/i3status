@@ -1,7 +1,7 @@
 i3status(1)
 ===========
 Michael Stapelberg <michael+i3@stapelberg.de>
-v2.2, September 2010
+v2.3, July 2011
 
 == NAME
 
@@ -24,12 +24,13 @@ configuration files in the following order:
 
 == DESCRIPTION
 
-i3status is a small program (less than 1000 SLOC) for generating a status bar
-for dzen2, xmobar or similar programs. It is designed to be very efficient by
-issuing a very small number of system calls, as one generally wants to update
-such a status line every second. This ensures that even under high load, your
-status bar is updated correctly. Also, it saves a bit of energy by not hogging
-your CPU as much as spawning the corresponding amount of shell commands would.
+i3status is a small program (about 1500 SLOC) for generating a status bar for
+i3bar, dzen2, xmobar or similar programs. It is designed to be very
+efficient by issuing a very small number of system calls, as one generally
+wants to update such a status line every second. This ensures that even under
+high load, your status bar is updated correctly. Also, it saves a bit of energy
+by not hogging your CPU as much as spawning the corresponding amount of shell
+commands would.
 
 == CONFIGURATION
 
@@ -135,7 +136,8 @@ xmobar::
 xmobar is a minimalistic, text based, status bar. It was designed to work
 with the xmonad Window Manager.
 none::
-Does not use any color codes. Separates values by the pipe symbol.
+Does not use any color codes. Separates values by the pipe symbol. This should
+be used with i3bar and can be used for custom scripts.
 
 === IPv6
 
@@ -290,3 +292,7 @@ Michael Stapelberg and contributors
 Thorsten Toepper
 
 Baptiste Daroussin
+
+Axel Wagner
+
+Fernando Tarlá Cardoso Lemos
