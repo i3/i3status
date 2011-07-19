@@ -10,8 +10,9 @@ i3status (2.3-1) unstable; urgency=low
   * automatically detect the output format unless configured specifically
   * Bugfix: get time at the beginning of the loop
   * Bugfix: respect locale settings (for %c in date format)
+  * debian: use [linux-any] in dependencies (Closes: #634491)
 
- -- Michael Stapelberg <michael@stapelberg.de>  Wed, 13 Jul 2011 16:25:53 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Tue, 19 Jul 2011 15:35:30 +0200
 
 i3status (2.2-1) unstable; urgency=low
 
