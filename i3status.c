@@ -291,11 +291,11 @@ int main(int argc, char *argv[]) {
                 if ((char)o == 'c')
                         configfile = optarg;
                 else if ((char)o == 'h') {
-                        printf("i3status " VERSION " © 2008-2010 Michael Stapelberg and contributors\n"
+                        printf("i3status " VERSION " © 2008-2011 Michael Stapelberg and contributors\n"
                                 "Syntax: %s [-c <configfile>] [-h] [-v]\n", argv[0]);
                         return 0;
                 } else if ((char)o == 'v') {
-                        printf("i3status " VERSION " © 2008-2010 Michael Stapelberg and contributors\n");
+                        printf("i3status " VERSION " © 2008-2011 Michael Stapelberg and contributors\n");
                         return 0;
                 }
 
