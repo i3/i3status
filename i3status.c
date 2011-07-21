@@ -344,7 +344,9 @@ int main(int argc, char *argv[]) {
 
         struct tm tm;
         while (1) {
-                time_t current_time = time(NULL);
+                struct timeval tv;
+                gettimeofday(&tv, NULL);
+                time_t current_time = tv.tv_sec;
                 struct tm *current_tm = NULL;
                 if (current_time != (time_t) -1) {
                         localtime_r(&current_time, &tm);
