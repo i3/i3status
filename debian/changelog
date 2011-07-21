@@ -1,5 +1,6 @@
 i3status (2.3-1) unstable; urgency=low
 
+  [ Michael Stapelberg ]
   * config search order is now ~/.i3status.conf, ~/.config/i3status/config,
     /etc/i3status/config, then /etc/xdg/i3status/config
   * battery: use POWER_NOW if CURRENT_NOW is not available (linux >= 2.6.36)
@@ -12,7 +13,10 @@ i3status (2.3-1) unstable; urgency=low
   * Bugfix: respect locale settings (for %c in date format)
   * debian: use [linux-any] in dependencies (Closes: #634491)
 
- -- Michael Stapelberg <michael@stapelberg.de>  Tue, 19 Jul 2011 15:35:30 +0200
+  [ Axel Beckert ]
+  * Fix FTBFS on kfreebsd.
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Thu, 21 Jul 2011 21:22:54 +0200
 
 i3status (2.2-1) unstable; urgency=low
 

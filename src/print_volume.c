@@ -27,19 +27,17 @@ struct mixer_hdl {
 };
 
 TAILQ_HEAD(handles_head, mixer_hdl) cached = TAILQ_HEAD_INITIALIZER(cached);
-#endif
 
 static void free_hdl(struct mixer_hdl *hdl) {
 	free(hdl->device);
 	free(hdl->mixer);
 	free(hdl);
 }
+#endif
 
 void print_volume(const char *fmt, const char *device, const char *mixer, int mixer_idx) {
 /* Printing volume only works with ALSA at the moment */
-#ifndef LINUX
-	return;
-#endif
+#ifdef LINUX
 	/* Check if we already opened the mixer and get the handle
 	 * from cache if so */
 	bool found = false;
@@ -151,4 +149,5 @@ void print_volume(const char *fmt, const char *device, const char *mixer, int mi
 			walk += strlen("volume");
 		}
 	}
+#endif
 }

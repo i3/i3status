@@ -4,6 +4,8 @@
 
 #ifdef LINUX
 #include <iwlib.h>
+#else
+#define IW_ESSID_MAX_SIZE 32
 #endif
 
 #include "i3status.h"
@@ -140,6 +142,7 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
         close(skfd);
         return 1;
 #endif
+	return 0;
 }
 
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down) {
@@ -216,6 +219,7 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                         walk += strlen("ip");
                 }
 
+#ifdef LINUX
                 if (BEGINS_WITH(walk+1, "bitrate")) {
                         char buffer[128];
 
@@ -224,6 +228,7 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                         printf("%s", buffer);
                         walk += strlen("bitrate");
                 }
+#endif
         }
 
         (void)printf("%s", endcolor());
