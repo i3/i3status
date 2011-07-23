@@ -1,9 +1,9 @@
 i3status (2.3-2) unstable; urgency=low
 
   [ Axel Beckert ]
-  * Fix missing build-dependency on kfreebsd.
+  * Fix missing build-dependency on kfreebsd (Closes: #635104).
 
- -- Michael Stapelberg <michael@stapelberg.de>  Fri, 22 Jul 2011 01:35:42 +0200
+ -- Michael Stapelberg <michael@stapelberg.de>  Sat, 23 Jul 2011 18:28:59 +0200
 
 i3status (2.3-1) unstable; urgency=low
 
