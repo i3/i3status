@@ -5,7 +5,22 @@
 #ifdef LINUX
 #include <iwlib.h>
 #else
+#ifndef __FreeBSD__
 #define IW_ESSID_MAX_SIZE 32
+#endif
+#endif
+
+#ifdef __FreeBSD__
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <net/if_media.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
+#include <unistd.h>
+#define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
 #endif
 
 #include "i3status.h"
@@ -140,6 +155,67 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
                 info->bitrate = wrq.u.bitrate.value;
 
         close(skfd);
+        return 1;
+#endif
+#ifdef __FreeBSD__
+        int s, len, inwid;
+        uint8_t buf[24 * 1024], *cp;
+        struct ieee80211req na;
+        char network_id[IEEE80211_NWID_LEN + 1];
+
+        if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+                return (0);
+
+        memset(&na, 0, sizeof(na));
+        strlcpy(na.i_name, interface, sizeof(na.i_name));
+        na.i_type = IEEE80211_IOC_SSID;
+        na.i_data = &info->essid[0];
+        na.i_len = IEEE80211_NWID_LEN + 1;
+        if ((inwid = ioctl(s, SIOCG80211, (caddr_t)&na)) == -1) {
+                close(s);
+                return (0);
+        }
+        if (inwid == 0) {
+                if (na.i_len <= IEEE80211_NWID_LEN)
+                        len = na.i_len + 1;
+                else
+                        len = IEEE80211_NWID_LEN + 1;
+                info->essid[len -1] = '\0';
+        } else {
+                close(s);
+                return (0);
+        }
+        info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
+
+        memset(&na, 0, sizeof(na));
+        strlcpy(na.i_name, interface, sizeof(na.i_name));
+        na.i_type = IEEE80211_IOC_SCAN_RESULTS;
+        na.i_data = buf;
+        na.i_len = sizeof(buf);
+
+        if (ioctl(s, SIOCG80211, (caddr_t)&na) == -1) {
+                printf("fail\n");
+                close(s);
+                return (0);
+        }
+
+        close(s);
+        len = na.i_len;
+        cp = buf;
+        struct ieee80211req_scan_result *sr;
+        uint8_t *vp;
+        sr = (struct ieee80211req_scan_result *)cp;
+        vp = (u_int8_t *)(sr + 1);
+        strlcpy(network_id, (const char *)vp, sr->isr_ssid_len + 1);
+        if (!strcmp(network_id, &info->essid[0])) {
+                info->signal_level = sr->isr_rssi;
+                info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+                info->noise_level = sr->isr_noise;
+                info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
+                info->quality = sr->isr_intval;
+                info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
+        }
+
         return 1;
 #endif
 	return 0;
