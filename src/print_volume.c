@@ -9,6 +9,12 @@
 #include <alloca.h>
 #endif
 
+#ifdef __FreeBSD__
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/soundcard.h>
+#endif
+
 #include "i3status.h"
 #include "queue.h"
 
@@ -149,5 +155,29 @@ void print_volume(const char *fmt, const char *device, const char *mixer, int mi
 			walk += strlen("volume");
 		}
 	}
+#endif
+#ifdef __FreeBSD__
+        char mixerpath[] = "/dev/mixer";
+        int mixfd, vol, devmask = 0;
+
+        if ((mixfd = open(mixerpath, O_RDWR)) < 0)
+                return;
+        if (ioctl(mixfd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1)
+                return;
+        if (ioctl(mixfd, MIXER_READ(0),&vol) == -1)
+                return;
+
+        const char *walk = fmt;
+        for (; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        putchar(*walk);
+                        continue;
+                }
+                if (BEGINS_WITH(walk+1, "volume")) {
+                        printf("%d%%", vol & 0x7f);
+                        walk += strlen("volume");
+                }
+        }
+        close(mixfd);
 #endif
 }
