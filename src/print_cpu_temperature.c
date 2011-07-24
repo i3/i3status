@@ -22,6 +22,7 @@ static char *thermal_zone;
  *
  */
 void print_cpu_temperature_info(int zone, const char *path, const char *format) {
+#ifdef THERMAL_ZONE
         const char *walk;
         static char buf[16];
 
@@ -59,4 +60,5 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
                         walk += strlen("degrees");
                 }
         }
+#endif
 }
