@@ -23,7 +23,7 @@ static int prev_idle  = 0;
 void print_cpu_usage(const char *format) {
         const char *walk;
         char buf[1024];
-        int curr_user, curr_nice, curr_system, curr_idle, curr_total;
+        int curr_user = 0, curr_nice = 0, curr_system = 0, curr_idle = 0, curr_total;
         int diff_idle, diff_total, diff_usage;
 
 #if defined(LINUX)
