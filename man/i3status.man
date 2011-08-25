@@ -281,6 +281,21 @@ is set to +xmobar+.
 i3status | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
 ---------------------------------------------------------------------
 
+== External scripts/programs with i3status
+
+In i3status, we don’t want to implement process management again. Therefore,
+there is no module to run arbitrary scripts or commands. Instead, you should
+use your shell, for example like this:
+
+*Example for prepending the i3status output*:
+--------------------------------------------------------------
+i3status | while [ 1 ]
+do
+	read line
+	echo "mystuff | $line"
+done | i3bar -d
+--------------------------------------------------------------
+
 == SEE ALSO
 
 +strftime(3)+, +date(1)+, +glob(3)+, +dzen2(1)+, +xmobar(1)+
