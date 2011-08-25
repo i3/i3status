@@ -1,6 +1,5 @@
 // vim:ts=8:expandtab
 #include "i3status.h"
-#include <err.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,7 +11,7 @@ void print_load(const char *format) {
         const char *walk;
 
         if (getloadavg(loadavg, 3) == -1)
-                errx(-1, "getloadavg() failed\n");
+                goto error;
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -35,5 +34,8 @@ void print_load(const char *format) {
                         walk += strlen("15min");
                 }
         }
+        return;
+error:
 #endif
+        (void)fputs("Cannot read load\n", stderr);
 }

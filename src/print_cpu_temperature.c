@@ -41,7 +41,7 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
 #if defined(LINUX)
                         long int temp;
                         if (!slurp(path, buf, sizeof(buf)))
-                                die("Could not open \"%s\"\n", path);
+                                goto error;
                         temp = strtol(buf, NULL, 10);
                         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
                                 (void)printf("?");
@@ -50,15 +50,16 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
                         int sysctl_rslt;
                         size_t sysctl_size = sizeof(sysctl_rslt);
-                        if (sysctlbyname(path, &sysctl_rslt, &sysctl_size, NULL, 0)) {
-                                (void)printf("No thermal zone found");
-                                return;
-                        }
+                        if (sysctlbyname(path, &sysctl_rslt, &sysctl_size, NULL, 0))
+                                goto error;
 
                         (void)printf("%d.%d", TZ_KELVTOC(sysctl_rslt));
 #endif
                         walk += strlen("degrees");
                 }
         }
+        return;
+error:
 #endif
+        (void)fputs("Cannot read temperature\n", stderr);
 }

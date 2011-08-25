@@ -29,11 +29,9 @@ void print_cpu_usage(const char *format) {
 #if defined(LINUX)
         static char statpath[512];
         strcpy(statpath, "/proc/stat");
-        if (!slurp(statpath, buf, sizeof(buf)))
-                die("could not read %s\n", statpath);
-
-        if (sscanf(buf, "cpu %d %d %d %d", &curr_user, &curr_nice, &curr_system, &curr_idle) != 4)
-                die("could not read cpu utilization\n");
+        if (!slurp(statpath, buf, sizeof(buf) ||
+            sscanf(buf, "cpu %d %d %d %d", &curr_user, &curr_nice, &curr_system, &curr_idle) != 4))
+                goto error;
 
         curr_total = curr_user + curr_nice + curr_system + curr_idle;
         diff_idle  = curr_idle - prev_idle;
@@ -41,14 +39,13 @@ void print_cpu_usage(const char *format) {
         diff_usage = (1000 * (diff_total - diff_idle)/diff_total + 5)/10;
         prev_total = curr_total;
         prev_idle  = curr_idle;
-#endif
-#if defined(__FreeBSD__)
+#elif defined(__FreeBSD__)
         size_t size;
         long cp_time[CPUSTATES];
         size = sizeof cp_time;
-        if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
-                return;
-        }
+        if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0)
+                goto error;
+
         curr_user = cp_time[CP_USER];
         curr_nice = cp_time[CP_NICE];
         curr_system = cp_time[CP_SYS];
@@ -59,7 +56,8 @@ void print_cpu_usage(const char *format) {
         diff_usage = (1000 * (diff_total - diff_idle)/diff_total + 5)/10;
         prev_total = curr_total;
         prev_idle  = curr_idle;
-
+#else
+        goto error;
 #endif
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -72,4 +70,7 @@ void print_cpu_usage(const char *format) {
                         walk += strlen("usage");
                 }
         }
+        return;
+error:
+        (void)fputs("Cannot read usage\n", stderr);
 }
