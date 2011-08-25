@@ -289,7 +289,7 @@ use your shell, for example like this:
 
 *Example for prepending the i3status output*:
 --------------------------------------------------------------
-i3status | while [ 1 ]
+i3status | while :
 do
 	read line
 	echo "mystuff | $line"
