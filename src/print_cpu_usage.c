@@ -29,8 +29,8 @@ void print_cpu_usage(const char *format) {
 #if defined(LINUX)
         static char statpath[512];
         strcpy(statpath, "/proc/stat");
-        if (!slurp(statpath, buf, sizeof(buf) ||
-            sscanf(buf, "cpu %d %d %d %d", &curr_user, &curr_nice, &curr_system, &curr_idle) != 4))
+        if (!slurp(statpath, buf, sizeof(buf)) ||
+            sscanf(buf, "cpu %d %d %d %d", &curr_user, &curr_nice, &curr_system, &curr_idle) != 4)
                 goto error;
 
         curr_total = curr_user + curr_nice + curr_system + curr_idle;
