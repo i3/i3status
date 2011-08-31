@@ -61,14 +61,14 @@ manpage:
 	$(MAKE) -C man
 
 install:
-	install -m 755 -d $(DESTDIR)$(PREFIX)/usr/bin
-	install -m 755 -d $(DESTDIR)$(PREFIX)/etc
-	install -m 755 -d $(DESTDIR)$(PREFIX)/usr/share/man/man1
-	install -m 755 i3status $(DESTDIR)$(PREFIX)/usr/bin/i3status
+	install -m 755 -d $(DESTDIR)$(PREFIX)/bin
+	install -m 755 -d $(DESTDIR)$(SYSCONFDIR)
+	install -m 755 -d $(DESTDIR)$(PREFIX)/share/man/man1
+	install -m 755 i3status $(DESTDIR)$(PREFIX)/bin/i3status
 	# Allow network configuration for getting the link speed
-	(which setcap && setcap cap_net_admin=ep $(DESTDIR)$(PREFIX)/usr/bin/i3status) || true
-	install -m 644 i3status.conf $(DESTDIR)$(PREFIX)/etc/i3status.conf
-	install -m 644 man/i3status.1 $(DESTDIR)$(PREFIX)/usr/share/man/man1
+	(which setcap && setcap cap_net_admin=ep $(DESTDIR)$(PREFIX)/bin/i3status) || true
+	install -m 644 i3status.conf $(DESTDIR)$(SYSCONFDIR)/i3status.conf
+	install -m 644 man/i3status.1 $(DESTDIR)$(PREFIX)/share/man/man1
 
 release:
 	[ -f i3status-${VERSION} ] || rm -rf i3status-${VERSION}
