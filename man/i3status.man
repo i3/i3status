@@ -220,7 +220,7 @@ Gets the system load (number of processes waiting for CPU time in the last
 
 *Example order*: +load+
 
-*Example format*: +%5min %10min %15min+
+*Example format*: +%1min %5min %15min+
 
 === Time
 
