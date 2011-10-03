@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t load_opts[] = {
-                CFG_STR("format", "%5min %10min %15min", CFGF_NONE),
+                CFG_STR("format", "%1min %5min %15min", CFGF_NONE),
                 CFG_END()
         };
 

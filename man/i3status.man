@@ -216,7 +216,7 @@ Gets the percentual CPU usage from +/proc/stat+.
 === Load
 
 Gets the system load (number of processes waiting for CPU time in the last
-5, 10 and 15 minutes).
+1, 5 and 15 minutes).
 
 *Example order*: +load+
 
