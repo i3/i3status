@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t opts[] = {
-                CFG_STR_LIST("order", "{ipv6,\"run_watch DHCP\",\"wireless wlan0\",\"ethernet eth0\",\"battery 0\",\"cpu_temperature 0\",load,time}", CFGF_NONE),
+                CFG_STR_LIST("order", "{}", CFGF_NONE),
                 CFG_SEC("general", general_opts, CFGF_NONE),
                 CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
@@ -306,6 +306,9 @@ int main(int argc, char *argv[]) {
         cfg = cfg_init(opts, CFGF_NONE);
         if (cfg_parse(cfg, configfile) == CFG_PARSE_ERROR)
                 return EXIT_FAILURE;
+
+        if (cfg_size(cfg, "order") == 0)
+                die("Your 'order' array is empty. Please fix your config.\n");
 
         cfg_general = cfg_getsec(cfg, "general");
         if (cfg_general == NULL)
