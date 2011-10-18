@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
         if (configfile == NULL)
                 configfile = get_config_path();
 
-        cfg = cfg_init(opts, CFGF_NONE);
+        cfg = cfg_init(opts, CFGF_NOCASE);
         if (cfg_parse(cfg, configfile) == CFG_PARSE_ERROR)
                 return EXIT_FAILURE;
 
