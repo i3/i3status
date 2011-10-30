@@ -289,12 +289,17 @@ use your shell, for example like this:
 
 *Example for prepending the i3status output*:
 --------------------------------------------------------------
+#!/bin/sh
+# shell script to prepend i3status with more stuff
+
 i3status | while :
 do
 	read line
 	echo "mystuff | $line"
-done | i3bar -d
+done
 --------------------------------------------------------------
+
+Put that in some script, say +.bin/my_i3status.sh+ and execute that instead of i3status.
 
 == SEE ALSO
 
