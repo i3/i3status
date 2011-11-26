@@ -75,7 +75,7 @@ ethernet eth0 {
 
 battery 0 {
         format = "%status %percentage %remaining"
-	path = "/sys/class/power_supply/BAT%d/uevent"
+        path = "/sys/class/power_supply/BAT%d/uevent"
 }
 
 run_watch DHCP {
