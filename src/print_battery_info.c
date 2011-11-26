@@ -17,7 +17,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(int number, const char *format, bool last_full_capacity) {
+void print_battery_info(int number, const char *path, const char *format, bool last_full_capacity) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -38,7 +38,7 @@ void print_battery_info(int number, const char *format, bool last_full_capacity)
 
 #if defined(LINUX)
         static char batpath[512];
-        sprintf(batpath, "/sys/class/power_supply/BAT%d/uevent", number);
+        sprintf(batpath, path, number);
         if (!slurp(batpath, buf, sizeof(buf))) {
                 printf("No battery");
                 return;

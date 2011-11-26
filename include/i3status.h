@@ -64,7 +64,7 @@ char *auto_detect_format();
 
 void print_ipv6_info(const char *format_up, const char *format_down);
 void print_disk_info(const char *path, const char *format);
-void print_battery_info(int number, const char *format, bool last_full_capacity);
+void print_battery_info(int number, const char *path, const char *format, bool last_full_capacity);
 void print_time(const char *format, struct tm *current_tm);
 void print_ddate(const char *format, struct tm *current_tm);
 const char *get_ip_addr();

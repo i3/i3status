@@ -209,6 +209,7 @@ int main(int argc, char *argv[]) {
 
         cfg_opt_t battery_opts[] = {
                 CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
+                CFG_STR("path", "/sys/class/power_supply/BAT%d/uevent", CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
                 CFG_END()
         };
@@ -371,7 +372,7 @@ int main(int argc, char *argv[]) {
                                 print_eth_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
 
                         CASE_SEC_TITLE("battery")
-                                print_battery_info(atoi(title), cfg_getstr(sec, "format"), cfg_getbool(sec, "last_full_capacity"));
+                                print_battery_info(atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getbool(sec, "last_full_capacity"));
 
                         CASE_SEC_TITLE("run_watch")
                                 print_run_watch(title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"));
