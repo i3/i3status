@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#include <sys/param.h>
+#include <sys/mount.h>
+#endif
+
 
 #include "i3status.h"
 
@@ -39,10 +44,18 @@ static void print_bytes_human(uint64_t bytes) {
  */
 void print_disk_info(const char *path, const char *format) {
         const char *walk;
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+        struct statfs buf;
+
+        if (statfs(path, &buf) == -1)
+                return;
+#else
         struct statvfs buf;
 
         if (statvfs(path, &buf) == -1)
                 return;
+#endif
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
