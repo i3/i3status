@@ -1,3 +1,15 @@
+i3status (2.4-1) unstable; urgency=low
+
+  * Support wifi, cpu usage, volume, disk usage on FreeBSD
+  * Don’t exit, but display an error when CPU temperature/usage/load is not
+    available
+  * manpage: load format is %1min %5min %15min
+  * Don’t use a default order, so that config files can use += everywhere
+  * Interpret configfiles case-insensitive
+  * battery: implement path option for batteries with non-standard paths
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Tue, 27 Dec 2011 00:20:49 +0100
+
 i3status (2.3-2) unstable; urgency=low
 
   [ Axel Beckert ]
