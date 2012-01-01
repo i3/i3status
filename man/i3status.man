@@ -165,6 +165,8 @@ a specific application, such as a VPN client or your DHCP client is running.
 
 *Example order*: +run_watch DHCP+
 
+*Example format*: +%title %status+
+
 === Wireless
 
 Gets the link quality and ESSID of the given wireless network interface. You
