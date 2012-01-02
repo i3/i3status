@@ -165,7 +165,7 @@ a specific application, such as a VPN client or your DHCP client is running.
 
 *Example order*: +run_watch DHCP+
 
-*Example format*: +%title %status+
+*Example format*: +%title: %status+
 
 === Wireless
 
