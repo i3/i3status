@@ -43,6 +43,8 @@ static void free_hdl(struct mixer_hdl *hdl) {
 
 void print_volume(const char *fmt, const char *device, const char *mixer, int mixer_idx) {
 /* Printing volume only works with ALSA at the moment */
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"volume\", \"instance\": \"%s.%s.%d\", \"full_text\":\"", device, mixer, mixer_idx);
 #ifdef LINUX
 	/* Check if we already opened the mixer and get the handle
 	 * from cache if so */
@@ -180,4 +182,6 @@ void print_volume(const char *fmt, const char *device, const char *mixer, int mi
         }
         close(mixfd);
 #endif
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

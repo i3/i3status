@@ -6,7 +6,13 @@ void print_run_watch(const char *title, const char *pidfile, const char *format)
 	bool running = process_runs(pidfile);
 	const char *walk;
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"run_watch\", \"instance\": \"%s\", ", pidfile);
+
 	printf("%s", (running ? color("color_good") : color("color_bad")));
+
+        if (output_format == O_I3BAR)
+                printf("\"full_text\":\"");
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -24,4 +30,7 @@ void print_run_watch(const char *title, const char *pidfile, const char *format)
         }
 
 	printf("%s", endcolor());
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

@@ -6,6 +6,9 @@
 
 void print_load(const char *format) {
 /* Get load */
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"load\", \"full_text\":\"");
+
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun)
         double loadavg[3];
         const char *walk;
@@ -34,6 +37,10 @@ void print_load(const char *format) {
                         walk += strlen("15min");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
+
         return;
 error:
 #endif

@@ -36,6 +36,9 @@ void print_battery_info(int number, const char *path, const char *format, bool l
         memset(remainingbuf, '\0', sizeof(remainingbuf));
         memset(emptytimebuf, '\0', sizeof(emptytimebuf));
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"battery\", \"instance\": \"%s\", \"full_text\":\"", path);
+
 #if defined(LINUX)
         static char batpath[512];
         sprintf(batpath, path, number);
@@ -185,4 +188,7 @@ void print_battery_info(int number, const char *path, const char *format, bool l
                         walk += strlen("emptytime");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

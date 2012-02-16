@@ -78,6 +78,9 @@ void print_eth_info(const char *interface, const char *format_up, const char *fo
         const char *walk;
         const char *ip_address = get_ip_addr(interface);
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"ethernet\", \"instance\": \"%s\", ", interface);
+
         if (ip_address == NULL) {
                 printf("%s", color("color_bad"));
                 printf("%s", format_down);
@@ -86,6 +89,9 @@ void print_eth_info(const char *interface, const char *format_up, const char *fo
         } else {
                 printf("%s", color("color_good"));
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"full_text\":\"");
 
         for (walk = format_up; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -103,4 +109,7 @@ void print_eth_info(const char *interface, const char *format_up, const char *fo
         }
 
         (void)printf("%s", endcolor());
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

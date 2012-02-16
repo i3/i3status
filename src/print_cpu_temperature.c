@@ -31,6 +31,9 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
                 path = thermal_zone;
         }
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"cpu_temperature\", \"instance\": \"%s\", \"full_text\":\"", path);
+
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
                         putchar(*walk);
@@ -58,6 +61,10 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
                         walk += strlen("degrees");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
+
         return;
 error:
 #endif

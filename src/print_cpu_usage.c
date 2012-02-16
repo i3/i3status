@@ -26,6 +26,9 @@ void print_cpu_usage(const char *format) {
         int curr_user = 0, curr_nice = 0, curr_system = 0, curr_idle = 0, curr_total;
         int diff_idle, diff_total, diff_usage;
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"cpu_usage\", \"full_text\":\"");
+
 #if defined(LINUX)
         static char statpath[512];
         strcpy(statpath, "/proc/stat");
@@ -70,6 +73,10 @@ void print_cpu_usage(const char *format) {
                         walk += strlen("usage");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
+
         return;
 error:
         (void)fputs("Cannot read usage\n", stderr);

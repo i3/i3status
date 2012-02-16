@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "i3status.h"
+
 /* define fixed output-Strings */
 char *season_long[5] = {
         "Chaos",
@@ -200,6 +202,10 @@ void print_ddate(const char *format, struct tm *current_tm) {
         if (form == NULL)
                 if ((form = malloc(strlen(format) + 1)) == NULL)
                         return;
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"ddate\", \"full_text\":\"");
         strcpy(form, format);
         format_output(form, dt);
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

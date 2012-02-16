@@ -331,6 +331,8 @@ int main(int argc, char *argv[]) {
                 output_format = O_DZEN2;
         else if (strcasecmp(output_str, "xmobar") == 0)
                 output_format = O_XMOBAR;
+        else if (strcasecmp(output_str, "i3bar") == 0)
+                output_format = O_I3BAR;
         else if (strcasecmp(output_str, "none") == 0)
                 output_format = O_NONE;
         else die("Unknown output format: \"%s\"\n", output_str);
@@ -340,6 +342,12 @@ int main(int argc, char *argv[]) {
                         || !valid_color(cfg_getstr(cfg_general, "color_bad"))
                         || !valid_color(cfg_getstr(cfg_general, "color_separator")))
                die("Bad color format");
+
+        if (output_format == O_I3BAR) {
+                /* Initialize the i3bar protocol. See i3/docs/i3bar-protocol
+                 * for details. */
+                printf("{\"version\":1}\n[\n");
+        }
 
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");
@@ -356,6 +364,8 @@ int main(int argc, char *argv[]) {
                         localtime_r(&current_time, &tm);
                         current_tm = &tm;
                 }
+                if (output_format == O_I3BAR)
+                        printf("[");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();
@@ -401,6 +411,8 @@ int main(int argc, char *argv[]) {
                         CASE_SEC("cpu_usage")
                                 print_cpu_usage(cfg_getstr(sec, "format"));
                 }
+                if (output_format == O_I3BAR)
+                        printf("],");
                 printf("\n");
                 fflush(stdout);
 

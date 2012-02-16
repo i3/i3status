@@ -45,6 +45,9 @@ static void print_bytes_human(uint64_t bytes) {
 void print_disk_info(const char *path, const char *format) {
         const char *walk;
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"disk_info\", \"instance\": \"%s\", \"full_text\":\"", path);
+
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         struct statfs buf;
 
@@ -83,4 +86,7 @@ void print_disk_info(const char *path, const char *format) {
                         walk += strlen("avail");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

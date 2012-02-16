@@ -224,6 +224,9 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
 void print_wireless_info(const char *interface, const char *format_up, const char *format_down) {
         const char *walk;
         wireless_info_t info;
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"wireless\", \"instance\": \"%s\", ", interface);
+
         if (get_wireless_info(interface, &info)) {
                 walk = format_up;
                 if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
@@ -233,6 +236,9 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                 walk = format_down;
                 printf("%s", color("color_bad"));
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"full_text\":\"");
 
         for (; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -308,4 +314,7 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
         }
 
         (void)printf("%s", endcolor());
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

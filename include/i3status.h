@@ -1,7 +1,7 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
-enum { O_DZEN2, O_XMOBAR, O_NONE } output_format;
+enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 
 #include <stdbool.h>
 #include <confuse.h>

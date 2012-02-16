@@ -9,6 +9,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#include "i3status.h"
+
 static char *get_sockname(struct addrinfo *addr) {
         static char buf[INET6_ADDRSTRLEN+1];
         struct sockaddr_storage local;
@@ -111,6 +113,9 @@ void print_ipv6_info(const char *format_up, const char *format_down) {
         const char *walk;
         char *addr_string = get_ipv6_addr();
 
+        if (output_format == O_I3BAR)
+                printf("{\"name\":\"ipv6\", \"full_text\":\"");
+
         if (addr_string == NULL) {
                 printf("%s", format_down);
                 return;
@@ -127,4 +132,7 @@ void print_ipv6_info(const char *format_up, const char *format_down) {
                         walk += strlen("ip");
                 }
         }
+
+        if (output_format == O_I3BAR)
+                printf("\"}");
 }

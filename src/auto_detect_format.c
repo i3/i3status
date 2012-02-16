@@ -78,7 +78,7 @@ char *auto_detect_format() {
      * pipe target the parent process of i3status. If we detect that, we set
      * the format and we are done. */
     if (strcasecmp(parentname, "i3bar") == 0)
-        format = "none";
+        format = "i3bar";
     else if (strcasecmp(parentname, "dzen2") == 0)
         format = "dzen2";
     else if (strcasecmp(parentname, "xmobar") == 0)
@@ -133,7 +133,7 @@ char *auto_detect_format() {
         /* Check for known destination programs and set format */
         char *newfmt = NULL;
         if (strcasecmp(name, "i3bar") == 0)
-            newfmt = "none";
+            newfmt = "i3bar";
         else if (strcasecmp(name, "dzen2") == 0)
             newfmt = "dzen2";
         else if (strcasecmp(name, "xmobar") == 0)
