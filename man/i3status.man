@@ -288,6 +288,39 @@ is set to +xmobar+.
 i3status | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
 ---------------------------------------------------------------------
 
+== What about memory usage or CPU frequency?
+
+While talking about two specific things, please understand this section as a
+general explanation why your favorite information is not included in i3status.
+
+Let’s talk about memory usage specifically. It is hard to measure memory in a
+way which is accurate or meaningful. An in-depth understanding of how paging
+and virtual memory work in your operating system is required. Furthermore, even
+if we had a well-defined way of displaying memory usage and you would
+understand it, I think that it’s not helpful to repeatedly monitor your memory
+usage. One reason for that is that I have not run out of memory in the last few
+years.  Memory has become so cheap that even in my 4 year old notebook, I have
+8 GiB of RAM. Another reason is that your operating system will do the right
+thing anyway: Either you have not enough RAM for your workload, but you need to
+do it anyway, then your operating system will swap. Or you don’t have enough
+RAM and you want to restrict your workload so that it fits, then the operating
+system will kill the process using too much RAM and you can act accordingly.
+
+For CPU frequency, the situation is similar. Many people don’t understand how
+frequency scaling works precisely. The generally recommended CPU frequency
+governor ("ondemand") changes the CPU frequency far more often than i3status
+could display it. The display number is therefore often incorrect and doesn’t
+tell you anything useful either.
+
+In general, i3status wants to display things which you would often look at
+anyways, like the current date/time, whether you are connected to a WiFi
+network or not, and if you have enough disk space to fit that 4.3 GiB download.
+
+However, if you need to look at some kind of information more than once in a
+while (like checking repeatedly how full your RAM is), you are probably better
+of with a script doing that, which pops up an alert when your RAM usage reaches
+a certain threshold.
+
 == External scripts/programs with i3status
 
 In i3status, we don’t want to implement process management again. Therefore,
