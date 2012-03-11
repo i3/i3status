@@ -164,8 +164,8 @@ static char *get_config_path() {
         free(buf);
 
         die("Unable to find the configuration file (looked at "
-                "~/.i3status/config, $XDG_CONFIG_HOME/i3status/config, "
-                "/etc/i3status/config and $XDG_CONFIG_DIRS/i3status/config)");
+                "~/.i3status.conf, $XDG_CONFIG_HOME/i3status/config, "
+                "/etc/i3status.conf and $XDG_CONFIG_DIRS/i3status/config)");
         return NULL;
 }
 
