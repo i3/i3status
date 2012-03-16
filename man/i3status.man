@@ -335,7 +335,7 @@ use your shell, for example like this:
 i3status | while :
 do
 	read line
-	echo "mystuff | $line"
+	echo "mystuff | $line" || exit 1
 done
 --------------------------------------------------------------
 
