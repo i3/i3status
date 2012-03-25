@@ -61,7 +61,7 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 			yajl_gen_string(json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
 			yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text)); \
 		} else { \
-			write(STDOUT_FILENO, text, strlen(text)); \
+			printf("%s", text); \
 		} \
 	} while (0)
 
