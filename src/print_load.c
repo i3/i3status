@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <yajl/yajl_gen.h>
 
-void print_load(const char *format) {
-/* Get load */
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"load\", \"full_text\":\"");
+void print_load(yajl_gen json_gen, char *buffer, const char *format) {
+        char *outwalk = buffer;
+        /* Get load */
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun)
         double loadavg[3];
@@ -18,28 +18,28 @@ void print_load(const char *format) {
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (BEGINS_WITH(walk+1, "1min")) {
-                        (void)printf("%1.2f", loadavg[0]);
+                        outwalk += sprintf(outwalk, "%1.2f", loadavg[0]);
                         walk += strlen("1min");
                 }
 
                 if (BEGINS_WITH(walk+1, "5min")) {
-                        (void)printf("%1.2f", loadavg[1]);
+                        outwalk += sprintf(outwalk, "%1.2f", loadavg[1]);
                         walk += strlen("5min");
                 }
 
                 if (BEGINS_WITH(walk+1, "15min")) {
-                        (void)printf("%1.2f", loadavg[2]);
+                        outwalk += sprintf(outwalk, "%1.2f", loadavg[2]);
                         walk += strlen("15min");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
+        *outwalk = '\0';
+        OUTPUT_FULL_TEXT(buffer);
 
         return;
 error:

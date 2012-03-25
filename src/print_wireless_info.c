@@ -221,40 +221,37 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
 	return 0;
 }
 
-void print_wireless_info(const char *interface, const char *format_up, const char *format_down) {
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
         const char *walk;
+        char *outwalk = buffer;
         wireless_info_t info;
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"wireless\", \"instance\": \"%s\", ", interface);
+
+        INSTANCE(interface);
 
         if (get_wireless_info(interface, &info)) {
                 walk = format_up;
                 if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
-                        printf("%s", info.quality < info.quality_average ? color("color_degraded") : color("color_good"));
+                        START_COLOR((info.quality < info.quality_average ? "color_degraded" : "color_good"));
         }
         else {
                 walk = format_down;
-                printf("%s", color("color_bad"));
+                START_COLOR("color_bad");
         }
-
-        if (output_format == O_I3BAR)
-                printf("\"full_text\":\"");
 
         for (; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (BEGINS_WITH(walk+1, "quality")) {
                         if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
                                 if (info.quality_max)
-                                        printf("%03d%%", PERCENT_VALUE(info.quality, info.quality_max));
+                                        outwalk += sprintf(outwalk, "%03d%%", PERCENT_VALUE(info.quality, info.quality_max));
                                 else
-                                        printf("%d", info.quality);
-                        }
-                        else {
-                                printf("no value");
+                                        outwalk += sprintf(outwalk, "%d", info.quality);
+                        } else {
+                                *(outwalk++) = '?';
                         }
                         walk += strlen("quality");
                 }
@@ -262,12 +259,11 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                 if (BEGINS_WITH(walk+1, "signal")) {
                         if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
                                 if (info.signal_level_max)
-                                        printf("%03d%%", PERCENT_VALUE(info.signal_level, info.signal_level_max));
+                                        outwalk += sprintf(outwalk, "%03d%%", PERCENT_VALUE(info.signal_level, info.signal_level_max));
                                 else
-                                        printf("%d dBm", info.signal_level);
-                        }
-                        else {
-                                printf("no value");
+                                        outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
+                        } else {
+                                *(outwalk++) = '?';
                         }
                         walk += strlen("signal");
                 }
@@ -275,46 +271,41 @@ void print_wireless_info(const char *interface, const char *format_up, const cha
                 if (BEGINS_WITH(walk+1, "noise")) {
                         if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
                                 if (info.noise_level_max)
-                                        printf("%03d%%", PERCENT_VALUE(info.noise_level, info.noise_level_max));
+                                        outwalk += sprintf(outwalk, "%03d%%", PERCENT_VALUE(info.noise_level, info.noise_level_max));
                                 else
-                                        printf("%d dBm", info.noise_level);
-                        }
-                        else {
-                                printf("no value");
+                                        outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
+                        } else {
+                                *(outwalk++) = '?';
                         }
                         walk += strlen("noise");
                 }
 
                 if (BEGINS_WITH(walk+1, "essid")) {
                         if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
-                                printf("%s", info.essid);
+                                outwalk += sprintf(outwalk, "%s", info.essid);
                         else
-                                printf("no value");
+                                *(outwalk++) = '?';
                         walk += strlen("essid");
                 }
 
                 if (BEGINS_WITH(walk+1, "ip")) {
                         const char *ip_address = get_ip_addr(interface);
-                        if (ip_address != NULL)
-                                (void)printf("%s", get_ip_addr(interface));
-                        else (void)printf("no IP");
+                        outwalk += sprintf(outwalk, "%s", (ip_address ? ip_address : "no IP"));
                         walk += strlen("ip");
                 }
 
 #ifdef LINUX
                 if (BEGINS_WITH(walk+1, "bitrate")) {
-                        char buffer[128];
+                        char br_buffer[128];
 
-                        iw_print_bitrate(buffer, sizeof(buffer), info.bitrate);
+                        iw_print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
 
-                        printf("%s", buffer);
+                        outwalk += sprintf(outwalk, "%s", br_buffer);
                         walk += strlen("bitrate");
                 }
 #endif
         }
 
-        (void)printf("%s", endcolor());
-
-        if (output_format == O_I3BAR)
-                printf("\"}");
+        END_COLOR;
+        OUTPUT_FULL_TEXT(buffer);
 }

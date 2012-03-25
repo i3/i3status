@@ -26,7 +26,7 @@
 
 #endif
 
-static void print_eth_speed(const char *interface) {
+static int print_eth_speed(char *outwalk, const char *interface) {
 #if defined(LINUX)
         int ethspeed = 0;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
@@ -44,8 +44,8 @@ static void print_eth_speed(const char *interface) {
         (void)strcpy(ifr.ifr_name, interface);
         if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0) {
                 ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
-                printf("%d Mbit/s", ethspeed);
-        } else printf("?");
+                return sprintf(outwalk, "%d Mbit/s", ethspeed);
+        } else return sprintf(outwalk, "?");
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         struct ifmediareq ifm;
         (void)memset(&ifm, 0, sizeof(ifm));
@@ -66,7 +66,7 @@ static void print_eth_speed(const char *interface) {
                 break;
         }
         ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
-        printf("%s", ethspeed);
+        return sprintf(outwalk, "%s", ethspeed);
 #endif
 }
 
@@ -74,42 +74,37 @@ static void print_eth_speed(const char *interface) {
  * Combines ethernet IP addresses and speed (if requested) for displaying
  *
  */
-void print_eth_info(const char *interface, const char *format_up, const char *format_down) {
+void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
         const char *walk;
         const char *ip_address = get_ip_addr(interface);
+        char *outwalk = buffer;
 
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"ethernet\", \"instance\": \"%s\", ", interface);
+        INSTANCE(interface);
 
         if (ip_address == NULL) {
-                printf("%s", color("color_bad"));
-                printf("%s", format_down);
-                (void)printf("%s", endcolor());
-                return;
-        } else {
-                printf("%s", color("color_good"));
+                START_COLOR("color_bad");
+                outwalk += sprintf(outwalk, "%s", format_down);
+                goto out;
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"full_text\":\"");
+        START_COLOR("color_good");
 
         for (walk = format_up; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
-                        printf("%s", ip_address);
+                        outwalk += sprintf(outwalk, "%s", ip_address);
                         walk += strlen("ip");
                 } else if (strncmp(walk+1, "speed", strlen("speed")) == 0) {
-                        print_eth_speed(interface);
+                        outwalk += print_eth_speed(outwalk, interface);
                         walk += strlen("speed");
                 }
         }
 
-        (void)printf("%s", endcolor());
-
-        if (output_format == O_I3BAR)
-                printf("\"}");
+out:
+        END_COLOR;
+        OUTPUT_FULL_TEXT(buffer);
 }

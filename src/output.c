@@ -24,8 +24,6 @@ char *color(const char *colorstr) {
                 (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", cfg_getstr(cfg_general, colorstr));
         else if (output_format == O_XMOBAR)
                 (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", cfg_getstr(cfg_general, colorstr));
-        else if (output_format == O_I3BAR)
-                (void)snprintf(colorbuf, sizeof(colorbuf), "\"color\":\"%s\", ", cfg_getstr(cfg_general, colorstr));
 
         return colorbuf;
 }
@@ -45,8 +43,6 @@ void print_seperator() {
                 printf("^fg(%s)^p(5;-2)^ro(2)^p()^fg()^p(5)", cfg_getstr(cfg_general, "color_separator"));
         else if (output_format == O_XMOBAR)
                 printf("<fc=%s> | </fc>", cfg_getstr(cfg_general, "color_separator"));
-        else if (output_format == O_I3BAR)
-                printf(", ");
         else if (output_format == O_NONE)
                 printf(" | ");
 }

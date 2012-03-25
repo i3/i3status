@@ -6,6 +6,9 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #include <stdbool.h>
 #include <confuse.h>
 #include <time.h>
+#include <yajl/yajl_gen.h>
+#include <unistd.h>
+#include <string.h>
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -47,6 +50,65 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
                         with(cfg_t *, sec, cfg_gettsec(cfg, name, title)) \
                                 if (sec != NULL)
 
+/* Macro which any plugin can use to output the full_text part (when the output
+ * format is JSON) or just output to stdout (any other output format). */
+#define OUTPUT_FULL_TEXT(text) \
+	do { \
+		/* Terminate the output buffer here in any case, so that it’s \
+		 * not forgotten in the module */ \
+		*outwalk = '\0'; \
+		if (output_format == O_I3BAR) { \
+			yajl_gen_string(json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
+			yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text)); \
+		} else { \
+			write(STDOUT_FILENO, text, strlen(text)); \
+		} \
+	} while (0)
+
+#define SEC_OPEN_MAP(name) \
+	do { \
+		if (output_format == O_I3BAR) { \
+			yajl_gen_map_open(json_gen); \
+			yajl_gen_string(json_gen, (const unsigned char *)"name", strlen("name")); \
+			yajl_gen_string(json_gen, (const unsigned char *)name, strlen(name)); \
+		} \
+	} while (0)
+
+#define SEC_CLOSE_MAP \
+	do { \
+		if (output_format == O_I3BAR) { \
+			yajl_gen_map_close(json_gen); \
+		} \
+	} while (0)
+
+#define START_COLOR(colorstr) \
+	do { \
+		if (cfg_getbool(cfg_general, "colors")) { \
+			const char *val = cfg_getstr(cfg_general, colorstr); \
+			if (output_format == O_I3BAR) { \
+				yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
+				yajl_gen_string(json_gen, (const unsigned char *)val, strlen(val)); \
+			} else { \
+				outwalk += sprintf(outwalk, "%s", color("color_bad")); \
+			} \
+		} \
+	} while (0)
+
+#define END_COLOR \
+	do { \
+		if (cfg_getbool(cfg_general, "colors") && output_format != O_I3BAR) { \
+			outwalk += sprintf(outwalk, "%s", endcolor()); \
+		} \
+	} while (0)
+
+#define INSTANCE(instance) \
+	do { \
+		if (output_format == O_I3BAR) { \
+			yajl_gen_string(json_gen, (const unsigned char *)"instance", strlen("instance")); \
+			yajl_gen_string(json_gen, (const unsigned char *)instance, strlen(instance)); \
+		} \
+	} while (0)
+
 
 typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
 
@@ -63,19 +125,19 @@ char *endcolor() __attribute__ ((pure));
 /* src/auto_detect_format.c */
 char *auto_detect_format();
 
-void print_ipv6_info(const char *format_up, const char *format_down);
-void print_disk_info(const char *path, const char *format);
-void print_battery_info(int number, const char *path, const char *format, bool last_full_capacity);
-void print_time(const char *format, struct tm *current_tm);
-void print_ddate(const char *format, struct tm *current_tm);
+void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format);
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, bool last_full_capacity);
+void print_time(yajl_gen json_gen, char *buffer, const char *format, struct tm *current_tm);
+void print_ddate(yajl_gen json_gen, char *buffer, const char *format, struct tm *current_tm);
 const char *get_ip_addr();
-void print_wireless_info(const char *interface, const char *format_up, const char *format_down);
-void print_run_watch(const char *title, const char *pidfile, const char *format);
-void print_cpu_temperature_info(int zone, const char *path, const char *format);
-void print_cpu_usage(const char *format);
-void print_eth_info(const char *interface, const char *format_up, const char *format_down);
-void print_load();
-void print_volume(const char *fmt, const char *device, const char *mixer, int mixer_idx);
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
+void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format);
+void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format);
+void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format);
+void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
+void print_load(yajl_gen json_gen, char *buffer, const char *format);
+void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
 
 /* socket file descriptor for general purposes */

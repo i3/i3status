@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <yajl/yajl_gen.h>
 
 #include "i3status.h"
 
@@ -17,7 +18,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(int number, const char *path, const char *format, bool last_full_capacity) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, bool last_full_capacity) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -26,6 +27,7 @@ void print_battery_info(int number, const char *path, const char *format, bool l
         char remainingbuf[256];
         char emptytimebuf[256];
         const char *walk, *last;
+        char *outwalk = buffer;
         int full_design = -1,
             remaining = -1,
             present_rate = -1;
@@ -36,14 +38,13 @@ void print_battery_info(int number, const char *path, const char *format, bool l
         memset(remainingbuf, '\0', sizeof(remainingbuf));
         memset(emptytimebuf, '\0', sizeof(emptytimebuf));
 
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"battery\", \"instance\": \"%s\", \"full_text\":\"", path);
+        INSTANCE(path);
 
 #if defined(LINUX)
         static char batpath[512];
         sprintf(batpath, path, number);
         if (!slurp(batpath, buf, sizeof(buf))) {
-                printf("No battery");
+                OUTPUT_FULL_TEXT("No battery");
                 return;
         }
 
@@ -170,25 +171,24 @@ void print_battery_info(int number, const char *path, const char *format, bool l
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (strncmp(walk+1, "status", strlen("status")) == 0) {
-                        printf("%s", statusbuf);
+                        outwalk += sprintf(outwalk, "%s", statusbuf);
                         walk += strlen("status");
                 } else if (strncmp(walk+1, "percentage", strlen("percentage")) == 0) {
-                        printf("%s", percentagebuf);
+                        outwalk += sprintf(outwalk, "%s", percentagebuf);
                         walk += strlen("percentage");
                 } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
-                        printf("%s", remainingbuf);
+                        outwalk += sprintf(outwalk, "%s", remainingbuf);
                         walk += strlen("remaining");
                 } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
-                        printf("%s", emptytimebuf);
+                        outwalk += sprintf(outwalk, "%s", emptytimebuf);
                         walk += strlen("emptytime");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
+        OUTPUT_FULL_TEXT(buffer);
 }

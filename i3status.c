@@ -28,6 +28,8 @@
 #include <sys/time.h>
 #include <locale.h>
 
+#include <yajl/yajl_gen.h>
+
 #include "i3status.h"
 
 #define exit_if_null(pointer, ...) { if (pointer == NULL) die(__VA_ARGS__); }
@@ -110,7 +112,8 @@ static char *resolve_tilde(const char *path) {
                 head = globbuf.gl_pathv[0];
                 result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
                 strncpy(result, head, strlen(head));
-                strncat(result, tail, strlen(tail));
+                if (tail)
+                        strncat(result, tail, strlen(tail));
         }
         globfree(&globbuf);
 
@@ -343,16 +346,29 @@ int main(int argc, char *argv[]) {
                         || !valid_color(cfg_getstr(cfg_general, "color_separator")))
                die("Bad color format");
 
+        yajl_gen json_gen = yajl_gen_alloc(NULL);
+
         if (output_format == O_I3BAR) {
                 /* Initialize the i3bar protocol. See i3/docs/i3bar-protocol
                  * for details. */
                 printf("{\"version\":1}\n[\n");
+                fflush(stdout);
+                yajl_gen_array_open(json_gen);
+                yajl_gen_clear(json_gen);
         }
 
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");
 
         int interval = cfg_getint(cfg_general, "interval");
+
+        /* One memory page which each plugin can use to buffer output.
+         * Even though it’s unclean, we just assume that the user will not
+         * specify a format string which expands to something longer than 4096
+         * bytes — given that the output of i3status is used to display
+         * information on screen, more than 1024 characters for the full line
+         * (!), not individual plugins, seem very unlikely. */
+        char buffer[4096];
 
         struct tm tm;
         while (1) {
@@ -365,54 +381,97 @@ int main(int argc, char *argv[]) {
                         current_tm = &tm;
                 }
                 if (output_format == O_I3BAR)
-                        printf("[");
+                        yajl_gen_array_open(json_gen);
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();
 
                         const char *current = cfg_getnstr(cfg, "order", j);
 
-                        CASE_SEC("ipv6")
-                                print_ipv6_info(cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                        CASE_SEC("ipv6") {
+                                SEC_OPEN_MAP("ipv6");
+                                print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("wireless")
-                                print_wireless_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                        CASE_SEC_TITLE("wireless") {
+                                SEC_OPEN_MAP("wireless");
+                                print_wireless_info(json_gen, buffer, title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("ethernet")
-                                print_eth_info(title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                        CASE_SEC_TITLE("ethernet") {
+                                SEC_OPEN_MAP("ethernet");
+                                print_eth_info(json_gen, buffer, title, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("battery")
-                                print_battery_info(atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getbool(sec, "last_full_capacity"));
+                        CASE_SEC_TITLE("battery") {
+                                SEC_OPEN_MAP("battery");
+                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getbool(sec, "last_full_capacity"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("run_watch")
-                                print_run_watch(title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"));
+                        CASE_SEC_TITLE("run_watch") {
+                                SEC_OPEN_MAP("run_watch");
+                                print_run_watch(json_gen, buffer, title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("disk")
-                                print_disk_info(title, cfg_getstr(sec, "format"));
+                        CASE_SEC_TITLE("disk") {
+                                SEC_OPEN_MAP("disk_info");
+                                print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC("load")
-                                print_load(cfg_getstr(sec, "format"));
+                        CASE_SEC("load") {
+                                SEC_OPEN_MAP("load");
+                                print_load(json_gen, buffer, cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC("time")
-                                print_time(cfg_getstr(sec, "format"), current_tm);
+                        CASE_SEC("time") {
+                                SEC_OPEN_MAP("time");
+                                print_time(json_gen, buffer, cfg_getstr(sec, "format"), current_tm);
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC("ddate")
-                                print_ddate(cfg_getstr(sec, "format"), current_tm);
+                        CASE_SEC("ddate") {
+                                SEC_OPEN_MAP("ddate");
+                                print_ddate(json_gen, buffer, cfg_getstr(sec, "format"), current_tm);
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("volume")
-                                print_volume(cfg_getstr(sec, "format"),
+                        CASE_SEC_TITLE("volume") {
+                                SEC_OPEN_MAP("volume");
+                                print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
                                              cfg_getstr(sec, "device"),
                                              cfg_getstr(sec, "mixer"),
                                              cfg_getint(sec, "mixer_idx"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC_TITLE("cpu_temperature")
-                                print_cpu_temperature_info(atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"));
+                        CASE_SEC_TITLE("cpu_temperature") {
+                                SEC_OPEN_MAP("cpu_temperature");
+                                print_cpu_temperature_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
+                        }
 
-                        CASE_SEC("cpu_usage")
-                                print_cpu_usage(cfg_getstr(sec, "format"));
+                        CASE_SEC("cpu_usage") {
+                                SEC_OPEN_MAP("cpu_usage");
+                                print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
+                        }
                 }
-                if (output_format == O_I3BAR)
-                        printf("],");
+                if (output_format == O_I3BAR) {
+                        yajl_gen_array_close(json_gen);
+                        const unsigned char *buf;
+                        size_t len;
+                        yajl_gen_get_buf(json_gen, &buf, &len);
+                        write(STDOUT_FILENO, buf, len);
+                        yajl_gen_clear(json_gen);
+                }
+
                 printf("\n");
                 fflush(stdout);
 

@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <yajl/yajl_gen.h>
 
 #include "i3status.h"
 
@@ -109,30 +110,27 @@ static char *get_ipv6_addr() {
         return NULL;
 }
 
-void print_ipv6_info(const char *format_up, const char *format_down) {
+void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down) {
         const char *walk;
         char *addr_string = get_ipv6_addr();
-
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"ipv6\", \"full_text\":\"");
+        char *outwalk = buffer;
 
         if (addr_string == NULL) {
-                printf("%s", format_down);
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
         for (walk = format_up; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
-                        printf("%s", addr_string);
+                        outwalk += sprintf(outwalk, "%s", addr_string);
                         walk += strlen("ip");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
+        OUTPUT_FULL_TEXT(buffer);
 }

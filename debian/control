@@ -3,7 +3,7 @@ Section: utils
 Priority: extra
 Maintainer: Michael Stapelberg <michael@stapelberg.de>
 DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 5), libiw-dev [linux-any], libconfuse-dev, asciidoc, xmlto, libcap2-bin [linux-any], libasound2-dev [linux-any], libbsd-dev [kfreebsd-any]
+Build-Depends: debhelper (>= 5), libiw-dev [linux-any], libconfuse-dev, asciidoc, xmlto, libcap2-bin [linux-any], libasound2-dev [linux-any], libbsd-dev [kfreebsd-any], libyajl-dev
 Standards-Version: 3.9.2
 Homepage: http://i3wm.org/i3status
 

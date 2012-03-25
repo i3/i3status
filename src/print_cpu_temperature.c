@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <yajl/yajl_gen.h>
 
 #include "i3status.h"
 
@@ -21,9 +22,10 @@ static char *thermal_zone;
  * returns the temperature in degree celcius.
  *
  */
-void print_cpu_temperature_info(int zone, const char *path, const char *format) {
+void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format) {
 #ifdef THERMAL_ZONE
         const char *walk;
+        char *outwalk = buffer;
         static char buf[16];
 
         if (path == NULL) {
@@ -31,12 +33,11 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
                 path = thermal_zone;
         }
 
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"cpu_temperature\", \"instance\": \"%s\", \"full_text\":\"", path);
+        INSTANCE(path);
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
@@ -47,24 +48,22 @@ void print_cpu_temperature_info(int zone, const char *path, const char *format) 
                                 goto error;
                         temp = strtol(buf, NULL, 10);
                         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
-                                (void)printf("?");
+                                *(outwalk++) = '?';
                         else
-                                (void)printf("%ld", (temp/1000));
+                                outwalk += sprintf(outwalk, "%ld", (temp/1000));
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
                         int sysctl_rslt;
                         size_t sysctl_size = sizeof(sysctl_rslt);
                         if (sysctlbyname(path, &sysctl_rslt, &sysctl_size, NULL, 0))
                                 goto error;
 
-                        (void)printf("%d.%d", TZ_KELVTOC(sysctl_rslt));
+                        outwalk += sprintf(outwalk, "%d.%d", TZ_KELVTOC(sysctl_rslt));
 #endif
                         walk += strlen("degrees");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
-
+        OUTPUT_FULL_TEXT(buffer);
         return;
 error:
 #endif

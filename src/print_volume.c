@@ -41,10 +41,16 @@ static void free_hdl(struct mixer_hdl *hdl) {
 }
 #endif
 
-void print_volume(const char *fmt, const char *device, const char *mixer, int mixer_idx) {
-/* Printing volume only works with ALSA at the moment */
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"volume\", \"instance\": \"%s.%s.%d\", \"full_text\":\"", device, mixer, mixer_idx);
+void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx) {
+        char *outwalk = buffer;
+
+        /* Printing volume only works with ALSA at the moment */
+        if (output_format == O_I3BAR) {
+                char *instance;
+                asprintf(&instance, "%s.%s.%d", device, mixer, mixer_idx);
+                INSTANCE(instance);
+                free(instance);
+        }
 #ifdef LINUX
 	/* Check if we already opened the mixer and get the handle
 	 * from cache if so */
@@ -149,11 +155,11 @@ void print_volume(const char *fmt, const char *device, const char *mixer, int mi
 	const char *walk = fmt;
 	for (; *walk != '\0'; walk++) {
 		if (*walk != '%') {
-			putchar(*walk);
+                        *(outwalk++) = *walk;
 			continue;
 		}
 		if (BEGINS_WITH(walk+1, "volume")) {
-			printf("%d%%", avg);
+			outwalk += sprintf(outwalk, "%d%%", avg);
 			walk += strlen("volume");
 		}
 	}
@@ -172,16 +178,17 @@ void print_volume(const char *fmt, const char *device, const char *mixer, int mi
         const char *walk = fmt;
         for (; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
                 if (BEGINS_WITH(walk+1, "volume")) {
-                        printf("%d%%", vol & 0x7f);
+                        outwalk += sprintf(outwalk, "%d%%", vol & 0x7f);
                         walk += strlen("volume");
                 }
         }
         close(mixfd);
 #endif
-        if (output_format == O_I3BAR)
-                printf("\"}");
+
+        *outwalk = '\0';
+        OUTPUT_FULL_TEXT(buffer);
 }

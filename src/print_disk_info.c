@@ -10,7 +10,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #endif
-
+#include <yajl/yajl_gen.h>
 
 #include "i3status.h"
 
@@ -23,17 +23,17 @@
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static void print_bytes_human(uint64_t bytes) {
+static int print_bytes_human(char *outwalk, uint64_t bytes) {
         if (bytes > TERABYTE)
-                printf("%.02f TB", (double)bytes / TERABYTE);
+                return sprintf(outwalk, "%.02f TB", (double)bytes / TERABYTE);
         else if (bytes > GIGABYTE)
-                printf("%.01f GB", (double)bytes / GIGABYTE);
+                return sprintf(outwalk, "%.01f GB", (double)bytes / GIGABYTE);
         else if (bytes > MEGABYTE)
-                printf("%.01f MB", (double)bytes / MEGABYTE);
+                return sprintf(outwalk, "%.01f MB", (double)bytes / MEGABYTE);
         else if (bytes > KILOBYTE)
-                printf("%.01f KB", (double)bytes / KILOBYTE);
+                return sprintf(outwalk, "%.01f KB", (double)bytes / KILOBYTE);
         else {
-                printf("%.01f B", (double)bytes);
+                return sprintf(outwalk, "%.01f B", (double)bytes);
         }
 }
 
@@ -42,11 +42,11 @@ static void print_bytes_human(uint64_t bytes) {
  * human readable manner.
  *
  */
-void print_disk_info(const char *path, const char *format) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format) {
         const char *walk;
+        char *outwalk = buffer;
 
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"disk_info\", \"instance\": \"%s\", \"full_text\":\"", path);
+        INSTANCE(path);
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         struct statfs buf;
@@ -62,31 +62,31 @@ void print_disk_info(const char *path, const char *format) {
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (BEGINS_WITH(walk+1, "free")) {
-                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree);
                         walk += strlen("free");
                 }
 
                 if (BEGINS_WITH(walk+1, "used")) {
-                        print_bytes_human((uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree));
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree));
                         walk += strlen("used");
                 }
 
                 if (BEGINS_WITH(walk+1, "total")) {
-                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks);
                         walk += strlen("total");
                 }
 
                 if (BEGINS_WITH(walk+1, "avail")) {
-                        print_bytes_human((uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail);
                         walk += strlen("avail");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
+        *outwalk = '\0';
+        OUTPUT_FULL_TEXT(buffer);
 }

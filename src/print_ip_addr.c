@@ -29,8 +29,6 @@ const char *get_ip_addr(const char *interface) {
         if (ifaddr == NULL)
                 return NULL;
 
-        addrp = ifaddr;
-
         /* Skip until we are at the AF_INET address of interface */
         for (addrp = ifaddr;
 

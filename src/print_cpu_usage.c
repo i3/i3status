@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <yajl/yajl_gen.h>
 
 #ifdef __FreeBSD__
 #include <sys/types.h>
@@ -20,14 +21,12 @@ static int prev_idle  = 0;
  * percentage.
  *
  */
-void print_cpu_usage(const char *format) {
+void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         const char *walk;
+        char *outwalk = buffer;
         char buf[1024];
         int curr_user = 0, curr_nice = 0, curr_system = 0, curr_idle = 0, curr_total;
         int diff_idle, diff_total, diff_usage;
-
-        if (output_format == O_I3BAR)
-                printf("{\"name\":\"cpu_usage\", \"full_text\":\"");
 
 #if defined(LINUX)
         static char statpath[512];
@@ -64,19 +63,17 @@ void print_cpu_usage(const char *format) {
 #endif
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
-                        putchar(*walk);
+                        *(outwalk++) = *walk;
                         continue;
                 }
 
                 if (strncmp(walk+1, "usage", strlen("usage")) == 0) {
-                        printf("%02d%%", diff_usage);
+                        outwalk += sprintf(outwalk, "%02d%%", diff_usage);
                         walk += strlen("usage");
                 }
         }
 
-        if (output_format == O_I3BAR)
-                printf("\"}");
-
+        OUTPUT_FULL_TEXT(buffer);
         return;
 error:
         (void)fputs("Cannot read usage\n", stderr);
