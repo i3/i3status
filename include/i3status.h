@@ -7,6 +7,7 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #include <confuse.h>
 #include <time.h>
 #include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 #include <unistd.h>
 #include <string.h>
 

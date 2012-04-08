@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 
 void print_load(yajl_gen json_gen, char *buffer, const char *format) {
         char *outwalk = buffer;

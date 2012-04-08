@@ -1,6 +1,8 @@
 // vim:ts=8:expandtab
 #include <stdio.h>
 #include <string.h>
+#include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 
 #ifdef LINUX
 #include <iwlib.h>

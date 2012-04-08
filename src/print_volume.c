@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 
 #ifdef LINUX
 #include <alsa/asoundlib.h>

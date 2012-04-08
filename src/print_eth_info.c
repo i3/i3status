@@ -8,6 +8,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 
 #include "i3status.h"
 

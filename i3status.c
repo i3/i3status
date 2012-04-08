@@ -29,6 +29,7 @@
 #include <locale.h>
 
 #include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 
 #include "i3status.h"
 
@@ -346,7 +347,11 @@ int main(int argc, char *argv[]) {
                         || !valid_color(cfg_getstr(cfg_general, "color_separator")))
                die("Bad color format");
 
+#if YAJL_MAJOR >= 2
         yajl_gen json_gen = yajl_gen_alloc(NULL);
+#else
+        yajl_gen json_gen = yajl_gen_alloc(NULL, NULL);
+#endif
 
         if (output_format == O_I3BAR) {
                 /* Initialize the i3bar protocol. See i3/docs/i3bar-protocol
@@ -466,7 +471,11 @@ int main(int argc, char *argv[]) {
                 if (output_format == O_I3BAR) {
                         yajl_gen_array_close(json_gen);
                         const unsigned char *buf;
+#if YAJL_MAJOR >= 2
                         size_t len;
+#else
+                        unsigned int len;
+#endif
                         yajl_gen_get_buf(json_gen, &buf, &len);
                         write(STDOUT_FILENO, buf, len);
                         yajl_gen_clear(json_gen);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <yajl/yajl_gen.h>
+#include <yajl/yajl_version.h>
 #include "i3status.h"
 
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format) {
