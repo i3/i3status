@@ -33,6 +33,11 @@ ifeq ($(shell uname),GNU/kFreeBSD)
 LIBS+=-lbsd
 endif
 
+ifeq ($(shell uname),OpenBSD)
+CFLAGS+=-I/usr/local/include/
+LDFLAGS+=-L/usr/local/lib/
+endif
+
 CFLAGS+=$(EXTRA_CFLAGS)
 
 # Fallback for libyajl 1 which did not include yajl_version.h. We need
