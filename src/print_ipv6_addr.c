@@ -1,13 +1,15 @@
 // vim:ts=8:expandtab
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 

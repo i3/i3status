@@ -1,7 +1,8 @@
 // vim:ts=8:expandtab
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
