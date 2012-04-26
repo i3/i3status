@@ -74,7 +74,7 @@ ethernet eth0 {
 }
 
 battery 0 {
-        format = "%status %percentage %remaining"
+        format = "%status %percentage %remaining %emptytime"
         path = "/sys/class/power_supply/BAT%d/uevent"
 }
 
@@ -190,11 +190,12 @@ it using +setcap cap_net_admin=ep $(which i3status)+.
 === Battery
 
 Gets the status (charging, discharging, running), percentage and remaining
-time of the given battery. If you want to use the last full capacity instead
-of the design capacity (when using the design capacity, it may happen that
-your battery is at 23% when fully charged because it’s old. In general, I
-want to see it this way, because it tells me how worn off my battery is.),
-just specify +last_full_capacity = true+.
+time of the given battery and when it's estimated to be empty. If you want
+to use the last full capacity instead of the design capacity (when using
+the design capacity, it may happen that your battery is at 23% when fully
+charged because it’s old. In general, I want to see it this way, because
+it tells me how worn off my battery is.), just specify
++last_full_capacity = true+.
 
 If your battery is represented in a non-standard path in /sys, be sure to
 modify the "path" property accordingly. The first occurence of %d gets replaced
@@ -202,7 +203,7 @@ with the battery number, but you can just hard-code a path as well.
 
 *Example order*: +battery 0+
 
-*Example format*: +%status %remaining+
+*Example format*: +%status %remaining (%emptytime)+
 
 === CPU-Temperature
 
