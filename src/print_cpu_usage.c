@@ -6,7 +6,8 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
@@ -42,12 +43,26 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         diff_usage = (1000 * (diff_total - diff_idle)/diff_total + 5)/10;
         prev_total = curr_total;
         prev_idle  = curr_idle;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+
+#if defined(__FreeBSD__)
         size_t size;
         long cp_time[CPUSTATES];
         size = sizeof cp_time;
         if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0)
                 goto error;
+#else
+	/* This information is taken from the boot cpu, any other cpus are currently ignored. */
+	long cp_time[CPUSTATES];
+	int mib[2];
+	size_t size = sizeof(cp_time);
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CPTIME;
+
+	if (sysctl(mib, 2, cp_time, &size, NULL, 0))
+		goto error;
+#endif
 
         curr_user = cp_time[CP_USER];
         curr_nice = cp_time[CP_NICE];
