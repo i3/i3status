@@ -17,6 +17,12 @@
 #include <sys/soundcard.h>
 #endif
 
+#ifdef __OpenBSD__
+#include <fcntl.h>
+#include <unistd.h>
+#include <soundcard.h>
+#endif
+
 #include "i3status.h"
 #include "queue.h"
 
@@ -166,7 +172,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		}
 	}
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
         char mixerpath[] = "/dev/mixer";
         int mixfd, vol, devmask = 0;
 

@@ -36,6 +36,7 @@ endif
 ifeq ($(shell uname),OpenBSD)
 CFLAGS+=-I/usr/local/include/
 LDFLAGS+=-L/usr/local/lib/
+LIBS+=-lossaudio
 endif
 
 CFLAGS+=$(EXTRA_CFLAGS)
