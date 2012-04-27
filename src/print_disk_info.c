@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || (__OpenBSD__)
 #include <sys/param.h>
 #include <sys/mount.h>
 #endif
@@ -49,7 +49,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 
         INSTANCE(path);
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
         struct statfs buf;
 
         if (statfs(path, &buf) == -1)
