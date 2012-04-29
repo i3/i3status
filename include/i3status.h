@@ -26,6 +26,15 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #define BATT_TIME "hw.acpi.battery.time"
 #define BATT_STATE "hw.acpi.battery.state"
 
+#elif defined(__OpenBSD__)
+/*
+ * Due to the fact there are various ways to obtain a temperature reading, THERMAL_ZONE will need
+ * to be adjustable enough for those situations. As it can either be hw.sensors.cpu%d.temp0, or
+ * hw.sensors.acpitz%d.temp0 or even something different entirely within hw.sensors.%s.temp0.
+ * XXX: For now just check cpu%d.temp0. Adjust this later.
+ */
+#define THERMAL_ZONE "cpu%d"
+
 #endif
 
 #if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
