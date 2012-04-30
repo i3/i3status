@@ -129,6 +129,12 @@ sleep before printing the next status line.
 Using +output_format+ you can chose which format strings i3status should
 use in its output. Currently available are:
 
+i3bar::
+i3bar comes with i3 and provides a workspace bar which does the right thing in
+multi-monitor situations. It also comes with tray support and can display the
+i3status output. This output type uses JSON to pass as much meta-information to
+i3bar as possible (like colors, which blocks can be shortened in which way,
+etc.).
 dzen2::
 Dzen is a general purpose messaging, notification and menuing program for X11.
 It was designed to be scriptable in any language and integrate well with window
