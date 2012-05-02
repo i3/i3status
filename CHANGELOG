@@ -1,0 +1,77 @@
+2012-05-02 i3status 2.5
+
+ • implement the i3bar JSON protocol
+ • Fix configuration paths in error message
+ • manpage: add a "format" example for run_watch
+ • manpage: add a section explaining why we don’t want RAM usage etc.
+ • manpage: add "exit 1" to example shell script.
+ • manpage: document %emptytime to the battery part
+ • various patches for OpenBSD
+
+2011-12-27 i3status 2.4
+
+ • Support wifi, cpu usage, volume, disk usage on FreeBSD
+ • Don’t exit, but display an error when CPU temperature/usage/load is not
+   available
+ • manpage: load format is %1min %5min %15min
+ • Don’t use a default order, so that config files can use += everywhere
+ • Interpret configfiles case-insensitive
+ • battery: implement path option for batteries with non-standard paths
+
+2011-07-21 i3status 2.3
+
+ • config search order is now ~/.i3status.conf, ~/.config/i3status/config,
+   /etc/i3status/config, then /etc/xdg/i3status/config
+ • battery: use POWER_NOW if CURRENT_NOW is not available (linux >= 2.6.36)
+ • use kill(0, pid) instead of /proc to check if a process is alive
+ • cache DNS query results also if there is no IPv6 connectivity
+ • implement the 'path' option for cpu_temperature
+ • add cpu_usage module
+ • automatically detect the output format unless configured specifically
+ • Bugfix: get time at the beginning of the loop
+ • Bugfix: respect locale settings (for %c in date format)
+ • debian: use [linux-any] in dependencies (Closes: #634491)
+
+2010-09-22 i3status 2.2
+
+ • Implement a discordian date module (like ddate(1))
+ • Implement ALSA volume support
+ • disk: implement %avail (different from %free with regard to the reserved
+   space of your filesystem)
+ • wireless: display quality relative to the wireless maximum quality.
+ • wireless: display connection speed (bitrate)
+ • wireless: custom colors for link quality
+ • Bugfix: Treat an interface as 'down' when it cannot be found in
+   /proc/net/wireless
+ • Bugfix: Correctly check for interface up/down status
+
+2010-04-10 i3status 2.1
+
+ • battery: implement %emptytime, the time of day when your battery is empty
+ • ipv6: cache DNS query lookups (for finding the K root server)
+ • disk: also round when printing TB
+ • wireless: display no IP instead of (null)
+ • instead of a relative sleep(1), sleep until the full second
+ • colorize ethernet output
+ • use cap_net_admin instead of running i3status as root for getting
+   ethernet link speed
+ • ipv6: don't require a title for config option
+ • ipv6: provide format strings for ipv6 up and ipv6 down
+
+2009-10-27 i3status 2.0
+
+ • add support for disk info (free/used/ins)
+ • add support for displaying the ESSID of the wireless interface
+ • add support for getting the public IPv6 address of the system
+ • all "modules" now support format strings
+ • switch to libconfuse for parsing the config file
+ • merge support for FreeBSD for many "modules"
+ • drop support for wmii, add support for xmobar
+
+2009-06-21 i3status 1.2
+
+ • Handle SIGPIPE to avoid zombie processes
+
+2009-06-17 i3status 1.1
+
+ • Implement getting temperature from thermal zones (Thanks atsutane)
