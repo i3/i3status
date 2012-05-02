@@ -117,10 +117,10 @@ static int format_output(char *outwalk, char *format, struct disc_time *dt) {
                         /* Holidays */
                         case 'H':
                                 if (dt->season_day == 4) {
-                                        outwalk += sprintf(outwalk, holidays[dt->season]);
+                                        outwalk += sprintf(outwalk, "%s", holidays[dt->season]);
                                 }
                                 if (dt->season_day == 49) {
-                                        outwalk += sprintf(outwalk, holidays[dt->season + 5]);
+                                        outwalk += sprintf(outwalk, "%s", holidays[dt->season + 5]);
                                 }
                                 break;
                         /* Stop parsing the format string, except on Holidays */
