@@ -66,7 +66,7 @@ clean:
 	rm -f *.o src/*.o
 
 distclean: clean
-	rm -f i3status
+	rm -f i3status man/i3status.1
 
 manpage:
 	$(MAKE) -C man
