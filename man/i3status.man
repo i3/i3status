@@ -315,14 +315,16 @@ governor ("ondemand") changes the CPU frequency far more often than i3status
 could display it. The display number is therefore often incorrect and doesn’t
 tell you anything useful either.
 
-In general, i3status wants to display things which you would often look at
-anyways, like the current date/time, whether you are connected to a WiFi
-network or not, and if you have enough disk space to fit that 4.3 GiB download.
+In general, i3status wants to display things which you would look at
+occasionally anyways, like the current date/time, whether you are connected to
+a WiFi network or not, and if you have enough disk space to fit that 4.3 GiB
+download.
 
 However, if you need to look at some kind of information more than once in a
 while (like checking repeatedly how full your RAM is), you are probably better
-of with a script doing that, which pops up an alert when your RAM usage reaches
-a certain threshold.
+off with a script doing that, which pops up an alert when your RAM usage reaches
+a certain threshold. After all, the point of computers is not to burden you
+with additional boring tasks like repeatedly checking a number.
 
 == External scripts/programs with i3status
 
