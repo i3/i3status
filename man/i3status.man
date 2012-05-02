@@ -34,10 +34,6 @@ commands would.
 
 == CONFIGURATION
 
-Since version 2, the configuration file for i3status will be parsed using
-libconfuse. This makes configuration easier in the programmer’s point of
-view and more flexible for the user at the same time.
-
 The basic idea of i3status is that you can specify which "modules" should
 be used (the order directive). You can then configure each module with its
 own section. For every module, you can specify the output format. See below
