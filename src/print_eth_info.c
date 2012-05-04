@@ -30,13 +30,8 @@
 
 static int print_eth_speed(char *outwalk, const char *interface) {
 #if defined(LINUX)
-        int ethspeed = 0;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-        char *ethspeed;
-#endif
-
-#if defined(LINUX)
         /* This code path requires root privileges */
+        int ethspeed = 0;
         struct ifreq ifr;
         struct ethtool_cmd ecmd;
 
@@ -49,6 +44,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
                 return sprintf(outwalk, "%d Mbit/s", ethspeed);
         } else return sprintf(outwalk, "?");
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+        char *ethspeed;
         struct ifmediareq ifm;
         (void)memset(&ifm, 0, sizeof(ifm));
         (void)strncpy(ifm.ifm_name, interface, sizeof(ifm.ifm_name));
@@ -69,6 +65,8 @@ static int print_eth_speed(char *outwalk, const char *interface) {
         }
         ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
         return sprintf(outwalk, "%s", ethspeed);
+#else
+	return sprintf(outwalk, "?");
 #endif
 }
 
