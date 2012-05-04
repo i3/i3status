@@ -38,10 +38,11 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         char *outwalk = buffer;
         static char buf[16];
 
-        if (path == NULL) {
+        if (path == NULL)
                 asprintf(&thermal_zone, THERMAL_ZONE, zone);
-                path = thermal_zone;
-        }
+        else
+                asprintf(&thermal_zone, path, zone);
+        path = thermal_zone;
 
         INSTANCE(path);
 
