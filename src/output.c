@@ -32,13 +32,13 @@ char *color(const char *colorstr) {
  * Some color formats (xmobar) require to terminate colors again
  *
  */
-char *endcolor() {
+char *endcolor(void) {
         if (output_format == O_XMOBAR)
                 return "</fc>";
         else return "";
 }
 
-void print_seperator() {
+void print_seperator(void) {
         if (output_format == O_DZEN2)
                 printf("^fg(%s)^p(5;-2)^ro(2)^p()^fg()^p(5)", cfg_getstr(cfg_general, "color_separator"));
         else if (output_format == O_XMOBAR)

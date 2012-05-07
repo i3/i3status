@@ -64,7 +64,7 @@ static char *get_sockname(struct addrinfo *addr) {
  * Returns the IPv6 address with which you have connectivity at the moment.
  * The char * is statically allocated and mustn't be freed
  */
-static char *get_ipv6_addr() {
+static char *get_ipv6_addr(void) {
         struct addrinfo hints;
         struct addrinfo *result, *resp;
         static struct addrinfo *cached = NULL;

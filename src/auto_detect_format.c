@@ -29,7 +29,7 @@
  * We then check whether the pipe target’s name is known and chose the format.
  *
  */
-char *auto_detect_format() {
+char *auto_detect_format(void) {
     pid_t myppid = getppid();
     pid_t mypid = getpid();
 

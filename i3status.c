@@ -121,7 +121,7 @@ static char *resolve_tilde(const char *path) {
         return result;
 }
 
-static char *get_config_path() {
+static char *get_config_path(void) {
         char *xdg_config_home, *xdg_config_dirs, *config_path;
 
         /* 1: check the traditional path under the home directory */
