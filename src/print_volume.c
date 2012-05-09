@@ -97,14 +97,14 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		}
 
 		if ((err = snd_mixer_open(&(hdl->m), 0)) < 0) {
-			fprintf(stderr, "ALSA: Cannot open mixer: %s\n", snd_strerror(err));
+			fprintf(stderr, "i3status: ALSA: Cannot open mixer: %s\n", snd_strerror(err));
 			free_hdl(hdl);
 			return;
 		}
 
 		/* Attach this mixer handle to the given device */
 		if ((err = snd_mixer_attach(hdl->m, device)) < 0) {
-			fprintf(stderr, "ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
+			fprintf(stderr, "i3status: ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
 			return;
@@ -112,14 +112,14 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 		/* Register this mixer */
 		if ((err = snd_mixer_selem_register(hdl->m, NULL, NULL)) < 0) {
-			fprintf(stderr, "ALSA: snd_mixer_selem_register: %s\n", snd_strerror(err));
+			fprintf(stderr, "i3status: ALSA: snd_mixer_selem_register: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
 			return;
 		}
 
 		if ((err = snd_mixer_load(hdl->m)) < 0) {
-			fprintf(stderr, "ALSA: snd_mixer_load: %s\n", snd_strerror(err));
+			fprintf(stderr, "i3status: ALSA: snd_mixer_load: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
 			return;
@@ -129,7 +129,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		snd_mixer_selem_id_set_index(hdl->sid, mixer_idx);
 		snd_mixer_selem_id_set_name(hdl->sid, mixer);
 		if (!(hdl->elem = snd_mixer_find_selem(hdl->m, hdl->sid))) {
-			fprintf(stderr, "ALSA: Cannot find mixer %s (index %i)\n",
+			fprintf(stderr, "i3status: ALSA: Cannot find mixer %s (index %i)\n",
 				snd_mixer_selem_id_get_name(hdl->sid), snd_mixer_selem_id_get_index(hdl->sid));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
@@ -155,7 +155,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 	if (snd_mixer_selem_has_playback_switch(hdl->elem)) {
 		int pbval;
 		if ((err = snd_mixer_selem_get_playback_switch(hdl->elem, 0, &pbval)) < 0)
-			fprintf (stderr, "ALSA: playback_switch: %s\n", snd_strerror(err));
+			fprintf (stderr, "i3status: ALSA: playback_switch: %s\n", snd_strerror(err));
 		if (!pbval)
 			avg = 0;
 	}

@@ -51,7 +51,7 @@ static char *get_sockname(struct addrinfo *addr) {
         if ((ret = getnameinfo((struct sockaddr*)&local, local_len,
                                buf, sizeof(buf), NULL, 0,
                                NI_NUMERICHOST)) != 0) {
-                fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(ret));
+                fprintf(stderr, "i3status: getnameinfo(): %s\n", gai_strerror(ret));
                 (void)close(fd);
                 return NULL;
         }

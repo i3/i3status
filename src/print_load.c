@@ -45,5 +45,6 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format) {
         return;
 error:
 #endif
-        (void)fputs("Cannot read load\n", stderr);
+        OUTPUT_FULL_TEXT("cant read load");
+        (void)fputs("i3status: Cannot read system load using getloadavg()\n", stderr);
 }

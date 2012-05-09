@@ -92,5 +92,6 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         OUTPUT_FULL_TEXT(buffer);
         return;
 error:
-        (void)fputs("Cannot read usage\n", stderr);
+        OUTPUT_FULL_TEXT("cant read cpu usage");
+        (void)fputs("i3status: Cannot read CPU usage\n", stderr);
 }
