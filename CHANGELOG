@@ -1,3 +1,10 @@
+2012-05-11 i3status 2.5.1
+
+ • Handle %d with non-default CPU temperature path
+ • Improve error message when the cpu temperature cannot be read
+ • Remove cpu_temperature from the default config
+ • Error handling: Never output null as full_text (JSON), prefix messages with i3status
+
 2012-05-02 i3status 2.5
 
  • implement the i3bar JSON protocol
