@@ -92,8 +92,10 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 }
         }
 
-        if ((full_design == 1) || (remaining == -1))
+        if ((full_design == -1) || (remaining == -1)) {
+                OUTPUT_FULL_TEXT("No battery");
                 return;
+        }
 
         (void)snprintf(statusbuf, sizeof(statusbuf), "%s",
                         (status == CS_CHARGING ? "CHR" :
@@ -134,19 +136,19 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         size_t sysctl_size = sizeof(sysctl_rslt);
 
         if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
-                printf("No battery");
+                OUTPUT_FULL_TEXT("No battery");
                 return;
         }
 
         present_rate = sysctl_rslt;
         if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
-                printf("No battery");
+                OUTPUT_FULL_TEXT("No battery");
                 return;
         }
 
         remaining = sysctl_rslt;
         if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL,0) != 0) {
-                printf("No battery");
+                OUTPUT_FULL_TEXT("No battery");
                 return;
         }
 
