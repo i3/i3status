@@ -72,6 +72,7 @@ ethernet eth0 {
 battery 0 {
         format = "%status %percentage %remaining %emptytime"
         path = "/sys/class/power_supply/BAT%d/uevent"
+        threshold = 10
 }
 
 run_watch DHCP {
@@ -206,6 +207,8 @@ with the battery number, but you can just hard-code a path as well.
 *Example order*: +battery 0+
 
 *Example format*: +%status %remaining (%emptytime)+
+
+*Example threshold*: +threshold 10+
 
 === CPU-Temperature
 

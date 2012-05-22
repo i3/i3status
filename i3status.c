@@ -214,6 +214,7 @@ int main(int argc, char *argv[]) {
         cfg_opt_t battery_opts[] = {
                 CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
                 CFG_STR("path", "/sys/class/power_supply/BAT%d/uevent", CFGF_NONE),
+                CFG_INT("threshold", 10, CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
                 CFG_END()
         };
@@ -413,7 +414,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("battery") {
                                 SEC_OPEN_MAP("battery");
-                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getbool(sec, "last_full_capacity"));
+                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getint(sec, "threshold"), cfg_getbool(sec, "last_full_capacity"));
                                 SEC_CLOSE_MAP;
                         }
 

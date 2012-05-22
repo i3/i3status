@@ -26,7 +26,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, bool last_full_capacity) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, int threshold, bool last_full_capacity) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -120,6 +120,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 minutes = seconds / 60;
                 seconds -= (minutes * 60);
 
+                if (threshold > 0 && seconds_remaining < 60 * threshold)
+                        START_COLOR("color_bad");
+
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
                         max(hours, 0), max(minutes, 0), max(seconds, 0));
 
@@ -129,6 +132,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
                 (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
                         max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+
+                END_COLOR;
         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
