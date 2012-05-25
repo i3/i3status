@@ -72,7 +72,7 @@ ethernet eth0 {
 battery 0 {
         format = "%status %percentage %remaining %emptytime"
         path = "/sys/class/power_supply/BAT%d/uevent"
-        threshold = 10
+        low_threshold = 10
 }
 
 run_watch DHCP {
@@ -204,11 +204,15 @@ If your battery is represented in a non-standard path in /sys, be sure to
 modify the "path" property accordingly. The first occurence of %d gets replaced
 with the battery number, but you can just hard-code a path as well.
 
+If the remaining time sinks below low_threshold minutes, the battery text will
+be colored red. So, if you configure low_threshold to 10, and your battery
+lasts another 9 minutes, it will be colored red.
+
 *Example order*: +battery 0+
 
 *Example format*: +%status %remaining (%emptytime)+
 
-*Example threshold*: +threshold 10+
+*Example low_threshold*: +low_threshold 10+
 
 === CPU-Temperature
 
