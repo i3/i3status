@@ -20,6 +20,9 @@
 #include <machine/apmvar.h>
 #endif
 
+#define BATT_STATUS_NAME(status) \
+    (status == CS_CHARGING ? "CHR" : \
+        (status == CS_DISCHARGING ? "BAT" : "FULL"))
 /*
  * Get battery information from /sys. Note that it uses the design capacity to
  * calculate the percentage, not the last full capacity, so you can see how
@@ -97,9 +100,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 return;
         }
 
-        (void)snprintf(statusbuf, sizeof(statusbuf), "%s",
-                        (status == CS_CHARGING ? "CHR" :
-                         (status == CS_DISCHARGING ? "BAT" : "FULL")));
+        (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%%",
                        (((float)remaining / (float)full_design) * 100));
@@ -167,9 +168,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
         full_design = sysctl_rslt;
 
-        (void)snprintf(statusbuf, sizeof(statusbuf), "%s",
-                        (status == CS_CHARGING ? "CHR" :
-                         (status == CS_DISCHARGING ? "BAT" : "FULL")));
+        (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%",
                        present_rate);
@@ -221,10 +220,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 		break;
 	}
 
-	(void)snprintf(statusbuf, sizeof(statusbuf), "%s",
-		       (ac_status == CS_CHARGING ? "CHR" :
-			(ac_status == CS_DISCHARGING ? "BAT" : "FULL")));
-
+	(void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%", apm_info.battery_life);
 
 	/* Can't give a meaningful value for remaining minutes if we're charging. */
