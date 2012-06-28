@@ -40,7 +40,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         curr_total = curr_user + curr_nice + curr_system + curr_idle;
         diff_idle  = curr_idle - prev_idle;
         diff_total = curr_total - prev_total;
-        diff_usage = (1000 * (diff_total - diff_idle)/diff_total + 5)/10;
+        diff_usage = (diff_total ? (1000 * (diff_total - diff_idle)/diff_total + 5)/10 : 0);
         prev_total = curr_total;
         prev_idle  = curr_idle;
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -71,7 +71,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         curr_total = curr_user + curr_nice + curr_system + curr_idle;
         diff_idle  = curr_idle - prev_idle;
         diff_total = curr_total - prev_total;
-        diff_usage = (1000 * (diff_total - diff_idle)/diff_total + 5)/10;
+        diff_usage = (diff_total ? (1000 * (diff_total - diff_idle)/diff_total + 5)/10 : 0);
         prev_total = curr_total;
         prev_idle  = curr_idle;
 #else
