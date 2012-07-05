@@ -37,6 +37,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         char percentagebuf[16];
         char remainingbuf[256];
         char emptytimebuf[256];
+        char consumptionbuf[256];
         const char *walk, *last;
         char *outwalk = buffer;
         int full_design = -1,
@@ -48,6 +49,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         memset(percentagebuf, '\0', sizeof(percentagebuf));
         memset(remainingbuf, '\0', sizeof(remainingbuf));
         memset(emptytimebuf, '\0', sizeof(emptytimebuf));
+        memset(consumptionbuf, '\0', sizeof(consumptionbuf));
 
         INSTANCE(path);
 
@@ -133,6 +135,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
                 (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
                         max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+
+                (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
+                        ((float)present_rate / 1000.0 / 1000.0));
 
                 END_COLOR;
         }
@@ -249,6 +254,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
                         outwalk += sprintf(outwalk, "%s", emptytimebuf);
                         walk += strlen("emptytime");
+                } else if (strncmp(walk+1, "consumption", strlen("consumption")) == 0) {
+                        outwalk += sprintf(outwalk, "%s", consumptionbuf);
+                        walk += strlen("consumptionbuf");
                 }
         }
 
