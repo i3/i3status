@@ -121,7 +121,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 minutes = seconds / 60;
                 seconds -= (minutes * 60);
 
-                if (threshold > 0 && seconds_remaining < 60 * threshold)
+                if (status == CS_DISCHARGING && threshold > 0 && seconds_remaining < 60 * threshold)
                         START_COLOR("color_bad");
 
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
