@@ -192,8 +192,8 @@ it using +setcap cap_net_admin=ep $(which i3status)+.
 
 === Battery
 
-Gets the status (charging, discharging, running), percentage and remaining
-time of the given battery and when it's estimated to be empty. If you want
+Gets the status (charging, discharging, running), percentage, remaining
+time and consumption of the given battery and when it's estimated to be empty. If you want
 to use the last full capacity instead of the design capacity (when using
 the design capacity, it may happen that your battery is at 23% when fully
 charged because it’s old. In general, I want to see it this way, because
@@ -210,7 +210,7 @@ lasts another 9 minutes, it will be colored red.
 
 *Example order*: +battery 0+
 
-*Example format*: +%status %remaining (%emptytime)+
+*Example format*: +%status %remaining (%emptytime %consumption)+
 
 *Example low_threshold*: +low_threshold 10+
 
