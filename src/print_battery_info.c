@@ -42,7 +42,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         char *outwalk = buffer;
         int full_design = -1,
             remaining = -1,
-            present_rate = -1;
+            present_rate = -1,
+            voltage = -1,
+            current = -1;
         charging_status_t status = CS_DISCHARGING;
 
         memset(statusbuf, '\0', sizeof(statusbuf));
@@ -74,7 +76,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                     BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW"))
                         remaining = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
-                        present_rate = atoi(walk+1);
+                        current = atoi(walk+1);
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
+                        voltage = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
                         present_rate = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
@@ -96,6 +100,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         full_design = atoi(walk+1);
                 }
         }
+
+        if (present_rate == -1) /* on some systems POWER_SUPPLY_POWER_NOW does not exist, so we have to calculate it */
+                present_rate = ((float)voltage / 1000.0) * ((float)current / 1000.0);
 
         if ((full_design == -1) || (remaining == -1)) {
                 OUTPUT_FULL_TEXT("No battery");
