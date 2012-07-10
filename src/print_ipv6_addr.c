@@ -119,7 +119,9 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
         char *outwalk = buffer;
 
         if (addr_string == NULL) {
+                START_COLOR("color_bad");
                 OUTPUT_FULL_TEXT(format_down);
+                END_COLOR;
                 return;
         }
 
@@ -134,6 +136,7 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
                         walk += strlen("ip");
                 }
         }
-
+        START_COLOR("color_good");
         OUTPUT_FULL_TEXT(buffer);
+        END_COLOR;
 }
