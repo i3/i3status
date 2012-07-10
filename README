@@ -1,0 +1,36 @@
+DESCRIPTION
+===========
+i3status is a small program (about 1500 SLOC) for generating a status bar for 
+i3bar, dzen2, xmobar or similar programs. It is designed to be very efficient by
+issuing a very small number of system calls, as one generally wants to update 
+such a status line every second. This ensures that even under high load, your 
+status bar is updated correctly. Also, it saves a bit of energy by not hogging 
+your CPU as much as spawning the corresponding amount of shell commands would.
+
+DEVELOPMENT
+===========
+i3status has the following dependencies:
+- libconfuse-dev
+- libyajl-dev
+- libasound2-dev
+- libiw-dev
+- asciidoc (only for the documentation)
+
+On debian-based systems, the following line will install all requirements:
+apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc
+
+GIT-REPOSITORY
+--------------
+The Code is developed at 
+  http://code.i3wm.org/i3status
+  
+You may clone the git-repository from
+  git://code.i3wm.org/i3status
+
+Talk to Michael Stapelberg for pull-requests at 
+  michael+i3status@stapelberg.de
+  
+COMPILING
+---------
+Compiling is done with the usual make-line
+  make && sudo make install
