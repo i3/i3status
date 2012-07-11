@@ -101,7 +101,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 }
         }
 
-        if (present_rate == -1) /* on some systems POWER_SUPPLY_POWER_NOW does not exist, so we have to calculate it */
+        /* on some systems POWER_SUPPLY_POWER_NOW does not exist, so we have to calculate it */
+        if (present_rate == -1)
                 present_rate = ((float)voltage / 1000.0) * ((float)current / 1000.0);
 
         if ((full_design == -1) || (remaining == -1)) {
