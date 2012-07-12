@@ -264,7 +264,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         walk += strlen("emptytime");
                 } else if (strncmp(walk+1, "consumption", strlen("consumption")) == 0) {
                         outwalk += sprintf(outwalk, "%s", consumptionbuf);
-                        walk += strlen("consumptionbuf");
+                        walk += strlen("consumption");
                 }
         }
 
