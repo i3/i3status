@@ -40,11 +40,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         char consumptionbuf[256];
         const char *walk, *last;
         char *outwalk = buffer;
+        bool watt_as_unit;
         int full_design = -1,
             remaining = -1,
             present_rate = -1,
-            voltage = -1,
-            current = -1;
+            voltage = -1;
         charging_status_t status = CS_DISCHARGING;
 
         memset(statusbuf, '\0', sizeof(statusbuf));
@@ -72,13 +72,22 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 if (*walk != '=')
                         continue;
 
-                if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW") ||
-                    BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW"))
+                if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW")) {
+                        watt_as_unit = true;
                         remaining = atoi(walk+1);
+                }
+                else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW")) {
+                        watt_as_unit = false;
+                        remaining = atoi(walk+1);
+                }
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
-                        current = atoi(walk+1);
+                        present_rate = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
                         voltage = atoi(walk+1);
+                /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
+                 * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
+                 * unit instead of μAh. We will calculate it as we need it
+                 * later. */
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
                         present_rate = atoi(walk+1);
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
@@ -101,9 +110,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 }
         }
 
-        /* on some systems POWER_SUPPLY_POWER_NOW does not exist, so we have to calculate it */
-        if (present_rate == -1)
-                present_rate = ((float)voltage / 1000.0) * ((float)current / 1000.0);
+        /* the difference between POWER_SUPPLY_ENERGY_NOW and
+         * POWER_SUPPLY_CHARGE_NOW is the unit of measurement. The energy is
+         * given in mWh, the charge in mAh. So calculate every value given in
+         * ampere to watt */
+        if (!watt_as_unit) {
+            present_rate = (((float)voltage / 1000.0) * ((float)present_rate / 1000.0));
+            remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
+            full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
+        }
 
         if ((full_design == -1) || (remaining == -1)) {
                 OUTPUT_FULL_TEXT("No battery");
