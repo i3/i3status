@@ -99,7 +99,7 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 				yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
 				yajl_gen_string(json_gen, (const unsigned char *)val, strlen(val)); \
 			} else { \
-				outwalk += sprintf(outwalk, "%s", color("color_bad")); \
+				outwalk += sprintf(outwalk, "%s", color(colorstr)); \
 			} \
 		} \
 	} while (0)
