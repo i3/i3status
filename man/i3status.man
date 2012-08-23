@@ -204,15 +204,18 @@ If your battery is represented in a non-standard path in /sys, be sure to
 modify the "path" property accordingly. The first occurence of %d gets replaced
 with the battery number, but you can just hard-code a path as well.
 
-If the remaining time sinks below low_threshold minutes, the battery text will
-be colored red. So, if you configure low_threshold to 10, and your battery
-lasts another 9 minutes, it will be colored red.
+It is possible to define a low_threshold that causes the battery text to be
+colored red. The low_threshold type can be of threshold_type "time" or
+"percentage". So, if you configure low_threshold to 10 and threshold_type to
+"time", and your battery lasts another 9 minutes, it will be colored red.
 
 *Example order*: +battery 0+
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
 
-*Example low_threshold*: +low_threshold 10+
+*Example low_threshold*: +30+
+
+*Example threshold_type*: +time+
 
 === CPU-Temperature
 
