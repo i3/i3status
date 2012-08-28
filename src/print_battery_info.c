@@ -1,4 +1,5 @@
 // vim:ts=8:expandtab
+#include <ctype.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -266,6 +267,16 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 		       (charging ? "(CHR)" : apm_info.minutes_left));
 #endif
 
+#define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \
+        do { \
+                if (strlen(_buf) == 0) { \
+                        if (outwalk > buffer && isspace(outwalk[-1])) \
+                                outwalk--; \
+                        else if (isspace(*(walk+1))) \
+                                walk++; \
+                } \
+        } while (0)
+
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
                         *(outwalk++) = *walk;
@@ -281,12 +292,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
                         outwalk += sprintf(outwalk, "%s", remainingbuf);
                         walk += strlen("remaining");
+                        EAT_SPACE_FROM_OUTPUT_IF_EMPTY(remainingbuf);
                 } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
                         outwalk += sprintf(outwalk, "%s", emptytimebuf);
                         walk += strlen("emptytime");
+                        EAT_SPACE_FROM_OUTPUT_IF_EMPTY(emptytimebuf);
                 } else if (strncmp(walk+1, "consumption", strlen("consumption")) == 0) {
                         outwalk += sprintf(outwalk, "%s", consumptionbuf);
                         walk += strlen("consumption");
+                        EAT_SPACE_FROM_OUTPUT_IF_EMPTY(consumptionbuf);
                 }
         }
 
