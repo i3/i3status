@@ -86,10 +86,25 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                         outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail);
                         walk += strlen("avail");
                 }
-                
-                if (BEGINS_WITH(walk+1, "percentage")) {
-                        outwalk += sprintf(outwalk, "%.01f%%", 100.0 - 100.0 * (double)buf.f_bavail / (double)buf.f_blocks);
-                        walk += strlen("percentage");
+
+                if (BEGINS_WITH(walk+1, "percentage_free")) {
+                        outwalk += sprintf(outwalk, "%.01f%%", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks);
+                        walk += strlen("percentage_free");
+                }
+
+                if (BEGINS_WITH(walk+1, "percentage_used_of_avail")) {
+                        outwalk += sprintf(outwalk, "%.01f%%", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks);
+                        walk += strlen("percentage_used_of_avail");
+                }
+
+                if (BEGINS_WITH(walk+1, "percentage_used")) {
+                        outwalk += sprintf(outwalk, "%.01f%%", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks);
+                        walk += strlen("percentage_used");
+                }
+
+                if (BEGINS_WITH(walk+1, "percentage_avail")) {
+                        outwalk += sprintf(outwalk, "%.01f%%", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks);
+                        walk += strlen("percentage_avail");
                 }
         }
 

@@ -156,9 +156,14 @@ best available public IPv6 address on your computer).
 
 Gets used, free, available and total amount of bytes on the given mounted filesystem.
 
+These values can also be expressed in percentages with the percentage_used,
+percentage_free, percentage_avail and percentage_used_of_avail formats.
+
 *Example order*: +disk /mnt/usbstick+
 
 *Example format*: +%free (%avail)/ %total+
+
+*Example format*: +%percentage_used used, %percentage_free free, %percentage_avail avail+
 
 === Run-watch
 
