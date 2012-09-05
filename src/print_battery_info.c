@@ -42,6 +42,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         const char *walk, *last;
         char *outwalk = buffer;
         bool watt_as_unit;
+        bool colorful_output;
         int full_design = -1,
             remaining = -1,
             present_rate = -1,
@@ -151,9 +152,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
                                 && percentage_remaining < low_threshold) {
                                 START_COLOR("color_bad");
+                                colorful_output = true;
                         } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
                                 && seconds_remaining < 60 * low_threshold) {
                                 START_COLOR("color_bad");
+                                colorful_output = true;
                         }
                 }
 
@@ -170,7 +173,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
                         ((float)present_rate / 1000.0 / 1000.0));
 
-                END_COLOR;
+                if (colorful_output)
+                    END_COLOR;
         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
