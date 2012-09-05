@@ -94,10 +94,10 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #define START_COLOR(colorstr) \
 	do { \
 		if (cfg_getbool(cfg_general, "colors")) { \
-			const char *val = cfg_getstr(cfg_general, colorstr); \
+			const char *_val = cfg_getstr(cfg_general, colorstr); \
 			if (output_format == O_I3BAR) { \
 				yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
-				yajl_gen_string(json_gen, (const unsigned char *)val, strlen(val)); \
+				yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val)); \
 			} else { \
 				outwalk += sprintf(outwalk, "%s", color(colorstr)); \
 			} \
