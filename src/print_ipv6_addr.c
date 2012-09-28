@@ -78,10 +78,13 @@ static char *get_ipv6_addr(void) {
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_DGRAM;
 
-        /* We resolve the K root server to get a public IPv6 address. You can
-         * replace this with any other host which has an AAAA record, but the
-         * K root server is a pretty safe bet. */
-        if (getaddrinfo("k.root-servers.net", "domain", &hints, &result) != 0) {
+        /* We use the public IPv6 of the K root server here. It doesn’t matter
+         * which IPv6 address we use (we don’t even send any packets), as long
+         * as it’s considered global by the kernel.
+         * NB: We don’t use a hostname since that would trigger a DNS lookup.
+         * By using an IPv6 address, getaddrinfo() will *not* do a DNS lookup,
+         * but return the address in the appropriate struct. */
+        if (getaddrinfo("2001:7fd::1", "domain", &hints, &result) != 0) {
                 /* We don’t display the error here because most
                  * likely, there just is no connectivity.
                  * Thus, don’t spam the user’s console. */
