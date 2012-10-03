@@ -1,3 +1,15 @@
+2012-10-03 i3status 2.6
+
+ • Error handling: Properly output JSON errors in the battery module
+ • Colorize battery output if remaining time/percentage below threshold
+ • Colorize volume in red if muted
+ • Include a Perl and Python example wrapper script for i3status’s JSON output
+ • Avoid division by zero when calculating CPU usage
+ • Add consumption to battery info
+ • Use correct units for battery calculations
+ • Add percentage values for disk info
+ • Save the DNS lookup for k.root-servers.net in the ipv6 module
+
 2012-05-11 i3status 2.5.1
 
  • Handle %d with non-default CPU temperature path
