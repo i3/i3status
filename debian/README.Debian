@@ -1,9 +1,0 @@
--------------------------------------------------
-When using i3status with dzen2 support (i3status)
--------------------------------------------------
-
-It is recommended to start i3status after starting your window manager, ideally
-using your window manager's configuration file.
-
-Launching i3status in combination with dzen2 could look like this:
-i3status | dzen2 -fg white -ta r -w 1280 -dock

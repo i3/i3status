@@ -1,2 +1,0 @@
-version=3
-http://i3.zekjur.net/i3status/	.*/i3status/i3status-(\d[\d_.-]+)\.tar\.bz2$
