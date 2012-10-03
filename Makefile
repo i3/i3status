@@ -91,6 +91,7 @@ release:
 	find man -maxdepth 1 -type f \( -regex ".*\.\(1\|man\|conf\)" -or -name "Makefile" \) -exec cp '{}' i3status-${VERSION}/man \;
 	cp -r include i3status-${VERSION}
 	cp -r yajl-fallback i3status-${VERSION}
+	cp -r contrib i3status-${VERSION}
 	sed -e 's/^GIT_VERSION:=\(.*\)/GIT_VERSION=${GIT_VERSION}/g;s/^VERSION:=\(.*\)/VERSION=${VERSION}/g' Makefile > i3status-${VERSION}/Makefile
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
