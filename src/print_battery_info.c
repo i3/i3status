@@ -228,7 +228,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 	 * probing acpi(4) devices.
 	 */
 	struct apm_power_info apm_info;
-	int apm_fd, ac_status, charging;
+	int apm_fd;
 
 	apm_fd = open("/dev/apm", O_RDONLY);
 	if (apm_fd < 0) {
@@ -249,26 +249,41 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
 	switch(apm_info.ac_state) {
 	case APM_AC_OFF:
-		ac_status = CS_DISCHARGING;
+		status = CS_DISCHARGING;
 		break;
 	case APM_AC_ON:
-		ac_status = CS_CHARGING;
+		status = CS_CHARGING;
 		break;
 	default:
 		/* If we don't know what's going on, just assume we're discharging. */
-		ac_status = CS_DISCHARGING;
+		status = CS_DISCHARGING;
 		break;
 	}
 
 	(void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%", apm_info.battery_life);
 
-	/* Can't give a meaningful value for remaining minutes if we're charging. */
-	if (ac_status == CS_CHARGING)
-		charging = 1;
+	if (status == CS_DISCHARGING && low_threshold > 0) {
+		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+		    && apm_info.battery_life < low_threshold) {
+			START_COLOR("color_bad");
+			colorful_output = true;
+		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+			   && apm_info.minutes_left < (u_int) low_threshold) {
+			START_COLOR("color_bad");
+			colorful_output = true;
+		}
+	}
 
-	(void)snprintf(remainingbuf, sizeof(remainingbuf), (charging ? "%s" : "%d"),
-		       (charging ? "(CHR)" : apm_info.minutes_left));
+	/* Can't give a meaningful value for remaining minutes if we're charging. */
+	if (status != CS_CHARGING) {
+		(void)snprintf(remainingbuf, sizeof(remainingbuf), "%d", apm_info.minutes_left);
+	} else {
+		(void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
+	}
+
+	if (colorful_output)
+		END_COLOR;
 #endif
 
 #define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \
