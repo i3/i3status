@@ -25,6 +25,17 @@
 #define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
 #endif
 
+#ifdef __OpenBSD__
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
+#endif
+
 #include "i3status.h"
 
 #define WIRELESS_INFO_FLAG_HAS_ESSID                    (1 << 0)
@@ -219,6 +230,70 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
         }
 
         return 1;
+#endif
+#ifdef __OpenBSD__
+	struct ifreq ifr;
+	struct ieee80211_bssid bssid;
+	struct ieee80211_nwid nwid;
+	struct ieee80211_nodereq nr;
+
+	struct ether_addr ea;
+
+        int s, len, ibssid, inwid;
+	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		return (0);
+
+        memset(&ifr, 0, sizeof(ifr));
+        ifr.ifr_data = (caddr_t)&nwid;
+	(void)strlcpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
+        inwid = ioctl(s, SIOCG80211NWID, (caddr_t)&ifr);
+
+	memset(&bssid, 0, sizeof(bssid));
+	strlcpy(bssid.i_name, interface, sizeof(bssid.i_name));
+	ibssid = ioctl(s, SIOCG80211BSSID, &bssid);
+
+	if (ibssid != 0 || inwid != 0) {
+		close(s);
+		return 0;
+	}
+
+	/* NWID */
+	{
+		if (nwid.i_len <= IEEE80211_NWID_LEN)
+			len = nwid.i_len + 1;
+		else
+			len = IEEE80211_NWID_LEN + 1;
+
+		strncpy(&info->essid[0], nwid.i_nwid, len);
+		info->essid[IW_ESSID_MAX_SIZE] = '\0';
+		info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
+	}
+
+	/* Signal strength */
+	{
+		memset(&zero_bssid, 0, sizeof(zero_bssid));
+		if (ibssid == 0 && memcmp(bssid.i_bssid, zero_bssid, IEEE80211_ADDR_LEN) != 0) {
+			memcpy(&ea.ether_addr_octet, bssid.i_bssid, sizeof(ea.ether_addr_octet));
+
+			bzero(&nr, sizeof(nr));
+			bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
+			strlcpy(nr.nr_ifname, interface, sizeof(nr.nr_ifname));
+
+			if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
+				if (nr.nr_max_rssi)
+					info->signal_level_max = IEEE80211_NODEREQ_RSSI(&nr);
+				else
+					info->signal_level = nr.nr_rssi;
+
+		                info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+			}
+		}
+	}
+
+	close(s);
+	return 1;
 #endif
 	return 0;
 }
