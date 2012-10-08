@@ -25,7 +25,11 @@
         (IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
 
 #define PART_ETHSPEED  "E: %s (%s)"
+#endif
 
+#if defined(__OpenBSD__)
+#include <errno.h>
+#include <net/if_media.h>
 #endif
 
 static int print_eth_speed(char *outwalk, const char *interface) {
@@ -65,6 +69,38 @@ static int print_eth_speed(char *outwalk, const char *interface) {
         }
         ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
         return sprintf(outwalk, "%s", ethspeed);
+#elif defined(__OpenBSD__)
+	char *ethspeed;
+	struct ifmediareq ifmr;
+
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strlcpy(ifmr.ifm_name, interface, sizeof(ifmr.ifm_name));
+
+	if (ioctl(general_socket, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+                if (errno != E2BIG)
+			return sprintf(outwalk, "?");
+	}
+
+	struct ifmedia_description *desc;
+	struct ifmedia_description ifm_subtype_descriptions[] =
+	    IFM_SUBTYPE_DESCRIPTIONS;
+
+        for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL; desc++) {
+		/*
+		 * Skip these non-informative values and go right ahead to the
+		 * actual speeds.
+		 */
+		if (strncmp(desc->ifmt_string, "autoselect", strlen("autoselect")) == 0 ||
+		    strncmp(desc->ifmt_string, "auto", strlen("auto")) == 0)
+			continue;
+
+		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmr.ifm_active) &&
+		    IFM_SUBTYPE(desc->ifmt_word) == IFM_SUBTYPE(ifmr.ifm_active))
+			break;
+        }
+        ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
+        return sprintf(outwalk, "%s", ethspeed);
+
 #else
 	return sprintf(outwalk, "?");
 #endif
