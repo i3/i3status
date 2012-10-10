@@ -88,18 +88,19 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 			goto error;
 		}
 		/*
-		 * 'path' is actually the node within the full path (eg, cpu0).
+		 * 'path' is actually the node within the full path (currently always acpitz0).
 		 * XXX: Extend the API to allow a string instead of just an int for path, this would
-		 * allow us to have a path of 'acpitz0' for example.
+		 * allow us to build an arbitrary path.
 		 */
 		if (strncmp(sensordev.xname, path, strlen(path)) == 0) {
 			mib[3] = SENSOR_TEMP;
 			for (numt = 0; numt < sensordev.maxnumt[SENSOR_TEMP]; numt++) {
 				mib[4] = numt;
 				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
-					if (errno != ENOENT)
+					if (errno != ENOENT) {
 						warn("sysctl");
-					continue;
+						continue;
+					}
 				}
 				outwalk += sprintf(outwalk, "%.2f", (sensor.value - 273150000) / 1000000.0 );
 			}

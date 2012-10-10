@@ -31,9 +31,11 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
  * Due to the fact there are various ways to obtain a temperature reading, THERMAL_ZONE will need
  * to be adjustable enough for those situations. As it can either be hw.sensors.cpu%d.temp0, or
  * hw.sensors.acpitz%d.temp0 or even something different entirely within hw.sensors.%s.temp0.
- * XXX: For now just check cpu%d.temp0. Adjust this later.
+ * XXX:
+ * Due to the fact the i3status API only allows to set the THERMAL_ZONE parameter to an integer,
+ * we can't make this fully configureable (yet?).
  */
-#define THERMAL_ZONE "cpu%d"
+#define THERMAL_ZONE "acpitz%d"
 
 #endif
 
