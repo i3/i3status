@@ -305,6 +305,15 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
         INSTANCE(interface);
 
+	const char *ip_address = get_ip_addr(interface);
+	if (ip_address == NULL) {
+		START_COLOR("color_bad");
+		outwalk += sprintf(outwalk, "%s", format_down);
+		goto out;
+	} else {
+		START_COLOR("color_good");
+	}
+
         if (get_wireless_info(interface, &info)) {
                 walk = format_up;
                 if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
@@ -366,9 +375,8 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
                 }
 
                 if (BEGINS_WITH(walk+1, "ip")) {
-                        const char *ip_address = get_ip_addr(interface);
-                        outwalk += sprintf(outwalk, "%s", (ip_address ? ip_address : "no IP"));
-                        walk += strlen("ip");
+			outwalk += sprintf(outwalk, "%s", ip_address);
+			walk += strlen("ip");
                 }
 
 #ifdef LINUX
@@ -383,6 +391,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 #endif
         }
 
+out:
         END_COLOR;
         OUTPUT_FULL_TEXT(buffer);
 }
