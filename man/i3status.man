@@ -224,11 +224,15 @@ colored red. The low_threshold type can be of threshold_type "time" or
 
 === CPU-Temperature
 
-Gets the temperature of the given thermal zone.
+Gets the temperature of the given thermal zone. It is possible to
+define a max_threshold that will color the temperature red in case the
+specified thermal zone is getting too hot. Defaults to 75 degrees C.
 
 *Example order*: +cpu_temperature 0+
 
 *Example format*: +T: %degrees °C+
+
+*Example max_threshold*: +42+
 
 === CPU Usage
 

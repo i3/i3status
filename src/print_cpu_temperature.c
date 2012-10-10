@@ -23,6 +23,8 @@
 #include <sys/sensors.h>
 #include <errno.h>
 #include <err.h>
+
+#define MUKTOC(v) ((v - 273150000) / 1000000.0)
 #endif
 
 static char *thermal_zone;
@@ -32,11 +34,11 @@ static char *thermal_zone;
  * returns the temperature in degree celcius.
  *
  */
-void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format) {
+void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, int max_threshold) {
 #ifdef THERMAL_ZONE
         const char *walk;
         char *outwalk = buffer;
-        static char buf[16];
+	bool colorful_output;
 
         if (path == NULL)
                 asprintf(&thermal_zone, THERMAL_ZONE, zone);
@@ -54,6 +56,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
                 if (BEGINS_WITH(walk+1, "degrees")) {
 #if defined(LINUX)
+		        static char buf[16];
                         long int temp;
                         if (!slurp(path, buf, sizeof(buf)))
                                 goto error;
@@ -87,14 +90,11 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 				break;
 			goto error;
 		}
-		/*
-		 * 'path' is actually the node within the full path (currently always acpitz0).
-		 * XXX: Extend the API to allow a string instead of just an int for path, this would
-		 * allow us to build an arbitrary path.
-		 */
+		/* 'path' is the node within the full path (defaults to acpitz0). */
 		if (strncmp(sensordev.xname, path, strlen(path)) == 0) {
 			mib[3] = SENSOR_TEMP;
-			for (numt = 0; numt < sensordev.maxnumt[SENSOR_TEMP]; numt++) {
+			/* Limit to temo0, but should retrieve from a full path... */
+			for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {
 				mib[4] = numt;
 				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
 					if (errno != ENOENT) {
@@ -102,7 +102,15 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 						continue;
 					}
 				}
-				outwalk += sprintf(outwalk, "%.2f", (sensor.value - 273150000) / 1000000.0 );
+				if ((int)MUKTOC(sensor.value) >= max_threshold) {
+					START_COLOR("color_bad");
+					colorful_output = true;
+				}
+
+				outwalk += sprintf(outwalk, "%.2f", MUKTOC(sensor.value));
+
+				if (colorful_output)
+					END_COLOR;
 			}
 		}
 	}

@@ -27,16 +27,8 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #define BATT_STATE "hw.acpi.battery.state"
 
 #elif defined(__OpenBSD__)
-/*
- * Due to the fact there are various ways to obtain a temperature reading, THERMAL_ZONE will need
- * to be adjustable enough for those situations. As it can either be hw.sensors.cpu%d.temp0, or
- * hw.sensors.acpitz%d.temp0 or even something different entirely within hw.sensors.%s.temp0.
- * XXX:
- * Due to the fact the i3status API only allows to set the THERMAL_ZONE parameter to an integer,
- * we can't make this fully configureable (yet?).
- */
+/* Default to acpitz(4) if no path is set. */
 #define THERMAL_ZONE "acpitz%d"
-
 #endif
 
 #if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
@@ -145,7 +137,7 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, struct tm 
 const char *get_ip_addr();
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format);
-void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format);
+void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, int);
 void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format);
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_load(yajl_gen json_gen, char *buffer, const char *format);

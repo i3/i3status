@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
         cfg_opt_t temp_opts[] = {
                 CFG_STR("format", "%degrees C", CFGF_NONE),
                 CFG_STR("path", NULL, CFGF_NONE),
+                CFG_INT("max_threshold", 75, CFGF_NONE),
                 CFG_END()
         };
 
@@ -460,7 +461,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("cpu_temperature") {
                                 SEC_OPEN_MAP("cpu_temperature");
-                                print_cpu_temperature_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"));
+                                print_cpu_temperature_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getint(sec, "max_threshold"));
                                 SEC_CLOSE_MAP;
                         }
 
