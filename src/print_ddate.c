@@ -180,20 +180,22 @@ struct disc_time *get_ddate(struct tm *current_tm) {
         int is_leap_year = !(current_tm->tm_year % 4) &&
                             (!(current_tm->tm_year % 400) || current_tm->tm_year % 100);
 
-        if (is_leap_year && current_tm->tm_yday == 59) {
+        /* If St. Tib's Day has passed, it will be necessary to skip a day. */
+        int yday = current_tm->tm_yday;
+
+        if (is_leap_year && yday == 59) {
                 /* On St. Tibs Day we don't have to define a date */
                 dt.st_tibs_day = 1;
         } else {
                 dt.st_tibs_day = 0;
-                dt.season_day = current_tm->tm_yday % 73;
-                if (is_leap_year && current_tm->tm_yday > 59) {
-                        dt.week_day = (current_tm->tm_yday - 1) % 5;
-                } else {
-                        dt.week_day = current_tm->tm_yday % 5;
-                }
+                if (is_leap_year && yday > 59)
+                        yday -= 1;
+
+                dt.season_day = yday % 73;
+                dt.week_day = yday % 5;
         }
         dt.year = current_tm->tm_year + 3066;
-        dt.season = current_tm->tm_yday / 73;
+        dt.season = yday / 73;
         return &dt;
 }
 
