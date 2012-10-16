@@ -63,8 +63,15 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                         temp = strtol(buf, NULL, 10);
                         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
                                 *(outwalk++) = '?';
-                        else
+                        else {
+                                if ((temp/1000) >= max_threshold) {
+                                        START_COLOR("color_bad");
+                                        colorful_output = true;
+                                }
                                 outwalk += sprintf(outwalk, "%ld", (temp/1000));
+                                if (colorful_output)
+                                        END_COLOR;
+                        }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
                         int sysctl_rslt;
                         size_t sysctl_size = sizeof(sysctl_rslt);
