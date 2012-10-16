@@ -157,6 +157,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                                 && seconds_remaining < 60 * low_threshold) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
+                        } else {
+                            colorful_output = false;
                         }
                 }
 
@@ -172,9 +174,17 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
                 (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
                         ((float)present_rate / 1000.0 / 1000.0));
-
-                if (colorful_output)
-                    END_COLOR;
+        } else {
+                /* On some systems, present_rate may not exist. Still, make sure
+                 * we colorize the output if threshold_type is set to percentage
+                 * (since we don't have any information on remaining time). */
+                if (status == CS_DISCHARGING && low_threshold > 0) {
+                        if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+                                && percentage_remaining < low_threshold) {
+                                START_COLOR("color_bad");
+                                colorful_output = true;
+                        }
+                }
         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
         int state;
@@ -322,6 +332,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(consumptionbuf);
                 }
         }
+
+        if (colorful_output)
+                END_COLOR;
 
         OUTPUT_FULL_TEXT(buffer);
 }
