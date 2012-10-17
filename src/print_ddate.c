@@ -95,7 +95,7 @@ static int format_output(char *outwalk, char *format, struct disc_time *dt) {
                                 break;
                         case 'e':
                                 outwalk += sprintf(outwalk, "%d", dt->season_day + 1);
-                                switch (dt->season_day) {
+                                switch (dt->season_day % 10) {
                                         case 0:
                                                 outwalk += sprintf(outwalk, "st");
                                                 break;
