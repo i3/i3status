@@ -143,6 +143,11 @@ none::
 Does not use any color codes. Separates values by the pipe symbol. This should
 be used with i3bar and can be used for custom scripts.
 
+It's also possible to use the color_good, color_degraded, color_bad directives
+to define specific colors per module. If one of these directives is defined
+in a module section its value will override the value defined in the general
+section just for this module.
+
 === IPv6
 
 This module gets the IPv6 address used for outgoing connections (that is, the

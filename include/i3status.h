@@ -45,13 +45,13 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 
 #define CASE_SEC(name) \
         if (BEGINS_WITH(current, name)) \
-                with(cfg_t *, sec, cfg_getsec(cfg, name)) \
+                with(cfg_t *, sec, cfg_section = cfg_getsec(cfg, name)) \
                         if (sec != NULL)
 
 #define CASE_SEC_TITLE(name) \
         if (BEGINS_WITH(current, name)) \
                 with(const char *, title, current + strlen(name) + 1) \
-                        with(cfg_t *, sec, cfg_gettsec(cfg, name, title)) \
+                        with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) \
                                 if (sec != NULL)
 
 /* Macro which any plugin can use to output the full_text part (when the output
@@ -88,7 +88,11 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 #define START_COLOR(colorstr) \
 	do { \
 		if (cfg_getbool(cfg_general, "colors")) { \
-			const char *_val = cfg_getstr(cfg_general, colorstr); \
+			const char *_val = NULL; \
+			if (cfg_section) \
+				_val = cfg_getstr(cfg_section, colorstr); \
+			if (!_val) \
+				_val = cfg_getstr(cfg_general, colorstr); \
 			if (output_format == O_I3BAR) { \
 				yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
 				yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val)); \
@@ -147,6 +151,6 @@ bool process_runs(const char *path);
 /* socket file descriptor for general purposes */
 extern int general_socket;
 
-extern cfg_t *cfg, *cfg_general;
+extern cfg_t *cfg, *cfg_general, *cfg_section;
 
 #endif

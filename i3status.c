@@ -35,10 +35,17 @@
 
 #define exit_if_null(pointer, ...) { if (pointer == NULL) die(__VA_ARGS__); }
 
+#define CFG_COLOR_OPTS(good, degraded, bad) \
+    CFG_STR("color_good", good, CFGF_NONE), \
+    CFG_STR("color_degraded", degraded, CFGF_NONE), \
+    CFG_STR("color_bad", bad, CFGF_NONE)
+
+#define CFG_CUSTOM_COLOR_OPTS CFG_COLOR_OPTS(NULL, NULL, NULL)
+
 /* socket file descriptor for general purposes */
 int general_socket;
 
-cfg_t *cfg, *cfg_general;
+cfg_t *cfg, *cfg_general, *cfg_section;
 
 /*
  * Exit upon SIGPIPE because when we have nowhere to write to, gathering
@@ -179,35 +186,37 @@ int main(int argc, char *argv[]) {
         cfg_opt_t general_opts[] = {
                 CFG_STR("output_format", "auto", CFGF_NONE),
                 CFG_BOOL("colors", 1, CFGF_NONE),
-                CFG_STR("color_good", "#00FF00", CFGF_NONE),
-                CFG_STR("color_degraded", "#FFFF00", CFGF_NONE),
-                CFG_STR("color_bad", "#FF0000", CFGF_NONE),
                 CFG_STR("color_separator", "#333333", CFGF_NONE),
                 CFG_INT("interval", 1, CFGF_NONE),
+                CFG_COLOR_OPTS("#00FF00", "#FFFF00", "#FF0000"),
                 CFG_END()
         };
 
         cfg_opt_t run_watch_opts[] = {
                 CFG_STR("pidfile", NULL, CFGF_NONE),
                 CFG_STR("format", "%title: %status", CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
         cfg_opt_t wireless_opts[] = {
                 CFG_STR("format_up", "W: (%quality at %essid, %bitrate) %ip", CFGF_NONE),
                 CFG_STR("format_down", "W: down", CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
         cfg_opt_t ethernet_opts[] = {
                 CFG_STR("format_up", "E: %ip (%speed)", CFGF_NONE),
                 CFG_STR("format_down", "E: down", CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
         cfg_opt_t ipv6_opts[] = {
                 CFG_STR("format_up", "%ip", CFGF_NONE),
                 CFG_STR("format_down", "no IPv6", CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
@@ -257,6 +266,7 @@ int main(int argc, char *argv[]) {
                 CFG_STR("device", "default", CFGF_NONE),
                 CFG_STR("mixer", "Master", CFGF_NONE),
                 CFG_INT("mixer_idx", 0, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
@@ -275,6 +285,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
