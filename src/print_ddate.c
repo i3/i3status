@@ -95,6 +95,11 @@ static int format_output(char *outwalk, char *format, struct disc_time *dt) {
                                 break;
                         case 'e':
                                 outwalk += sprintf(outwalk, "%d", dt->season_day + 1);
+                                if (dt->season_day > 9 && dt->season_day < 13) {
+                                        outwalk += sprintf(outwalk, "th");
+                                        break;
+                                }
+
                                 switch (dt->season_day % 10) {
                                         case 0:
                                                 outwalk += sprintf(outwalk, "st");
