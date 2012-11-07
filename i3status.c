@@ -253,6 +253,7 @@ int main(int argc, char *argv[]) {
                 CFG_STR("format", "%degrees C", CFGF_NONE),
                 CFG_STR("path", NULL, CFGF_NONE),
                 CFG_INT("max_threshold", 75, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
