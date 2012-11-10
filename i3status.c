@@ -226,6 +226,7 @@ int main(int argc, char *argv[]) {
                 CFG_INT("low_threshold", 30, CFGF_NONE),
                 CFG_STR("threshold_type", "time", CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
