@@ -25,6 +25,19 @@
 #define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
 #endif
 
+#ifdef __DragonFly__
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <net/if_media.h>
+#include <netproto/802_11/ieee80211.h>
+#include <netproto/802_11/ieee80211_ioctl.h>
+#include <unistd.h>
+#define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
+#endif
+
 #ifdef __OpenBSD__
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -170,7 +183,7 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
         close(skfd);
         return 1;
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__DragonFly__)
         int s, len, inwid;
         uint8_t buf[24 * 1024], *cp;
         struct ieee80211req na;

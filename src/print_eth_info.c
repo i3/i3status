@@ -19,7 +19,7 @@
 #define PART_ETHSPEED  "E: %s (%d Mbit/s)"
 #endif
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #include <net/if_media.h>
 #define IFM_TYPE_MATCH(dt, t)                       \
         (IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
@@ -47,7 +47,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
                 ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
                 return sprintf(outwalk, "%d Mbit/s", ethspeed);
         } else return sprintf(outwalk, "?");
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
         char *ethspeed;
         struct ifmediareq ifm;
         (void)memset(&ifm, 0, sizeof(ifm));

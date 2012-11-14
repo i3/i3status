@@ -11,7 +11,7 @@
 #include <alloca.h>
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/soundcard.h>
@@ -174,7 +174,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		}
 	}
 #endif
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
         char mixerpath[] = "/dev/mixer";
         int mixfd, vol, devmask = 0;
 

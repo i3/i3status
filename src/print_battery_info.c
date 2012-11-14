@@ -9,7 +9,7 @@
 
 #include "i3status.h"
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -186,7 +186,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         }
                 }
         }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
         int state;
         int sysctl_rslt;
         size_t sysctl_size = sizeof(sysctl_rslt);

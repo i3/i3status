@@ -39,6 +39,13 @@ LDFLAGS+=-L/usr/local/lib/
 LIBS+=-lossaudio
 endif
 
+# This probably applies for any pkgsrc based system
+ifeq ($(shell uname),DragonFly)
+CFLAGS+=-I/usr/pkg/include/
+LDFLAGS+=-L/usr/pkg/lib/
+endif
+
+
 CFLAGS+=$(EXTRA_CFLAGS)
 
 # Fallback for libyajl 1 which did not include yajl_version.h. We need

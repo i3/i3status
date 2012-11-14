@@ -13,6 +13,13 @@
 #include <sys/dkstat.h>
 #endif
 
+#if defined(__DragonFly__)
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/resource.h>
+#endif
+
 #include "i3status.h"
 
 static int prev_total = 0;
@@ -43,9 +50,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         diff_usage = (diff_total ? (1000 * (diff_total - diff_idle)/diff_total + 5)/10 : 0);
         prev_total = curr_total;
         prev_idle  = curr_idle;
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
         size_t size;
         long cp_time[CPUSTATES];
         size = sizeof cp_time;

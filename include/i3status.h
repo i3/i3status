@@ -18,10 +18,14 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
 
 #define THERMAL_ZONE "/sys/class/thermal/thermal_zone%d/temp"
 
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 
 /* this needs the coretemp module to be loaded */
+#if defined(__DragonFly__)
+#define THERMAL_ZONE "hw.sensors.cpu%d.temp0"
+#else
 #define THERMAL_ZONE "dev.cpu.%d.temperature"
+#endif
 #define BATT_LIFE "hw.acpi.battery.life"
 #define BATT_TIME "hw.acpi.battery.time"
 #define BATT_STATE "hw.acpi.battery.state"
