@@ -58,6 +58,14 @@ void sigpipe(int signum) {
 }
 
 /*
+ * Do nothing upon SIGUSR1. Running this signal handler will nevertheless
+ * interrupt nanosleep() so that i3status immediately generates new output.
+ *
+ */
+void sigusr1(int signum) {
+}
+
+/*
  * Checks if the given path exists by calling stat().
  *
  */
@@ -304,6 +312,10 @@ int main(int argc, char *argv[]) {
         memset(&action, 0, sizeof(struct sigaction));
         action.sa_handler = sigpipe;
         sigaction(SIGPIPE, &action, NULL);
+
+        memset(&action, 0, sizeof(struct sigaction));
+        action.sa_handler = sigusr1;
+        sigaction(SIGUSR1, &action, NULL);
 
         if (setlocale(LC_ALL, "") == NULL)
                 die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.");

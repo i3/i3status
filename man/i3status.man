@@ -378,6 +378,12 @@ Note that if you want to use the JSON output format (with colors in i3bar), you
 need to use a slightly more complex wrapper script. There are examples in the
 contrib/ folder, see http://code.i3wm.org/i3status/tree/contrib
 
+== SIGNALS
+
+When receiving +SIGUSR1+, i3status’s nanosleep() will be interrupted and thus
+you will force an update. You can use killall -USR1 i3status to force an update
+after changing the system volume, for example.
+
 == SEE ALSO
 
 +strftime(3)+, +date(1)+, +glob(3)+, +dzen2(1)+, +xmobar(1)+
