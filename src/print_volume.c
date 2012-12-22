@@ -157,7 +157,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		if ((err = snd_mixer_selem_get_playback_switch(hdl->elem, 0, &pbval)) < 0)
 			fprintf (stderr, "i3status: ALSA: playback_switch: %s\n", snd_strerror(err));
 		if (!pbval)  {
-			START_COLOR("color_bad");
+			START_COLOR("color_degraded");
 			avg = 0;
 		}
 	}
