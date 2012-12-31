@@ -259,11 +259,15 @@ Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+ (FreeBSD/
 === Load
 
 Gets the system load (number of processes waiting for CPU time in the last
-1, 5 and 15 minutes).
+1, 5 and 15 minutes). It is possible to define a max_threshold that will
+color the load value red in case the load average of the last minute is
+getting higher than the configured threshold. Defaults to 5.
 
 *Example order*: +load+
 
 *Example format*: +%1min %5min %15min+
+
+*Example max_threshold*: 5
 
 === Time
 

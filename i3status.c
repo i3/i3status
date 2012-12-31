@@ -257,6 +257,8 @@ int main(int argc, char *argv[]) {
 
         cfg_opt_t load_opts[] = {
                 CFG_STR("format", "%1min %5min %15min", CFGF_NONE),
+                CFG_INT("max_threshold", 5, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
@@ -460,7 +462,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC("load") {
                                 SEC_OPEN_MAP("load");
-                                print_load(json_gen, buffer, cfg_getstr(sec, "format"));
+                                print_load(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getint(sec, "max_threshold"));
                                 SEC_CLOSE_MAP;
                         }
 
