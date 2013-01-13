@@ -38,7 +38,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 #ifdef THERMAL_ZONE
         const char *walk;
         char *outwalk = buffer;
-	bool colorful_output;
+        bool colorful_output = false;
 
         if (path == NULL)
                 asprintf(&thermal_zone, THERMAL_ZONE, zone);
@@ -69,8 +69,10 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                                         colorful_output = true;
                                 }
                                 outwalk += sprintf(outwalk, "%ld", (temp/1000));
-                                if (colorful_output)
+                                if (colorful_output) {
                                         END_COLOR;
+                                        colorful_output = false;
+                                }
                         }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
                         int sysctl_rslt;
@@ -116,8 +118,10 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
 				outwalk += sprintf(outwalk, "%.2f", MUKTOC(sensor.value));
 
-				if (colorful_output)
+				if (colorful_output) {
 					END_COLOR;
+                                        colorful_output = false;
+                                }
 			}
 		}
 	}
