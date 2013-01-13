@@ -56,7 +56,8 @@ order += "ethernet eth0"
 order += "battery 0"
 order += "cpu_temperature 0"
 order += "load"
-order += "time"
+order += "tztime local"
+order += "tztime berlin"
 
 wireless wlan0 {
         format_up = "W: (%quality at %essid, %bitrate) %ip"
@@ -83,8 +84,13 @@ run_watch VPN {
         pidfile = "/var/run/vpnc/pid"
 }
 
-time {
-	format = "%Y-%m-%d %H:%M:%S"
+tztime local {
+        format = "%Y-%m-%d %H:%M:%S"
+}
+
+tztime berlin {
+        format = "%Y-%m-%d %H:%M:%S %Z"
+        timezone = "Europe/Berlin"
 }
 
 load {
@@ -258,11 +264,30 @@ Gets the system load (number of processes waiting for CPU time in the last
 
 === Time
 
-Formats the current system time. See +strftime(3)+ for the format.
+Outputs the current time in the local timezone.
+To use a different timezone, you can set the TZ environment variable,
+or use the +tztime+ module.
+See +strftime(3)+ for details on the format string.
 
 *Example order*: +time+
 
 *Example format*: +%Y-%m-%d %H:%M:%S+
+
+=== TzTime
+
+Outputs the current time in the given timezone.
+If no timezone is given, local time will be used.
+See +strftime(3)+ for details on the format string.
+The system's timezone database is usually installed in +/usr/share/zoneinfo+.
+Files below that path make for valid timezone strings, e.g. for
++/usr/share/zoneinfo/Europe/Berlin+ you can set timezone to +Europe/Berlin+
+in the +tztime+ module.
+
+*Example order*: +tztime berlin+
+
+*Example format*: +%Y-%m-%d %H:%M:%S %Z+
+
+*Example timezone*: +Europe/Berlin+
 
 === DDate
 

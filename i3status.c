@@ -239,7 +239,13 @@ int main(int argc, char *argv[]) {
         };
 
         cfg_opt_t time_opts[] = {
-                CFG_STR("format", "%d.%m.%Y %H:%M:%S", CFGF_NONE),
+                CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
+                CFG_END()
+        };
+
+        cfg_opt_t tztime_opts[] = {
+                CFG_STR("format", "%Y-%m-%d %H:%M:%S %Z", CFGF_NONE),
+                CFG_STR("timezone", "", CFGF_NONE),
                 CFG_END()
         };
 
@@ -292,6 +298,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
                 CFG_SEC("time", time_opts, CFGF_NONE),
+                CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
@@ -403,16 +410,9 @@ int main(int argc, char *argv[]) {
          * (!), not individual plugins, seem very unlikely. */
         char buffer[4096];
 
-        struct tm tm;
         while (1) {
                 struct timeval tv;
                 gettimeofday(&tv, NULL);
-                time_t current_time = tv.tv_sec;
-                struct tm *current_tm = NULL;
-                if (current_time != (time_t) -1) {
-                        localtime_r(&current_time, &tm);
-                        current_tm = &tm;
-                }
                 if (output_format == O_I3BAR)
                         yajl_gen_array_open(json_gen);
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
@@ -465,13 +465,19 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC("time") {
                                 SEC_OPEN_MAP("time");
-                                print_time(json_gen, buffer, cfg_getstr(sec, "format"), current_tm);
+                                print_time(json_gen, buffer, cfg_getstr(sec, "format"), NULL, tv.tv_sec);
+                                SEC_CLOSE_MAP;
+                        }
+
+                        CASE_SEC_TITLE("tztime") {
+                                SEC_OPEN_MAP("tztime");
+                                print_time(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), tv.tv_sec);
                                 SEC_CLOSE_MAP;
                         }
 
                         CASE_SEC("ddate") {
                                 SEC_OPEN_MAP("ddate");
-                                print_ddate(json_gen, buffer, cfg_getstr(sec, "format"), current_tm);
+                                print_ddate(json_gen, buffer, cfg_getstr(sec, "format"), tv.tv_sec);
                                 SEC_CLOSE_MAP;
                         }
 

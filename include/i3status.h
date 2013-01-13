@@ -137,11 +137,14 @@ char *endcolor() __attribute__ ((pure));
 /* src/auto_detect_format.c */
 char *auto_detect_format();
 
+/* src/print_time.c */
+void set_timezone(const char *timezone);
+
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format);
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, int low_threshold, char *threshold_type, bool last_full_capacity);
-void print_time(yajl_gen json_gen, char *buffer, const char *format, struct tm *current_tm);
-void print_ddate(yajl_gen json_gen, char *buffer, const char *format, struct tm *current_tm);
+void print_time(yajl_gen json_gen, char *buffer, const char *format, const char *timezone, time_t t);
+void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr();
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format);

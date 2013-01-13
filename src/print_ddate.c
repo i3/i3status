@@ -204,11 +204,14 @@ struct disc_time *get_ddate(struct tm *current_tm) {
         return &dt;
 }
 
-void print_ddate(yajl_gen json_gen, char *buffer, const char *format, struct tm *current_tm) {
+void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) {
         char *outwalk = buffer;
         static char *form = NULL;
+        struct tm current_tm;
         struct disc_time *dt;
-        if ((dt = get_ddate(current_tm)) == NULL)
+        set_timezone(NULL);  /* Use local time. */
+        localtime_r(&t, &current_tm);
+        if ((dt = get_ddate(&current_tm)) == NULL)
                 return;
         if (form == NULL)
                 if ((form = malloc(strlen(format) + 1)) == NULL)
