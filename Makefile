@@ -55,7 +55,7 @@ CFLAGS += -idirafter yajl-fallback
 OBJS:=$(wildcard src/*.c *.c)
 OBJS:=$(OBJS:.c=.o)
 
-src/%.o: src/%.c
+src/%.o: src/%.c include/i3status.h
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
 
