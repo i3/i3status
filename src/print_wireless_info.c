@@ -93,6 +93,15 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
                 info->essid[IW_ESSID_MAX_SIZE] = '\0';
         }
 
+        /* If the function iw_get_stats does not return proper stats, the
+           wifi is considered as down.
+           Since ad-hoc network does not have theses stats, we need to return
+           here for this mode. */
+        if (wcfg.mode == 1) {
+                close(skfd);
+                return 1;
+        }
+
         /* Wireless quality is a relative value in a driver-specific range.
            Signal and noise level can be either relative or absolute values
            in dBm. Furthermore, noise and quality can be expressed directly
