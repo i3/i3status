@@ -56,7 +56,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
                 if (BEGINS_WITH(walk+1, "degrees")) {
 #if defined(LINUX)
-		        static char buf[16];
+                        static char buf[16];
                         long int temp;
                         if (!slurp(path, buf, sizeof(buf)))
                                 goto error;
@@ -82,49 +82,49 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
                         outwalk += sprintf(outwalk, "%d.%d", TZ_KELVTOC(sysctl_rslt));
 #elif defined(__OpenBSD__)
-	struct sensordev sensordev;
-	struct sensor sensor;
-	size_t sdlen, slen;
-	int dev, numt, mib[5] = { CTL_HW, HW_SENSORS, 0, 0, 0 };
+        struct sensordev sensordev;
+        struct sensor sensor;
+        size_t sdlen, slen;
+        int dev, numt, mib[5] = { CTL_HW, HW_SENSORS, 0, 0, 0 };
 
-	sdlen = sizeof(sensordev);
-	slen = sizeof(sensor);
+        sdlen = sizeof(sensordev);
+        slen = sizeof(sensor);
 
-	for (dev = 0; ; dev++) {
-		mib[2] = dev;
-		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-			if (errno == ENXIO)
-				continue;
-			if (errno == ENOENT)
-				break;
-			goto error;
-		}
-		/* 'path' is the node within the full path (defaults to acpitz0). */
-		if (strncmp(sensordev.xname, path, strlen(path)) == 0) {
-			mib[3] = SENSOR_TEMP;
-			/* Limit to temo0, but should retrieve from a full path... */
-			for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {
-				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
-					if (errno != ENOENT) {
-						warn("sysctl");
-						continue;
-					}
-				}
-				if ((int)MUKTOC(sensor.value) >= max_threshold) {
-					START_COLOR("color_bad");
-					colorful_output = true;
-				}
+        for (dev = 0; ; dev++) {
+                mib[2] = dev;
+                if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
+                        if (errno == ENXIO)
+                                continue;
+                        if (errno == ENOENT)
+                                break;
+                        goto error;
+                }
+                /* 'path' is the node within the full path (defaults to acpitz0). */
+                if (strncmp(sensordev.xname, path, strlen(path)) == 0) {
+                        mib[3] = SENSOR_TEMP;
+                        /* Limit to temo0, but should retrieve from a full path... */
+                        for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {
+                                mib[4] = numt;
+                                if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+                                        if (errno != ENOENT) {
+                                                warn("sysctl");
+                                                continue;
+                                        }
+                                }
+                                if ((int)MUKTOC(sensor.value) >= max_threshold) {
+                                        START_COLOR("color_bad");
+                                        colorful_output = true;
+                                }
 
-				outwalk += sprintf(outwalk, "%.2f", MUKTOC(sensor.value));
+                                outwalk += sprintf(outwalk, "%.2f", MUKTOC(sensor.value));
 
-				if (colorful_output) {
-					END_COLOR;
+                                if (colorful_output) {
+                                        END_COLOR;
                                         colorful_output = false;
                                 }
-			}
-		}
-	}
+                        }
+                }
+        }
 #endif
                         walk += strlen("degrees");
                 }
