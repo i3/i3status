@@ -139,7 +139,7 @@ char *auto_detect_format(void) {
         else if (strcasecmp(name, "xmobar") == 0)
             newfmt = "xmobar";
 
-        if (newfmt && format) {
+        if (newfmt && format && strcmp(newfmt, format) != 0) {
             fprintf(stderr, "i3status: cannot auto-configure, situation ambiguous (format \"%s\" *and* \"%s\" detected)\n", newfmt, format);
             format = NULL;
             break;
