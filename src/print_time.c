@@ -2,12 +2,13 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
 #include "i3status.h"
 
-static int local_timezone_init = 0;
+static bool local_timezone_init = false;
 static const char *local_timezone = NULL;
 static const char *current_timezone = NULL;
 
@@ -15,7 +16,7 @@ void set_timezone(const char *tz) {
         if (!local_timezone_init) {
                 /* First call, initialize. */
                 local_timezone = getenv("TZ");
-                local_timezone_init = 1;
+                local_timezone_init = true;
         }
         if (tz == NULL || tz[0] == '\0') {
                 /* User wants localtime. */
