@@ -34,8 +34,8 @@ i3status is developed at
 You may clone the git-repository using
   git clone git://code.i3wm.org/i3status
 
-Talk to Michael Stapelberg for pull-requests at
-  michael+i3status@stapelberg.de
+Please submit patches at
+  http://cr.i3wm.org/
 
  ┌────────────────────────────┐
  │ Compilation                │
