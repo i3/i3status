@@ -30,7 +30,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, int low_threshold, char *threshold_type, bool last_full_capacity) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -130,7 +130,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
         float percentage_remaining = (((float)remaining / (float)full_design) * 100);
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%%", percentage_remaining);
+        if (integer_battery_capacity) {
+                (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00f%%", percentage_remaining);
+        } else {
+                (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%%", percentage_remaining);
+        }
 
         if (present_rate > 0) {
                 float remaining_time;

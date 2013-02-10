@@ -234,6 +234,7 @@ int main(int argc, char *argv[]) {
                 CFG_INT("low_threshold", 30, CFGF_NONE),
                 CFG_STR("threshold_type", "time", CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
+                CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
                 CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
@@ -441,7 +442,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("battery") {
                                 SEC_OPEN_MAP("battery");
-                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"));
+                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getbool(sec, "integer_battery_capacity"));
                                 SEC_CLOSE_MAP;
                         }
 
