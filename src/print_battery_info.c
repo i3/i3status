@@ -42,7 +42,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         const char *walk, *last;
         char *outwalk = buffer;
         bool watt_as_unit;
-        bool colorful_output;
+        bool colorful_output = false;
         int full_design = -1,
             remaining = -1,
             present_rate = -1,
