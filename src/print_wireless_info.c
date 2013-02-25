@@ -332,16 +332,15 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 		START_COLOR("color_bad");
 		outwalk += sprintf(outwalk, "%s", format_down);
 		goto out;
-	} else {
-		START_COLOR("color_good");
 	}
 
         if (get_wireless_info(interface, &info)) {
                 walk = format_up;
                 if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
                         START_COLOR((info.quality < info.quality_average ? "color_degraded" : "color_good"));
-        }
-        else {
+                else
+                        START_COLOR("color_good");
+        } else {
                 walk = format_down;
                 START_COLOR("color_bad");
         }
