@@ -18,7 +18,7 @@
 #   status_command measure-net-speed-i3status.bash
 # }
 
-i3status | (read line && echo $line && while :
+i3status | (read line && echo $line && read line && echo $line && while :
 do
   read line
   dat=$(measure-net-speed.bash)
