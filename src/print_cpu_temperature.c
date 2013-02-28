@@ -35,9 +35,9 @@ static char *thermal_zone;
  *
  */
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, int max_threshold) {
+        char *outwalk = buffer;
 #ifdef THERMAL_ZONE
         const char *walk;
-        char *outwalk = buffer;
         bool colorful_output = false;
 
         if (path == NULL)
