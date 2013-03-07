@@ -30,7 +30,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -61,7 +61,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         static char batpath[512];
         sprintf(batpath, path, number);
         if (!slurp(batpath, buf, sizeof(buf))) {
-                OUTPUT_FULL_TEXT("No battery");
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
@@ -123,7 +123,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
 
         if ((full_design == -1) || (remaining == -1)) {
-                OUTPUT_FULL_TEXT("No battery");
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
@@ -196,19 +196,19 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         size_t sysctl_size = sizeof(sysctl_rslt);
 
         if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
-                OUTPUT_FULL_TEXT("No battery");
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
         present_rate = sysctl_rslt;
         if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
-                OUTPUT_FULL_TEXT("No battery");
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
         remaining = sysctl_rslt;
         if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL,0) != 0) {
-                OUTPUT_FULL_TEXT("No battery");
+                OUTPUT_FULL_TEXT(format_down);
                 return;
         }
 
@@ -257,7 +257,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 	/* Don't bother to go further if there's no battery present. */
 	if ((apm_info.battery_state == APM_BATTERY_ABSENT) ||
 	    (apm_info.battery_state == APM_BATT_UNKNOWN)) {
-		OUTPUT_FULL_TEXT("No battery");
+		OUTPUT_FULL_TEXT(format_down);
 		return;
 	}
 
