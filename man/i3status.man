@@ -1,11 +1,11 @@
 i3status(1)
 ===========
 Michael Stapelberg <michael@i3wm.org>
-v2.6, October 2012
+v2.7, March 2013
 
 == NAME
 
-i3status - Generates a status line for dzen2 or xmobar
+i3status - Generates a status line for i3bar, dzen2 or xmobar
 
 == SYNOPSIS
 
