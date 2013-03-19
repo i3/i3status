@@ -177,6 +177,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
         char mixerpath[] = "/dev/mixer";
         int mixfd, vol, devmask = 0;
+        pbval = 1;
 
         if ((mixfd = open(mixerpath, O_RDWR)) < 0)
                 return;
@@ -184,6 +185,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 return;
         if (ioctl(mixfd, MIXER_READ(0),&vol) == -1)
                 return;
+
+        if (((vol & 0x7f) == 0) && (((vol >> 8) & 0x7f) == 0)) {
+                START_COLOR("color_degraded");
+                pbval = 0;
+        }
 
         const char *walk = fmt;
         for (; *walk != '\0'; walk++) {
