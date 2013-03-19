@@ -234,6 +234,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 minutes -= (hours * 60);
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02dh%02d",
                                max(hours, 0), max(minutes, 0));
+		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+		    && present_rate < low_threshold) {
+			START_COLOR("color_bad");
+			colorful_output = true;
+		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+			   && remaining < (u_int) low_threshold) {
+			START_COLOR("color_bad");
+			colorful_output = true;
+		}
         }
 #elif defined(__OpenBSD__)
 	/*
