@@ -77,30 +77,30 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 	if (!found) {
 		if ((hdl = calloc(sizeof(struct mixer_hdl), 1)) == NULL)
-			return;
+			goto out;
 
 		if ((hdl->device = strdup(device)) == NULL) {
 			free(hdl);
-			return;
+			goto out;
 		}
 
 		if ((hdl->mixer = strdup(mixer)) == NULL) {
 			free(hdl->device);
 			free(hdl);
-			return;
+			goto out;
 		}
 
 		hdl->mixer_idx = mixer_idx;
 		snd_mixer_selem_id_malloc(&(hdl->sid));
 		if (hdl->sid == NULL) {
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		if ((err = snd_mixer_open(&(hdl->m), 0)) < 0) {
 			fprintf(stderr, "i3status: ALSA: Cannot open mixer: %s\n", snd_strerror(err));
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		/* Attach this mixer handle to the given device */
@@ -108,7 +108,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 			fprintf(stderr, "i3status: ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		/* Register this mixer */
@@ -116,14 +116,14 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 			fprintf(stderr, "i3status: ALSA: snd_mixer_selem_register: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		if ((err = snd_mixer_load(hdl->m)) < 0) {
 			fprintf(stderr, "i3status: ALSA: snd_mixer_load: %s\n", snd_strerror(err));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		/* Find the given mixer */
@@ -134,7 +134,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 				snd_mixer_selem_id_get_name(hdl->sid), snd_mixer_selem_id_get_index(hdl->sid));
 			snd_mixer_close(hdl->m);
 			free_hdl(hdl);
-			return;
+			goto out;
 		}
 
 		/* Get the volume range to convert the volume later */
@@ -215,6 +215,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         close(mixfd);
 #endif
 
+out:
         *outwalk = '\0';
         OUTPUT_FULL_TEXT(buffer);
 
