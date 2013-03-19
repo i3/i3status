@@ -312,9 +312,10 @@ details on the format string.
 Outputs the volume of the specified mixer on the specified device. Works only
 on Linux because it uses ALSA.
 A simplified configuration can be used on FreeBSD and OpenBSD due to
-the lack of ALSA,  the +device+, +mixer+ and +mixder_idx+ options can be
+the lack of ALSA,  the +device+ and +mixer+ options can be
 ignored on these systems. On these systems the OSS API is used instead to
-query +/dev/mixer+ directly.
+query +/dev/mixer+ directly if +mixer_dix+ is -1, otherwise
++/dev/mixer++mixer_idx+.
 
 *Example order*: +volume master+
 
