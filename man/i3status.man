@@ -221,8 +221,9 @@ If you want the battery percentage to be shown without decimals, add
 +integer_battery_capacity = true+.
 
 If your battery is represented in a non-standard path in /sys, be sure to
-modify the "path" property accordingly. The first occurence of %d gets replaced
-with the battery number, but you can just hard-code a path as well.
+modify the "path" property accordingly, i.e. pointing to the uevent file on
+your system. The first occurence of %d gets replaced with the battery number,
+but you can just hard-code a path as well.
 
 It is possible to define a low_threshold that causes the battery text to be
 colored red. The low_threshold type can be of threshold_type "time" or
@@ -236,6 +237,8 @@ colored red. The low_threshold type can be of threshold_type "time" or
 *Example low_threshold*: +30+
 
 *Example threshold_type*: +time+
+
+*Example path*: +/sys/class/power_supply/CMB1/uevent+
 
 === CPU-Temperature
 
