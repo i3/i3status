@@ -55,11 +55,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         memset(emptytimebuf, '\0', sizeof(emptytimebuf));
         memset(consumptionbuf, '\0', sizeof(consumptionbuf));
 
-        INSTANCE(path);
-
-#if defined(LINUX)
         static char batpath[512];
         sprintf(batpath, path, number);
+        INSTANCE(batpath);
+
+#if defined(LINUX)
         if (!slurp(batpath, buf, sizeof(buf))) {
                 OUTPUT_FULL_TEXT(format_down);
                 return;
