@@ -30,6 +30,11 @@
  *
  */
 char *auto_detect_format(void) {
+    /* If stdout is a tty, we output directly to a terminal. */
+    if (isatty(STDOUT_FILENO)) {
+        return "term";
+    }
+
     pid_t myppid = getppid();
     pid_t mypid = getpid();
 

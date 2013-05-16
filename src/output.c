@@ -24,7 +24,19 @@ char *color(const char *colorstr) {
                 (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", cfg_getstr(cfg_general, colorstr));
         else if (output_format == O_XMOBAR)
                 (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", cfg_getstr(cfg_general, colorstr));
-
+        else if (output_format == O_TERM) {
+                /* The escape-sequence for color is <CSI><col>;1m (bright/bold
+                 * output), where col is a 3-bit rgb-value with b in the
+                 * least-significant bit. We round the given color to the
+                 * nearist 3-bit-depth color and output the escape-sequence */
+                char *str = cfg_getstr(cfg_general, colorstr);
+                int col = strtol(str + 1, NULL, 16);
+                int r = (col & (0xFF << 0)) / 0x80;
+                int g = (col & (0xFF << 8)) / 0x8000;
+                int b = (col & (0xFF << 16)) / 0x800000;
+                col = (r << 2) | (g << 1) | b;
+                (void)snprintf(colorbuf, sizeof(colorbuf), "\033[3%d;1m", col);
+        }
         return colorbuf;
 }
 
@@ -35,6 +47,8 @@ char *color(const char *colorstr) {
 char *endcolor(void) {
         if (output_format == O_XMOBAR)
                 return "</fc>";
+        else if (output_format == O_TERM)
+                return "\033[0m";
         else return "";
 }
 
@@ -43,6 +57,15 @@ void print_seperator(void) {
                 printf("^fg(%s)^p(5;-2)^ro(2)^p()^fg()^p(5)", cfg_getstr(cfg_general, "color_separator"));
         else if (output_format == O_XMOBAR)
                 printf("<fc=%s> | </fc>", cfg_getstr(cfg_general, "color_separator"));
+        else if (output_format == O_TERM)
+                printf(" %s|%s ", color("color_separator"), endcolor());
         else if (output_format == O_NONE)
                 printf(" | ");
+}
+
+/*
+ * The term-output hides the cursor. We call this on exit to reset that.
+ */
+void reset_cursor(void) {
+        printf("\033[?25h");
 }

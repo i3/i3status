@@ -146,6 +146,12 @@ managers like dwm, wmii and xmonad though it will work with any windowmanger
 xmobar::
 xmobar is a minimalistic, text based, status bar. It was designed to work
 with the xmonad Window Manager.
+term::
+Use ANSI Escape sequences to produce a terminal-output as close as possible to
+the graphical outputs. This makes debugging your config file a little bit
+easier because the terminal-output of i3status becomes much more readable, but
+should only used for such quick glances, because it will only support very
+basic output-features (for example you only get 3 bits of color depth).
 none::
 Does not use any color codes. Separates values by the pipe symbol. This should
 be used with i3bar and can be used for custom scripts.

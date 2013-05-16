@@ -48,12 +48,15 @@ int general_socket;
 cfg_t *cfg, *cfg_general, *cfg_section;
 
 /*
- * Exit upon SIGPIPE because when we have nowhere to write to, gathering
- * system information is pointless.
+ * Exit upon SIGPIPE because when we have nowhere to write to, gathering system
+ * information is pointless. Also exit explicitly on SIGTERM and SIGINT because
+ * only this will trigger a reset of the cursor in the terminal output-format.
  *
  */
-void sigpipe(int signum) {
-        fprintf(stderr, "Received SIGPIPE, exiting\n");
+void fatalsig(int signum) {
+        fprintf(stderr, "Received SIG%s, exiting\n", signum == SIGPIPE ? "PIPE" :
+                                                     signum == SIGTERM ? "TERM" :
+                                                     "INT");
         exit(1);
 }
 
@@ -321,8 +324,10 @@ int main(int argc, char *argv[]) {
 
         struct sigaction action;
         memset(&action, 0, sizeof(struct sigaction));
-        action.sa_handler = sigpipe;
+        action.sa_handler = fatalsig;
         sigaction(SIGPIPE, &action, NULL);
+        sigaction(SIGTERM, &action, NULL);
+        sigaction(SIGINT, &action, NULL);
 
         memset(&action, 0, sizeof(struct sigaction));
         action.sa_handler = sigusr1;
@@ -376,6 +381,8 @@ int main(int argc, char *argv[]) {
                 output_format = O_XMOBAR;
         else if (strcasecmp(output_str, "i3bar") == 0)
                 output_format = O_I3BAR;
+        else if (strcasecmp(output_str, "term") == 0)
+                output_format = O_TERM;
         else if (strcasecmp(output_str, "none") == 0)
                 output_format = O_NONE;
         else die("Unknown output format: \"%s\"\n", output_str);
@@ -400,6 +407,12 @@ int main(int argc, char *argv[]) {
                 yajl_gen_array_open(json_gen);
                 yajl_gen_clear(json_gen);
         }
+        if (output_format == O_TERM) {
+                /* Save the cursor-position and hide the cursor */
+                printf("\033[s\033[?25l");
+                /* Undo at exit */
+                atexit(&reset_cursor);
+        }
 
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");
@@ -419,6 +432,9 @@ int main(int argc, char *argv[]) {
                 gettimeofday(&tv, NULL);
                 if (output_format == O_I3BAR)
                         yajl_gen_array_open(json_gen);
+                else if (output_format == O_TERM)
+                        /* Restore the cursor-position */
+                        printf("\033[u");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();

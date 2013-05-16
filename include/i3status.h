@@ -1,7 +1,7 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
-enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_NONE } output_format;
+enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 
 #include <stdbool.h>
 #include <confuse.h>
@@ -133,6 +133,7 @@ bool slurp(const char *filename, char *destination, int size);
 void print_seperator();
 char *color(const char *colorstr);
 char *endcolor() __attribute__ ((pure));
+void reset_cursor(void);
 
 /* src/auto_detect_format.c */
 char *auto_detect_format();
