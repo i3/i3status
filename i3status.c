@@ -45,19 +45,19 @@
 /* socket file descriptor for general purposes */
 int general_socket;
 
+static bool exit_upon_signal = false;
+
 cfg_t *cfg, *cfg_general, *cfg_section;
 
 /*
- * Exit upon SIGPIPE because when we have nowhere to write to, gathering system
- * information is pointless. Also exit explicitly on SIGTERM and SIGINT because
- * only this will trigger a reset of the cursor in the terminal output-format.
+ * Set the exit_upon_signal flag, because one cannot do anything in a safe
+ * manner in a signal handler (e.g. fprintf, which we really want to do for
+ * debugging purposes), see
+ * https://www.securecoding.cert.org/confluence/display/seccode/SIG30-C.+Call+only+asynchronous-safe+functions+within+signal+handlers
  *
  */
 void fatalsig(int signum) {
-        fprintf(stderr, "Received SIG%s, exiting\n", signum == SIGPIPE ? "PIPE" :
-                                                     signum == SIGTERM ? "TERM" :
-                                                     "INT");
-        exit(1);
+        exit_upon_signal = true;
 }
 
 /*
@@ -325,6 +325,11 @@ int main(int argc, char *argv[]) {
         struct sigaction action;
         memset(&action, 0, sizeof(struct sigaction));
         action.sa_handler = fatalsig;
+
+        /* Exit upon SIGPIPE because when we have nowhere to write to, gathering system
+         * information is pointless. Also exit explicitly on SIGTERM and SIGINT because
+         * only this will trigger a reset of the cursor in the terminal output-format.
+         */
         sigaction(SIGPIPE, &action, NULL);
         sigaction(SIGTERM, &action, NULL);
         sigaction(SIGINT, &action, NULL);
@@ -428,6 +433,10 @@ int main(int argc, char *argv[]) {
         char buffer[4096];
 
         while (1) {
+                if (exit_upon_signal) {
+                        fprintf(stderr, "Exiting due to signal.\n");
+                        exit(1);
+                }
                 struct timeval tv;
                 gettimeofday(&tv, NULL);
                 if (output_format == O_I3BAR)
