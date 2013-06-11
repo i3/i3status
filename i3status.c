@@ -442,8 +442,8 @@ int main(int argc, char *argv[]) {
                 if (output_format == O_I3BAR)
                         yajl_gen_array_open(json_gen);
                 else if (output_format == O_TERM)
-                        /* Restore the cursor-position */
-                        printf("\033[u");
+                        /* Restore the cursor-position, clear line */
+                        printf("\033[u\033[K");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
                                 print_seperator();
