@@ -6,7 +6,7 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
-void print_load(yajl_gen json_gen, char *buffer, const char *format, const int max_threshold) {
+void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold) {
         char *outwalk = buffer;
         /* Get load */
 
