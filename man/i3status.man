@@ -258,6 +258,8 @@ specified thermal zone is getting too hot. Defaults to 75 degrees C.
 
 *Example max_threshold*: +42+
 
+*Example path*: +/sys/devices/platform/coretemp.0/temp1_input+
+
 === CPU Usage
 
 Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+ (FreeBSD/OpenBSD).
