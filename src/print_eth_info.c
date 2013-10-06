@@ -27,7 +27,7 @@
 #define PART_ETHSPEED  "E: %s (%s)"
 #endif
 
-#if defined(__OpenBSD__)
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <errno.h>
 #include <net/if_media.h>
 #endif
@@ -69,7 +69,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
         }
         ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
         return sprintf(outwalk, "%s", ethspeed);
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
 	char *ethspeed;
 	struct ifmediareq ifmr;
 
