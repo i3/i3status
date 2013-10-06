@@ -21,26 +21,28 @@ LIBS+=-lyajl
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
+OS:=$(shell uname)
 
-ifeq ($(shell uname),Linux)
+ifeq ($(OS),Linux)
 CPPFLAGS+=-DLINUX
 CPPFLAGS+=-D_GNU_SOURCE
 LIBS+=-liw
 LIBS+=-lasound
 endif
 
-ifeq ($(shell uname),GNU/kFreeBSD)
+ifeq ($(OS),GNU/kFreeBSD)
 LIBS+=-lbsd
 endif
 
-ifeq ($(shell uname),OpenBSD)
+ifeq ($(OS),OpenBSD)
 CFLAGS+=-I/usr/local/include/
 LDFLAGS+=-L/usr/local/lib/
 LIBS+=-lossaudio
 endif
 
+
 # This probably applies for any pkgsrc based system
-ifeq ($(shell uname),DragonFly)
+ifneq (, $(filter $(OS), NetBSD DragonFly))
 CFLAGS+=-I/usr/pkg/include/
 LDFLAGS+=-L/usr/pkg/lib/
 endif
