@@ -47,6 +47,11 @@ CFLAGS+=-I/usr/pkg/include/
 LDFLAGS+=-L/usr/pkg/lib/
 endif
 
+ifeq ($(OS), NetBSD)
+LIBS+= -lprop
+endif
+
+
 V ?= 0
 ifeq ($(V),0)
 # Don’t print command lines which are run
