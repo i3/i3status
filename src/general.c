@@ -19,7 +19,8 @@ bool slurp(const char *filename, char *destination, int size) {
         if ((fd = open(filename, O_RDONLY)) == -1)
                 return false;
 
-        int n = read(fd, destination, size);
+        /* We need one byte for the trailing 0 byte */
+        int n = read(fd, destination, size-1);
         if (n != -1)
                 destination[n] = '\0';
         (void)close(fd);
