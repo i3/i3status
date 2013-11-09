@@ -15,6 +15,46 @@
 #include "i3status.h"
 
 /*
+ * Reads /proc/<pid>/stat and returns (via pointers) the name and parent pid of
+ * the specified pid.
+ * When false is returned, parsing failed and the contents of outname and
+ * outpid are undefined.
+ *
+ */
+static bool parse_proc_stat(pid_t pid, char **outname, pid_t *outppid) {
+    char path[255];
+    /* the relevant contents (for us) are:
+     * <pid> (<program name>) <status> <ppid>
+     * which should well fit into one page of 4096 bytes */
+    char buffer[4096];
+
+    if (snprintf(path, sizeof(path), "/proc/%d/stat", pid) == -1 ||
+        !slurp(path, buffer, sizeof(buffer)))
+        return false;
+
+    char *leftbracket = strchr(buffer, '(');
+    char *rightbracket = strrchr(buffer, ')');
+    if (!leftbracket ||
+        !rightbracket ||
+        sscanf(rightbracket + 2, "%*c %d", outppid) != 1)
+        return false;
+    *rightbracket = '\0';
+    *outname = strdup(leftbracket + 1);
+    return true;
+}
+
+static char *format_for_process(const char *name) {
+    if (strcasecmp(name, "i3bar") == 0)
+        return "i3bar";
+    else if (strcasecmp(name, "dzen2") == 0)
+        return "dzen2";
+    else if (strcasecmp(name, "xmobar") == 0)
+        return "xmobar";
+    else
+        return NULL;
+}
+
+/*
  * This function tries to automatically find out where i3status is being piped
  * to and choses the appropriate output format.
  *
@@ -40,66 +80,35 @@ char *auto_detect_format(void) {
 
     DIR *dir;
     struct dirent *entry;
-    char path[255];
-    /* the relevant contents (for us) are:
-     * <pid> (<program name>) <status> <ppid>
-     * which should well fit into one page of 4096 bytes */
-    char buffer[4096];
 
     char *format = NULL;
 
-    char *parentname = NULL;
+    char *parentname;
+    pid_t parentpid;
 
-    if (!(dir = opendir("/proc")))
+    if (!parse_proc_stat(myppid, &parentname, &parentpid))
         return NULL;
 
-    /* First pass: get the executable name of the parent.
-     * Upon error, we directly return NULL as we cannot continue without the
-     * name of our parent process. */
-    while ((entry = readdir(dir)) != NULL) {
-        pid_t pid = (pid_t)atoi(entry->d_name);
-        if (pid != myppid)
-            continue;
-
-        if (snprintf(path, sizeof(path), "/proc/%d/stat", pid) == -1 ||
-            !slurp(path, buffer, 4095))
-            goto out;
-
-        buffer[4095] = '\0';
-        char *leftbracket = strchr(buffer, '(');
-        char *rightbracket = strrchr(buffer, ')');
-        if (!leftbracket ||
-            !rightbracket ||
-            !(parentname = malloc((rightbracket - leftbracket))))
-            goto out;
-        *rightbracket = '\0';
-        strcpy(parentname, leftbracket + 1);
+    if (strcmp(parentname, "sh") == 0) {
+        pid_t tmp_ppid = parentpid;
+        free(parentname);
+        fprintf(stderr, "i3status: auto-detection: parent process is \"sh\", looking at its parent\n");
+        if (!parse_proc_stat(tmp_ppid, &parentname, &parentpid))
+            return NULL;
     }
-
-    if (!parentname)
-        goto out;
 
     /* Some shells, for example zsh, open a pipe in a way which will make the
      * pipe target the parent process of i3status. If we detect that, we set
      * the format and we are done. */
-    if (strcasecmp(parentname, "i3bar") == 0)
-        format = "i3bar";
-    else if (strcasecmp(parentname, "dzen2") == 0)
-        format = "dzen2";
-    else if (strcasecmp(parentname, "xmobar") == 0)
-        format = "xmobar";
-
-    if (format)
+    if ((format = format_for_process(parentname)) != NULL)
         goto out;
 
-    rewinddir(dir);
+    if (!(dir = opendir("/proc")))
+        goto out;
 
     while ((entry = readdir(dir)) != NULL) {
         pid_t pid = (pid_t)atoi(entry->d_name);
         if (pid == 0 || pid == mypid)
-            continue;
-
-        if (snprintf(path, sizeof(path), "/proc/%d/stat", pid) == -1)
             continue;
 
         char *name = NULL;
@@ -115,34 +124,23 @@ char *auto_detect_format(void) {
         do {
             /* give the scheduler a chance between each iteration, don’t hog
              * the CPU too much */
-            if (name)
+            if (name) {
                 usleep(50);
+                free(name);
+            }
 
-            if (!slurp(path, buffer, 4095))
+            if (!parse_proc_stat(pid, &name, &ppid))
                 break;
-            buffer[4095] = '\0';
-            char *leftbracket = strchr(buffer, '(');
-            char *rightbracket = strrchr(buffer, ')');
-            if (!leftbracket ||
-                !rightbracket ||
-                sscanf(rightbracket + 2, "%*c %d", &ppid) != 1 ||
-                ppid != myppid)
+            if (ppid != myppid)
                 break;
-            *rightbracket = '\0';
-            name = leftbracket + 1;
         } while (strcmp(parentname, name) == 0 && loopcnt++ < 10000);
 
         if (!name)
             continue;
 
         /* Check for known destination programs and set format */
-        char *newfmt = NULL;
-        if (strcasecmp(name, "i3bar") == 0)
-            newfmt = "i3bar";
-        else if (strcasecmp(name, "dzen2") == 0)
-            newfmt = "dzen2";
-        else if (strcasecmp(name, "xmobar") == 0)
-            newfmt = "xmobar";
+        char *newfmt = format_for_process(name);
+        free(name);
 
         if (newfmt && format && strcmp(newfmt, format) != 0) {
             fprintf(stderr, "i3status: cannot auto-configure, situation ambiguous (format \"%s\" *and* \"%s\" detected)\n", newfmt, format);
@@ -153,11 +151,11 @@ char *auto_detect_format(void) {
         }
     }
 
+    closedir(dir);
+
 out:
     if (parentname)
         free(parentname);
-
-    closedir(dir);
 
     return format;
 }
