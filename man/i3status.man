@@ -50,7 +50,8 @@ general {
 order += "ipv6"
 order += "disk /"
 order += "run_watch DHCP"
-order += "run_watch VPN"
+order += "run_watch VPNC"
+order += "path_exists VPN"
 order += "wireless wlan0"
 order += "ethernet eth0"
 order += "battery 0"
@@ -81,8 +82,14 @@ run_watch DHCP {
         pidfile = "/var/run/dhclient*.pid"
 }
 
-run_watch VPN {
+run_watch VPNC {
+        # file containing the PID of a vpnc process
         pidfile = "/var/run/vpnc/pid"
+}
+
+path_exists VPN {
+        # path exists when a VPN tunnel launched by nmcli/nm-applet is active
+        path = "/proc/sys/net/ipv4/conf/tun0"
 }
 
 tztime local {
@@ -190,6 +197,15 @@ is valid (that is, if the process is running). You can use this to check if
 a specific application, such as a VPN client or your DHCP client is running.
 
 *Example order*: +run_watch DHCP+
+
+*Example format*: +%title: %status+
+
+=== Path-exists
+
+Checks if the given path exists in the filesystem. You can use this to check if
+something is active, like for example a VPN tunnel managed by NetworkManager.
+
+*Example order*: +path_exists VPN+
 
 *Example format*: +%title: %status+
 

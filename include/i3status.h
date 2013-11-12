@@ -152,6 +152,7 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr();
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format);
+void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format);
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, int);
 void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format);
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
