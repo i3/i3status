@@ -286,6 +286,7 @@ int main(int argc, char *argv[]) {
 
         cfg_opt_t volume_opts[] = {
                 CFG_STR("format", "♪: %volume", CFGF_NONE),
+                CFG_STR("format_muted", "♪: 0%%", CFGF_NONE),
                 CFG_STR("device", "default", CFGF_NONE),
                 CFG_STR("mixer", "Master", CFGF_NONE),
                 CFG_INT("mixer_idx", 0, CFGF_NONE),
@@ -513,6 +514,7 @@ int main(int argc, char *argv[]) {
                         CASE_SEC_TITLE("volume") {
                                 SEC_OPEN_MAP("volume");
                                 print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
+                                             cfg_getstr(sec, "format_muted"),
                                              cfg_getstr(sec, "device"),
                                              cfg_getstr(sec, "mixer"),
                                              cfg_getint(sec, "mixer_idx"));

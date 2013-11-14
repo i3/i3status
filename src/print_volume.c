@@ -26,7 +26,7 @@
 #include "i3status.h"
 #include "queue.h"
 
-void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx) {
+void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
         char *outwalk = buffer;
 	int pbval = 1;
 
@@ -104,7 +104,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 			fprintf (stderr, "i3status: ALSA: playback_switch: %s\n", snd_strerror(err));
 		if (!pbval)  {
 			START_COLOR("color_degraded");
-			avg = 0;
+			fmt = fmt_muted;
 		}
 	}
 
@@ -116,6 +116,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 		if (*walk != '%') {
                         *(outwalk++) = *walk;
 			continue;
+		}
+		if (BEGINS_WITH(walk+1, "%")) {
+			outwalk += sprintf(outwalk, "%%");
+			walk += strlen("%");
 		}
 		if (BEGINS_WITH(walk+1, "volume")) {
 			outwalk += sprintf(outwalk, "%d%%", avg);
@@ -155,6 +159,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 if (*walk != '%') {
                         *(outwalk++) = *walk;
                         continue;
+                }
+                if (BEGINS_WITH(walk+1, "%")) {
+                        outwalk += sprintf(outwalk, "%%");
+                        walk += strlen("%");
                 }
                 if (BEGINS_WITH(walk+1, "volume")) {
                         outwalk += sprintf(outwalk, "%d%%", vol & 0x7f);
