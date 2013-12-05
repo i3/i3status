@@ -184,11 +184,25 @@ Gets used, free, available and total amount of bytes on the given mounted filesy
 These values can also be expressed in percentages with the percentage_used,
 percentage_free, percentage_avail and percentage_used_of_avail formats.
 
+Byte sizes are presented in a human readable format using a set of prefixes
+whose type can be specified via the "prefix_type" option. Three sets of
+prefixes are available:
+
+binary::
+IEC prefixes (Ki, Mi, Gi, Ti) represent multiples of powers of 1024.
+This is the default.
+decimal::
+SI prefixes (k, M, G, T) represent multiples of powers of 1000.
+custom::
+The custom prefixes (K, M, G, T) represent multiples of powers of 1024.
+
 *Example order*: +disk /mnt/usbstick+
 
 *Example format*: +%free (%avail)/ %total+
 
 *Example format*: +%percentage_used used, %percentage_free free, %percentage_avail avail+
+
+*Example prefix_type*: +custom+
 
 === Run-watch
 

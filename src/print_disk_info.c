@@ -15,26 +15,40 @@
 
 #include "i3status.h"
 
-#define TERABYTE (1024ULL * 1024 * 1024 * 1024)
-#define GIGABYTE (1024ULL * 1024 * 1024)
-#define MEGABYTE (1024ULL * 1024)
-#define KILOBYTE (1024ULL)
+#define BINARY_BASE UINT64_C(1024)
+#define DECIMAL_BASE UINT64_C(1000)
+
+#define MAX_EXPONENT 4
+
+static const char * const iec_symbols[MAX_EXPONENT+1] = {"", "Ki", "Mi", "Gi", "Ti"};
+static const char * const si_symbols[MAX_EXPONENT+1] = {"", "k", "M", "G", "T"};
+static const char * const custom_symbols[MAX_EXPONENT+1] = {"", "K", "M", "G", "T"};
+
+/*
+ * Formats bytes according to the given base and set of symbols.
+ *
+ */
+static int format_bytes(char *outwalk, uint64_t bytes, uint64_t base, const char * const symbols[]) {
+        double size = bytes;
+        int exponent = 0;
+        while (size >= base && exponent < MAX_EXPONENT) {
+                size /= base;
+                exponent += 1;
+        }
+        return sprintf(outwalk, "%.1f %sB", size, symbols[exponent]);
+}
 
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static int print_bytes_human(char *outwalk, uint64_t bytes) {
-        if (bytes > TERABYTE)
-                return sprintf(outwalk, "%.02f TB", (double)bytes / TERABYTE);
-        else if (bytes > GIGABYTE)
-                return sprintf(outwalk, "%.01f GB", (double)bytes / GIGABYTE);
-        else if (bytes > MEGABYTE)
-                return sprintf(outwalk, "%.01f MB", (double)bytes / MEGABYTE);
-        else if (bytes > KILOBYTE)
-                return sprintf(outwalk, "%.01f KB", (double)bytes / KILOBYTE);
-        else {
-                return sprintf(outwalk, "%.01f B", (double)bytes);
+static int print_bytes_human(char *outwalk, uint64_t bytes, const char *prefix_type) {
+        if (strncmp(prefix_type, "decimal", strlen(prefix_type)) == 0) {
+                return format_bytes(outwalk, bytes, DECIMAL_BASE, si_symbols);
+        } else if (strncmp(prefix_type, "custom", strlen(prefix_type)) == 0) {
+                return format_bytes(outwalk, bytes, BINARY_BASE, custom_symbols);
+        } else {
+                return format_bytes(outwalk, bytes, BINARY_BASE, iec_symbols);
         }
 }
 
@@ -43,7 +57,7 @@ static int print_bytes_human(char *outwalk, uint64_t bytes) {
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *prefix_type) {
         const char *walk;
         char *outwalk = buffer;
 
@@ -68,22 +82,22 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                 }
 
                 if (BEGINS_WITH(walk+1, "free")) {
-                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, prefix_type);
                         walk += strlen("free");
                 }
 
                 if (BEGINS_WITH(walk+1, "used")) {
-                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree));
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
                         walk += strlen("used");
                 }
 
                 if (BEGINS_WITH(walk+1, "total")) {
-                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, prefix_type);
                         walk += strlen("total");
                 }
 
                 if (BEGINS_WITH(walk+1, "avail")) {
-                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail);
+                        outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, prefix_type);
                         walk += strlen("avail");
                 }
 
