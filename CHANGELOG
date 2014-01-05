@@ -1,3 +1,31 @@
+2014-01-05 i3status 2.8
+
+ • Fix build on GNU/Hurd
+ • Add format_down for battery if no battery is available
+ • Use degraded color in case volume is muted with OSS
+ • Support mixer_idx with OSS
+ • Enable colored output for battery on FreeBSD
+ • print_volume: don’t return, complete the buffer first
+ • Support colored output for CPU temperature on FreeBSD
+ • manpage: mention i3bar in the description
+ • manpage: be more explicit about the path option
+ • battery: use path as i3bar JSON “instance”
+ • print_volume(linux): Open a new mixer every time
+ • Implement term output format
+ • signal handler: set flag because directly calling fprintf() is unsafe
+ • Makefile: use .SILENT and support V=1 for verbose builds
+ • load: allow max_threshold to be a float
+ • manpage: Add example path for CPU temperature
+ • Fix build on NetBSD
+ • Implement cpu usage, ethernet status, cpu temperature on NetBSD
+ • fix slurp(), it needs to read size-1 for the trailing NUL
+ • format detection: simplify code, handle "sh" processes in the hierarchy
+ • default config: show %avail disk space instead of %free
+ • Added different format string for volume in case it is muted
+ • manpage: document format_muted
+ • add support for path_exists directive
+ • disk: Distinguish between IEC, SI and custom prefixes
+
 2013-02-27 i3status 2.7
 
  • Various battery fixes for OpenBSD
