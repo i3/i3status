@@ -175,7 +175,7 @@ best available public IPv6 address on your computer).
 
 *Example format_up*: +%ip+
 
-*Example format_down* +no IPv6+
+*Example format_down*: +no IPv6+
 
 === Disk
 
