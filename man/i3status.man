@@ -270,6 +270,8 @@ colored red. The low_threshold type can be of threshold_type "time" or
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
 
+*Example format_down*: +No battery+
+
 *Example low_threshold*: +30+
 
 *Example threshold_type*: +time+
