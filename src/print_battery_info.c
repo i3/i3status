@@ -30,7 +30,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -166,15 +166,23 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         }
                 }
 
-                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
-                        max(hours, 0), max(minutes, 0), max(seconds, 0));
+                if (hide_seconds)
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
+                                max(hours, 0), max(minutes, 0));
+                else
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
+                                max(hours, 0), max(minutes, 0), max(seconds, 0));
 
                 empty_time = time(NULL);
                 empty_time += seconds_remaining;
                 empty_tm = localtime(&empty_time);
 
-                (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
-                        max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+                if (hide_seconds)
+                        (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d",
+                                max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+                else
+                        (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
+                                max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
 
                 (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
                         ((float)present_rate / 1000.0 / 1000.0));
