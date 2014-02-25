@@ -37,11 +37,9 @@
 #endif
 
 
-static char *thermal_zone;
-
 /*
- * Reads the CPU temperature from /sys/class/thermal/thermal_zone0/temp and
- * returns the temperature in degree celcius.
+ * Reads the CPU temperature from /sys/class/thermal/thermal_zone%d/temp (or
+ * the user provided path) and returns the temperature in degree celcius.
  *
  */
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, int max_threshold) {
@@ -49,16 +47,14 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 #ifdef THERMAL_ZONE
         const char *walk;
         bool colorful_output = false;
+        char *thermal_zone;
 
-        if (thermal_zone == NULL) {
-                if (path == NULL)
-                        asprintf(&thermal_zone, THERMAL_ZONE, zone);
-                else
-                        asprintf(&thermal_zone, path, zone);
-        }
-        path = thermal_zone;
+        if (path == NULL)
+                asprintf(&thermal_zone, THERMAL_ZONE, zone);
+        else
+                asprintf(&thermal_zone, path, zone);
 
-        INSTANCE(path);
+        INSTANCE(thermal_zone);
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -70,7 +66,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 #if defined(LINUX)
                         static char buf[16];
                         long int temp;
-                        if (!slurp(path, buf, sizeof(buf)))
+                        if (!slurp(thermal_zone, buf, sizeof(buf)))
                                 goto error;
                         temp = strtol(buf, NULL, 10);
                         if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
@@ -89,7 +85,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
                         int sysctl_rslt;
                         size_t sysctl_size = sizeof(sysctl_rslt);
-                        if (sysctlbyname(path, &sysctl_rslt, &sysctl_size, NULL, 0))
+                        if (sysctlbyname(thermal_zone, &sysctl_rslt, &sysctl_size, NULL, 0))
                                 goto error;
 
                         if (TZ_AVG(sysctl_rslt) >= max_threshold) {
@@ -121,7 +117,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                         goto error;
                 }
                 /* 'path' is the node within the full path (defaults to acpitz0). */
-                if (strncmp(sensordev.xname, path, strlen(path)) == 0) {
+                if (strncmp(sensordev.xname, thermal_zone, strlen(thermal_zone)) == 0) {
                         mib[3] = SENSOR_TEMP;
                         /* Limit to temo0, but should retrieve from a full path... */
                         for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {
@@ -195,7 +191,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                 while ((obj2 = prop_object_iterator_next(iter2)) != NULL) {
                         obj3 = prop_dictionary_get(obj2, "description");
                         if (obj3 &&
-                            strcmp(path, prop_string_cstring_nocopy(obj3)) == 0)
+                            strcmp(thermal_zone, prop_string_cstring_nocopy(obj3)) == 0)
                         {
                                 obj3 = prop_dictionary_get(obj2, "cur-value");
                                 float temp = MUKTOC(prop_number_integer_value(obj3));
@@ -230,10 +226,15 @@ error_netbsd1:
                         walk += strlen("degrees");
                 }
         }
+
+        free(thermal_zone);
+
         OUTPUT_FULL_TEXT(buffer);
         return;
 error:
 #endif
+        free(thermal_zone);
+
         OUTPUT_FULL_TEXT("cant read temp");
         (void)fputs("i3status: Cannot read temperature. Verify that you have a thermal zone in /sys/class/thermal or disable the cpu_temperature module in your i3status config.\n", stderr);
 }
