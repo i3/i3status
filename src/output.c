@@ -52,15 +52,18 @@ char *endcolor(void) {
         else return "";
 }
 
-void print_seperator(void) {
+void print_seperator(const char *separator) {
+        if (output_format == O_I3BAR || strlen(separator) == 0)
+                return;
+
         if (output_format == O_DZEN2)
-                printf("^fg(%s)^p(5;-2)^ro(2)^p()^fg()^p(5)", cfg_getstr(cfg_general, "color_separator"));
+                printf("^fg(%s)%s^fg()", cfg_getstr(cfg_general, "color_separator"), separator);
         else if (output_format == O_XMOBAR)
-                printf("<fc=%s> | </fc>", cfg_getstr(cfg_general, "color_separator"));
+                printf("<fc=%s>%s</fc>", cfg_getstr(cfg_general, "color_separator"), separator);
         else if (output_format == O_TERM)
-                printf(" %s|%s ", color("color_separator"), endcolor());
+                printf("%s%s%s", color("color_separator"), separator, endcolor());
         else if (output_format == O_NONE)
-                printf(" | ");
+                printf("%s", separator);
 }
 
 /*

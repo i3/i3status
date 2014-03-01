@@ -191,12 +191,25 @@ static char *get_config_path(void) {
         return NULL;
 }
 
+/*
+ * Returns the default separator to use if no custom separator has been specified.
+ */
+static char *get_default_separator() {
+        if (output_format == O_DZEN2)
+                return "^p(5;-2)^ro(2)^p()^p(5)";
+        if (output_format == O_I3BAR)
+                // anything besides the empty string indicates that the default separator should be used
+                return "default";
+        return " | ";
+}
+
 int main(int argc, char *argv[]) {
         unsigned int j;
 
         cfg_opt_t general_opts[] = {
                 CFG_STR("output_format", "auto", CFGF_NONE),
                 CFG_BOOL("colors", 1, CFGF_NONE),
+                CFG_STR("separator", "default", CFGF_NONE),
                 CFG_STR("color_separator", "#333333", CFGF_NONE),
                 CFG_INT("interval", 1, CFGF_NONE),
                 CFG_COLOR_OPTS("#00FF00", "#FFFF00", "#FF0000"),
@@ -403,6 +416,12 @@ int main(int argc, char *argv[]) {
                 output_format = O_NONE;
         else die("Unknown output format: \"%s\"\n", output_str);
 
+        const char *separator = cfg_getstr(cfg_general, "separator");
+
+        // if no custom separator has been provided, use the default one
+        if (strcasecmp(separator, "default") == 0)
+                separator = get_default_separator();
+
         if (!valid_color(cfg_getstr(cfg_general, "color_good"))
                         || !valid_color(cfg_getstr(cfg_general, "color_degraded"))
                         || !valid_color(cfg_getstr(cfg_general, "color_bad"))
@@ -457,7 +476,7 @@ int main(int argc, char *argv[]) {
                         printf("\033[u\033[K");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
-                                print_seperator();
+                                print_seperator(separator);
 
                         const char *current = cfg_getnstr(cfg, "order", j);
 

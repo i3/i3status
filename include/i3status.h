@@ -88,6 +88,11 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 #define SEC_CLOSE_MAP \
 	do { \
 		if (output_format == O_I3BAR) { \
+			const char *_sep = cfg_getstr(cfg_general, "separator"); \
+			if (strlen(_sep) == 0) {\
+				yajl_gen_string(json_gen, (const unsigned char *)"separator", strlen("separator")); \
+				yajl_gen_bool(json_gen, false); \
+			} \
 			yajl_gen_map_close(json_gen); \
 		} \
 	} while (0)
@@ -133,7 +138,7 @@ void die(const char *fmt, ...);
 bool slurp(const char *filename, char *destination, int size);
 
 /* src/output.c */
-void print_seperator();
+void print_seperator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__ ((pure));
 void reset_cursor(void);

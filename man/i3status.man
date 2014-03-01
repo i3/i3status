@@ -160,13 +160,40 @@ easier because the terminal-output of i3status becomes much more readable, but
 should only used for such quick glances, because it will only support very
 basic output-features (for example you only get 3 bits of color depth).
 none::
-Does not use any color codes. Separates values by the pipe symbol. This should
-be used with i3bar and can be used for custom scripts.
+Does not use any color codes. Separates values by the pipe symbol by default.
+This should be used with i3bar and can be used for custom scripts.
 
 It's also possible to use the color_good, color_degraded, color_bad directives
 to define specific colors per module. If one of these directives is defined
 in a module section its value will override the value defined in the general
 section just for this module.
+
+If you don't fancy the vertical separators between modules i3status/i3bar
+uses by default, you can employ the +separator+ directive to configure how
+modules are separated. You can either disable the default separator altogether
+setting it to the empty string. You might then define separation as part of a
+module's format string. This is your only option when using the i3bar output
+format as the separator is drawn by i3bar directly otherwise. For the other
+output formats, the provided non-empty string will be automatically enclosed
+with the necessary coloring bits if color support is enabled.
+
+*Example configuration*:
+-------------------------------------------------------------
+general {
+    output_format = "xmobar"
+    separator = "  "
+}
+
+order += "load"
+order += "disk /"
+
+load {
+    format = "[ load: %1min, %5min, %15min ]"
+}
+disk "/" {
+    format = "%avail"
+}
+-------------------------------------------------------------
 
 === IPv6
 
