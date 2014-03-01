@@ -52,7 +52,7 @@ char *endcolor(void) {
         else return "";
 }
 
-void print_seperator(const char *separator) {
+void print_separator(const char *separator) {
         if (output_format == O_I3BAR || strlen(separator) == 0)
                 return;
 

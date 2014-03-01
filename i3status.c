@@ -476,7 +476,7 @@ int main(int argc, char *argv[]) {
                         printf("\033[u\033[K");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
                         if (j > 0)
-                                print_seperator(separator);
+                                print_separator(separator);
 
                         const char *current = cfg_getnstr(cfg, "order", j);
 

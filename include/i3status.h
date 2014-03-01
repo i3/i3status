@@ -138,7 +138,7 @@ void die(const char *fmt, ...);
 bool slurp(const char *filename, char *destination, int size);
 
 /* src/output.c */
-void print_seperator(const char *separator);
+void print_separator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__ ((pure));
 void reset_cursor(void);
