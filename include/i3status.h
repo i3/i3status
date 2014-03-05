@@ -88,6 +88,22 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 #define SEC_CLOSE_MAP \
 	do { \
 		if (output_format == O_I3BAR) { \
+			char *_align = cfg_getstr(sec, "align"); \
+			if (_align) { \
+				yajl_gen_string(json_gen, (const unsigned char *)"align", strlen("align")); \
+				yajl_gen_string(json_gen, (const unsigned char *)_align, strlen(_align)); \
+			} \
+			struct min_width *_width = cfg_getptr(sec, "min_width"); \
+			if (_width) { \
+				/* if the value can be parsed as a number, we use the numerical value */ \
+				if (_width->num > 0) { \
+					yajl_gen_string(json_gen, (const unsigned char *)"min_width", strlen("min_width")); \
+					yajl_gen_integer(json_gen, _width->num); \
+				} else { \
+					yajl_gen_string(json_gen, (const unsigned char *)"min_width", strlen("min_width")); \
+					yajl_gen_string(json_gen, (const unsigned char *)_width->str, strlen(_width->str)); \
+				} \
+			} \
 			const char *_sep = cfg_getstr(cfg_general, "separator"); \
 			if (strlen(_sep) == 0) {\
 				yajl_gen_string(json_gen, (const unsigned char *)"separator", strlen("separator")); \
@@ -131,6 +147,14 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 
 
 typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
+
+/*
+ * The "min_width" module option may either be defined as a string or a number.
+ */
+struct min_width {
+    long num;
+    const char *str;
+};
 
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);

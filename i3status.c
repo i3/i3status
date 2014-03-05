@@ -11,6 +11,7 @@
  * See file LICENSE for license information.
  *
  */
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -35,12 +36,18 @@
 
 #define exit_if_null(pointer, ...) { if (pointer == NULL) die(__VA_ARGS__); }
 
+#define CFG_CUSTOM_ALIGN_OPT \
+    CFG_STR_CB("align", NULL, CFGF_NONE, parse_align)
+
 #define CFG_COLOR_OPTS(good, degraded, bad) \
     CFG_STR("color_good", good, CFGF_NONE), \
     CFG_STR("color_degraded", degraded, CFGF_NONE), \
     CFG_STR("color_bad", bad, CFGF_NONE)
 
 #define CFG_CUSTOM_COLOR_OPTS CFG_COLOR_OPTS(NULL, NULL, NULL)
+
+#define CFG_CUSTOM_MIN_WIDTH_OPT \
+    CFG_PTR_CB("min_width", NULL, CFGF_NONE, parse_min_width, free)
 
 /* socket file descriptor for general purposes */
 int general_socket;
@@ -89,6 +96,54 @@ static char *sstrdup(const char *str) {
         return result;
 }
 
+/*
+ * Parses the "align" module option (to validate input).
+ */
+static int parse_align(cfg_t *context, cfg_opt_t *option, const char *value, void *result) {
+        if (strcasecmp(value, "left") != 0 && strcasecmp(value,"right") != 0 && strcasecmp(value, "center") != 0)
+                die("Invalid alignment attribute found in section %s, line %d: \"%s\"\n"
+                    "Valid attributes are: left, center, right\n", context->name, context->line, value);
+
+        char **cresult = result;
+        *cresult = sstrdup(value);
+
+        return 0;
+}
+
+/*
+ * Parses the "min_width" module option whose value can either be a string or an integer.
+ */
+static int parse_min_width(cfg_t *context, cfg_opt_t *option, const char *value, void *result) {
+        char *end;
+        long num = strtol(value, &end, 10);
+
+        if (num < 0)
+                die("Invalid min_width attribute found in section %s, line %d: %d\n"
+                    "Expected positive integer or string\n", context->name, context->line, num);
+        else if (num == LONG_MIN || num == LONG_MAX || (end && *end != '\0'))
+                num = 0;
+
+        if (strlen(value) == 0)
+                die("Empty min_width attribute found in section %s, line %d\n"
+                    "Expected positive integer or non-empty string\n", context->name, context->line);
+
+        if (strcmp(value, "0") == 0)
+                die("Invalid min_width attribute found in section %s, line %d: \"%s\"\n"
+                    "Expected positive integer or string\n", context->name, context->line, value);
+
+        struct min_width *parsed = scalloc(sizeof(struct min_width));
+        parsed->num = num;
+
+        /* num is preferred, but if it’s 0 (i.e. not valid), store and use
+         * the raw string value */
+        if (num == 0)
+                parsed->str = sstrdup(value);
+
+        struct min_width **cresult = result;
+        *cresult = parsed;
+
+        return 0;
+}
 
 /*
  * Validates a color in "#RRGGBB" format
@@ -219,35 +274,45 @@ int main(int argc, char *argv[]) {
         cfg_opt_t run_watch_opts[] = {
                 CFG_STR("pidfile", NULL, CFGF_NONE),
                 CFG_STR("format", "%title: %status", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t path_exists_opts[] = {
                 CFG_STR("path", NULL, CFGF_NONE),
                 CFG_STR("format", "%title: %status", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t wireless_opts[] = {
                 CFG_STR("format_up", "W: (%quality at %essid, %bitrate) %ip", CFGF_NONE),
                 CFG_STR("format_down", "W: down", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t ethernet_opts[] = {
                 CFG_STR("format_up", "E: %ip (%speed)", CFGF_NONE),
                 CFG_STR("format_down", "E: down", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t ipv6_opts[] = {
                 CFG_STR("format_up", "%ip", CFGF_NONE),
                 CFG_STR("format_down", "no IPv6", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
@@ -260,35 +325,47 @@ int main(int argc, char *argv[]) {
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
                 CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
                 CFG_BOOL("hide_seconds", false, CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t time_opts[] = {
                 CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t tztime_opts[] = {
                 CFG_STR("format", "%Y-%m-%d %H:%M:%S %Z", CFGF_NONE),
                 CFG_STR("timezone", "", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t ddate_opts[] = {
                 CFG_STR("format", "%{%a, %b %d%}, %Y%N - %H", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t load_opts[] = {
                 CFG_STR("format", "%1min %5min %15min", CFGF_NONE),
                 CFG_FLOAT("max_threshold", 5, CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t usage_opts[] = {
                 CFG_STR("format", "%usage", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
@@ -296,13 +373,17 @@ int main(int argc, char *argv[]) {
                 CFG_STR("format", "%degrees C", CFGF_NONE),
                 CFG_STR("path", NULL, CFGF_NONE),
                 CFG_INT("max_threshold", 75, CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
         cfg_opt_t disk_opts[] = {
                 CFG_STR("format", "%free", CFGF_NONE),
                 CFG_STR("prefix_type", "binary", CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
@@ -312,7 +393,9 @@ int main(int argc, char *argv[]) {
                 CFG_STR("device", "default", CFGF_NONE),
                 CFG_STR("mixer", "Master", CFGF_NONE),
                 CFG_INT("mixer_idx", 0, CFGF_NONE),
+                CFG_CUSTOM_ALIGN_OPT,
                 CFG_CUSTOM_COLOR_OPTS,
+                CFG_CUSTOM_MIN_WIDTH_OPT,
                 CFG_END()
         };
 
