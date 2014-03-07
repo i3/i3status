@@ -53,13 +53,63 @@ static int print_bytes_human(char *outwalk, uint64_t bytes, const char *prefix_t
 }
 
 /*
+ * Determines whether remaining bytes are below given threshold.
+ *
+ */
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
+static bool below_threshold(struct statfs buf, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+#else
+static bool below_threshold(struct statvfs buf, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+#endif
+        if (strcasecmp(threshold_type, "percentage_free") == 0) {
+                return 100.0 * (double)buf.f_bfree / (double)buf.f_blocks < low_threshold;
+        } else if (strcasecmp(threshold_type, "percentage_avail") == 0) {
+                return 100.0 * (double)buf.f_bavail / (double)buf.f_blocks < low_threshold;
+        } else if (strcasecmp(threshold_type, "bytes_free") == 0) {
+                return (double)buf.f_bsize * (double)buf.f_bfree < low_threshold;
+        } else if (strcasecmp(threshold_type, "bytes_avail") == 0) {
+                return (double)buf.f_bsize * (double)buf.f_bavail < low_threshold;
+        } else if (threshold_type[0] != '\0' && strncasecmp(threshold_type+1, "bytes_", strlen("bytes_")) == 0) {
+                uint64_t base = strcasecmp(prefix_type, "decimal") == 0 ? DECIMAL_BASE : BINARY_BASE;
+                double factor = 1;
+
+                switch (threshold_type[0]) {
+                case 'T':
+                case 't':
+                        factor *= base;
+                case 'G':
+                case 'g':
+                        factor *= base;
+                case 'M':
+                case 'm':
+                        factor *= base;
+                case 'K':
+                case 'k':
+                        factor *= base;
+                        break;
+                default:
+                        return false;
+                }
+
+                if (strcasecmp(threshold_type+1, "bytes_free") == 0) {
+                        return (double)buf.f_bsize * (double)buf.f_bfree < low_threshold * factor;
+                } else if (strcasecmp(threshold_type+1, "bytes_avail") == 0) {
+                        return (double)buf.f_bsize * (double)buf.f_bavail < low_threshold * factor;
+                }
+        }
+
+        return false;
+}
+
+/*
  * Does a statvfs and prints either free, used or total amounts of bytes in a
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *prefix_type) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *prefix_type, const char *threshold_type, const double low_threshold) {
         const char *walk;
         char *outwalk = buffer;
+        bool colorful_output = false;
 
         INSTANCE(path);
 
@@ -74,6 +124,11 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         if (statvfs(path, &buf) == -1)
                 return;
 #endif
+
+        if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
+                START_COLOR("color_bad");
+                colorful_output = true;
+        }
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -121,6 +176,9 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                         walk += strlen("percentage_avail");
                 }
         }
+
+        if (colorful_output)
+                END_COLOR;
 
         *outwalk = '\0';
         OUTPUT_FULL_TEXT(buffer);

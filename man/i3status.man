@@ -223,6 +223,16 @@ SI prefixes (k, M, G, T) represent multiples of powers of 1000.
 custom::
 The custom prefixes (K, M, G, T) represent multiples of powers of 1024.
 
+It is possible to define a low_threshold that causes the disk text to be
+displayed using color_bad. The low_threshold type can be of threshold_type
+"bytes_free", "bytes_avail", "percentage_free", or "percentage_avail", where
+the former two can be prepended by a generic prefix (k, m, g, t) having
+prefix_type. So, if you configure low_threshold to 2, threshold_type to
+"gbytes_avail", and prefix_type to "binary", and the remaining available disk
+space is below 2 GiB, it will be colored bad. If not specified, threshold_type
+is assumed to be "percentage_avail" and low_threshold to be set to 0, which
+implies no coloring at all.
+
 *Example order*: +disk /mnt/usbstick+
 
 *Example format*: +%free (%avail)/ %total+
@@ -230,6 +240,10 @@ The custom prefixes (K, M, G, T) represent multiples of powers of 1024.
 *Example format*: +%percentage_used used, %percentage_free free, %percentage_avail avail+
 
 *Example prefix_type*: +custom+
+
+*Example low_threshold*: +5+
+
+*Example threshold_type*: +percentage_free+
 
 === Run-watch
 
