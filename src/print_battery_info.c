@@ -292,7 +292,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 	}
 
 	(void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%", apm_info.battery_life);
+	/* integer_battery_capacity is implied as battery_life is already in whole numbers. */
+	(void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%%", apm_info.battery_life);
 
 	if (status == CS_DISCHARGING && low_threshold > 0) {
 		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
