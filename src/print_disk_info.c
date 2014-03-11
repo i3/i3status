@@ -43,9 +43,9 @@ static int format_bytes(char *outwalk, uint64_t bytes, uint64_t base, const char
  *
  */
 static int print_bytes_human(char *outwalk, uint64_t bytes, const char *prefix_type) {
-        if (strncmp(prefix_type, "decimal", strlen(prefix_type)) == 0) {
+        if (strcasecmp(prefix_type, "decimal") == 0) {
                 return format_bytes(outwalk, bytes, DECIMAL_BASE, si_symbols);
-        } else if (strncmp(prefix_type, "custom", strlen(prefix_type)) == 0) {
+        } else if (strcasecmp(prefix_type, "custom") == 0) {
                 return format_bytes(outwalk, bytes, BINARY_BASE, custom_symbols);
         } else {
                 return format_bytes(outwalk, bytes, BINARY_BASE, iec_symbols);

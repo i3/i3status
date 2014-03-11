@@ -90,8 +90,8 @@ static int print_eth_speed(char *outwalk, const char *interface) {
 		 * Skip these non-informative values and go right ahead to the
 		 * actual speeds.
 		 */
-		if (strncmp(desc->ifmt_string, "autoselect", strlen("autoselect")) == 0 ||
-		    strncmp(desc->ifmt_string, "auto", strlen("auto")) == 0)
+		if (BEGINS_WITH(desc->ifmt_string, "autoselect") ||
+		    BEGINS_WITH(desc->ifmt_string, "auto"))
 			continue;
 
 		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmr.ifm_active) &&
@@ -131,10 +131,10 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
                         continue;
                 }
 
-                if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
+                if (BEGINS_WITH(walk+1, "ip")) {
                         outwalk += sprintf(outwalk, "%s", ip_address);
                         walk += strlen("ip");
-                } else if (strncmp(walk+1, "speed", strlen("speed")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "speed")) {
                         outwalk += print_eth_speed(outwalk, interface);
                         walk += strlen("speed");
                 }

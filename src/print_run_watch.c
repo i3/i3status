@@ -19,10 +19,10 @@ void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const c
                         continue;
                 }
 
-                if (strncmp(walk+1, "title", strlen("title")) == 0) {
+                if (BEGINS_WITH(walk+1, "title")) {
 			outwalk += sprintf(outwalk, "%s", title);
                         walk += strlen("title");
-                } else if (strncmp(walk+1, "status", strlen("status")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "status")) {
 			outwalk += sprintf(outwalk, "%s", (running ? "yes" : "no"));
                         walk += strlen("status");
                 }

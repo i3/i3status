@@ -117,7 +117,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                         goto error;
                 }
                 /* 'path' is the node within the full path (defaults to acpitz0). */
-                if (strncmp(sensordev.xname, thermal_zone, strlen(thermal_zone)) == 0) {
+                if (BEGINS_WITH(sensordev.xname, thermal_zone)) {
                         mib[3] = SENSOR_TEMP;
                         /* Limit to temo0, but should retrieve from a full path... */
                         for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {

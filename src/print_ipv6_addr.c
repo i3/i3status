@@ -136,7 +136,7 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
                         continue;
                 }
 
-                if (strncmp(walk+1, "ip", strlen("ip")) == 0) {
+                if (BEGINS_WITH(walk+1, "ip")) {
                         outwalk += sprintf(outwalk, "%s", addr_string);
                         walk += strlen("ip");
                 }

@@ -153,11 +153,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 seconds -= (minutes * 60);
 
                 if (status == CS_DISCHARGING && low_threshold > 0) {
-                        if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+                        if (strcasecmp(threshold_type, "percentage") == 0
                                 && percentage_remaining < low_threshold) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
-                        } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+                        } else if (strcasecmp(threshold_type, "time") == 0
                                 && seconds_remaining < 60 * low_threshold) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
@@ -191,7 +191,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                  * we colorize the output if threshold_type is set to percentage
                  * (since we don't have any information on remaining time). */
                 if (status == CS_DISCHARGING && low_threshold > 0) {
-                        if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+                        if (strcasecmp(threshold_type, "percentage") == 0
                                 && percentage_remaining < low_threshold) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
@@ -242,11 +242,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 minutes -= (hours * 60);
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02dh%02d",
                                max(hours, 0), max(minutes, 0));
-		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+		if (strcasecmp(threshold_type, "percentage") == 0
 		    && present_rate < low_threshold) {
 			START_COLOR("color_bad");
 			colorful_output = true;
-		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+		} else if (strcasecmp(threshold_type, "time") == 0
 			   && remaining < (u_int) low_threshold) {
 			START_COLOR("color_bad");
 			colorful_output = true;
@@ -296,11 +296,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 	(void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%%", apm_info.battery_life);
 
 	if (status == CS_DISCHARGING && low_threshold > 0) {
-		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+		if (strcasecmp(threshold_type, "percentage") == 0
 		    && apm_info.battery_life < low_threshold) {
 			START_COLOR("color_bad");
 			colorful_output = true;
-		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+		} else if (strcasecmp(threshold_type, "time") == 0
 			   && apm_info.minutes_left < (u_int) low_threshold) {
 			START_COLOR("color_bad");
 			colorful_output = true;
@@ -334,21 +334,21 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         continue;
                 }
 
-                if (strncmp(walk+1, "status", strlen("status")) == 0) {
+                if (BEGINS_WITH(walk+1, "status")) {
                         outwalk += sprintf(outwalk, "%s", statusbuf);
                         walk += strlen("status");
-                } else if (strncmp(walk+1, "percentage", strlen("percentage")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "percentage")) {
                         outwalk += sprintf(outwalk, "%s", percentagebuf);
                         walk += strlen("percentage");
-                } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "remaining")) {
                         outwalk += sprintf(outwalk, "%s", remainingbuf);
                         walk += strlen("remaining");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(remainingbuf);
-                } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "emptytime")) {
                         outwalk += sprintf(outwalk, "%s", emptytimebuf);
                         walk += strlen("emptytime");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(emptytimebuf);
-                } else if (strncmp(walk+1, "consumption", strlen("consumption")) == 0) {
+                } else if (BEGINS_WITH(walk+1, "consumption")) {
                         outwalk += sprintf(outwalk, "%s", consumptionbuf);
                         walk += strlen("consumption");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(consumptionbuf);
