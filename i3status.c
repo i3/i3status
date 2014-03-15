@@ -104,8 +104,8 @@ static int parse_align(cfg_t *context, cfg_opt_t *option, const char *value, voi
                 die("Invalid alignment attribute found in section %s, line %d: \"%s\"\n"
                     "Valid attributes are: left, center, right\n", context->name, context->line, value);
 
-        char **cresult = result;
-        *cresult = sstrdup(value);
+        const char **cresult = result;
+        *cresult = value;
 
         return 0;
 }
