@@ -419,7 +419,6 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
-                CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
 
