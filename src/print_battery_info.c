@@ -21,6 +21,12 @@
 #include <machine/apmvar.h>
 #endif
 
+#if defined(__NetBSD__)
+#include <fcntl.h>
+#include <prop/proplib.h>
+#include <sys/envsys.h>
+#endif
+
 #define BATT_STATUS_NAME(status) \
     (status == CS_CHARGING ? "CHR" : \
         (status == CS_DISCHARGING ? "BAT" : "FULL"))
@@ -316,6 +322,266 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
 	if (colorful_output)
 		END_COLOR;
+#elif defined(__NetBSD__)
+        /*
+         * Using envsys(4) via sysmon(4).
+         */
+        int fd, rval, last_full_cap;
+        bool is_found = false;
+        char *sensor_desc;
+        bool is_full = false;
+
+        prop_dictionary_t dict;
+        prop_array_t array;
+        prop_object_iterator_t iter;
+        prop_object_iterator_t iter2;
+        prop_object_t obj, obj2, obj3, obj4, obj5;
+
+        asprintf(&sensor_desc, "acpibat%d", number);
+
+        fd = open("/dev/sysmon", O_RDONLY);
+        if (fd < 0) {
+                OUTPUT_FULL_TEXT("can't open /dev/sysmon");
+                return;
+        }
+
+        rval = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
+        if (rval == -1) {
+                close(fd);
+                return;
+        }
+
+        if (prop_dictionary_count(dict) == 0) {
+                prop_object_release(dict);
+                close(fd);
+                return;
+        }
+
+        iter = prop_dictionary_iterator(dict);
+        if (iter == NULL) {
+                prop_object_release(dict);
+                close(fd);
+        }
+
+        /* iterate over the dictionary returned by the kernel */
+        while ((obj = prop_object_iterator_next(iter)) != NULL) {
+                /* skip this dict if it's not what we're looking for */
+                if ((strlen(prop_dictionary_keysym_cstring_nocopy(obj)) == strlen(sensor_desc)) &&
+                    (strncmp(sensor_desc,
+                            prop_dictionary_keysym_cstring_nocopy(obj),
+                            strlen(sensor_desc)) != 0))
+                        continue;
+
+                is_found = true;
+
+                array = prop_dictionary_get_keysym(dict, obj);
+                if (prop_object_type(array) != PROP_TYPE_ARRAY) {
+                        prop_object_iterator_release(iter);
+                        prop_object_release(dict);
+                        close(fd);
+                        return;
+                }
+
+                iter2 = prop_array_iterator(array);
+                if (!iter2) {
+                        prop_object_iterator_release(iter);
+                        prop_object_release(dict);
+                        close(fd);
+                        return;
+                }
+
+                /* iterate over array of dicts specific to target battery */
+                while ((obj2 = prop_object_iterator_next(iter2)) != NULL) {
+                        obj3 = prop_dictionary_get(obj2, "description");
+
+                        if (obj3 &&
+                            strlen(prop_string_cstring_nocopy(obj3)) == 8 &&
+                            strncmp("charging",
+                                    prop_string_cstring_nocopy(obj3),
+                                    8) == 0)
+                        {
+                                obj3 = prop_dictionary_get(obj2, "cur-value");
+
+                                if (prop_number_integer_value(obj3))
+                                        status = CS_CHARGING;
+                                else
+                                        status = CS_DISCHARGING;
+
+                                continue;
+                        }
+
+                        if (obj3 &&
+                            strlen(prop_string_cstring_nocopy(obj3)) == 6 &&
+                            strncmp("charge",
+                                    prop_string_cstring_nocopy(obj3),
+                                    6) == 0)
+                        {
+                                obj3 = prop_dictionary_get(obj2, "cur-value");
+                                obj4 = prop_dictionary_get(obj2, "max-value");
+                                obj5 = prop_dictionary_get(obj2, "type");
+
+                                remaining = prop_number_integer_value(obj3);
+                                full_design = prop_number_integer_value(obj4);
+
+                                if (remaining == full_design)
+                                        is_full = true;
+
+                                if (strncmp("Ampere hour",
+                                            prop_string_cstring_nocopy(obj5),
+                                            11) == 0)
+                                        watt_as_unit = false;
+                                else
+                                        watt_as_unit = true;
+
+                                continue;
+                        }
+
+                        if (obj3 &&
+                            strlen(prop_string_cstring_nocopy(obj3)) == 14 &&
+                            strncmp("discharge rate",
+                                    prop_string_cstring_nocopy(obj3),
+                                    14) == 0)
+                        {
+                                obj3 = prop_dictionary_get(obj2, "cur-value");
+                                present_rate = prop_number_integer_value(obj3);
+                                continue;
+                        }
+
+                        if (obj3 &&
+                            strlen(prop_string_cstring_nocopy(obj3)) == 13 &&
+                            strncmp("last full cap",
+                                    prop_string_cstring_nocopy(obj3),
+                                    13) == 0)
+                        {
+                                obj3 = prop_dictionary_get(obj2, "cur-value");
+                                last_full_cap = prop_number_integer_value(obj3);
+                                continue;
+                        }
+
+                        if (obj3 &&
+                            strlen(prop_string_cstring_nocopy(obj3)) == 7 &&
+                            strncmp("voltage",
+                                    prop_string_cstring_nocopy(obj3),
+                                    7) == 0)
+                        {
+                                obj3 = prop_dictionary_get(obj2, "cur-value");
+                                voltage = prop_number_integer_value(obj3);
+                                continue;
+                        }
+                }
+                prop_object_iterator_release(iter2);
+        }
+
+        prop_object_iterator_release(iter);
+        prop_object_release(dict);
+        close(fd);
+
+        if (! is_found) {
+                OUTPUT_FULL_TEXT(format_down);
+                return;
+        }
+
+        if (last_full_capacity)
+                full_design = last_full_cap;
+
+        if (! watt_as_unit) {
+                present_rate = (((float)voltage / 1000.0) * ((float)present_rate / 1000.0));
+                remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
+                full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
+        }
+
+        float percentage_remaining =
+                (((float)remaining / (float)full_design) * 100);
+
+        if (integer_battery_capacity)
+                (void)snprintf(percentagebuf,
+                           sizeof(percentagebuf),
+                           "%d%%",
+                           (int) percentage_remaining);
+        else
+                (void)snprintf(percentagebuf,
+                           sizeof(percentagebuf),
+                           "%.02f%%",
+                           percentage_remaining);
+
+        /*
+         * Handle percentage low_threshold here, and time low_threshold when
+         * we have it.
+         */
+        if (status == CS_DISCHARGING && low_threshold > 0) {
+                if (strcasecmp(threshold_type, "percentage") == 0
+                    && (((float)remaining / (float)full_design) * 100) < low_threshold) {
+                        START_COLOR("color_bad");
+                        colorful_output = true;
+                }
+        }
+
+        if (is_full)
+                (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(CS_FULL));
+        else
+                (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
+
+        /*
+         * The envsys(4) ACPI routines do not appear to provide a 'time
+         * remaining' figure, so we must deduce it.
+         */
+        float remaining_time;
+        int seconds, hours, minutes, seconds_remaining;
+
+        if (status == CS_CHARGING)
+                remaining_time = ((float)full_design - (float)remaining)
+                        / (float)present_rate;
+        else if (status == CS_DISCHARGING)
+                remaining_time = ((float)remaining / (float)present_rate);
+        else remaining_time = 0;
+
+        seconds_remaining = (int)(remaining_time * 3600.0);
+
+        hours = seconds_remaining / 3600;
+        seconds = seconds_remaining - (hours * 3600);
+        minutes = seconds / 60;
+        seconds -= (minutes * 60);
+
+        if (status != CS_CHARGING) {
+                if (hide_seconds)
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
+                                max(hours, 0), max(minutes, 0));
+                else
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
+                                max(hours, 0), max(minutes, 0), max(seconds, 0));
+
+                if (low_threshold > 0) {
+                        if (strcasecmp(threshold_type, "time") == 0
+                            && ((float) seconds_remaining / 60.0) < (u_int) low_threshold) {
+                                START_COLOR("color_bad");
+                                colorful_output = true;
+                        }
+                }
+        } else {
+                if (hide_seconds)
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "(%02d:%02d until full)",
+                                max(hours, 0), max(minutes, 0));
+                else
+                        (void)snprintf(remainingbuf, sizeof(remainingbuf), "(%02d:%02d:%02d until full)",
+                                max(hours, 0), max(minutes, 0), max(seconds, 0));
+        }
+
+        empty_time = time(NULL);
+        empty_time += seconds_remaining;
+        empty_tm = localtime(&empty_time);
+
+        /* No need to show empty time if battery is charging */
+        if (status != CS_CHARGING) {
+                if (hide_seconds)
+                        (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d",
+                                max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+                else
+                        (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
+                                max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+        }
+
+        (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
+                ((float)present_rate / 1000.0 / 1000.0));
 #endif
 
 #define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \
