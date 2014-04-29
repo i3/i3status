@@ -167,7 +167,6 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
             goto error_netbsd2;
         }
 
-        /* print sensors for all devices registered */
         iter = prop_dictionary_iterator(dict);
         if (iter == NULL) {
             err = true;
@@ -176,39 +175,43 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
         /* iterate over the dictionary returned by the kernel */
         while ((obj = prop_object_iterator_next(iter)) != NULL) {
+                /* skip this dict if it's not what we're looking for */
+                if ((strlen(prop_dictionary_keysym_cstring_nocopy(obj)) != strlen(thermal_zone)) ||
+                    (strncmp(thermal_zone,
+                             prop_dictionary_keysym_cstring_nocopy(obj),
+                             strlen(thermal_zone)) != 0))
+                        continue;
+
                 array = prop_dictionary_get_keysym(dict, obj);
                 if (prop_object_type(array) != PROP_TYPE_ARRAY) {
                     err = true;
                     goto error_netbsd3;
                 }
+
                 iter2 = prop_array_iterator(array);
                 if (!iter2) {
                     err = true;
                     goto error_netbsd3;
                 }
 
-                /* iterate over the array of dictionaries */
+                /* iterate over array of dicts specific to target sensor */
                 while ((obj2 = prop_object_iterator_next(iter2)) != NULL) {
-                        obj3 = prop_dictionary_get(obj2, "description");
-                        if (obj3 &&
-                            strcmp(thermal_zone, prop_string_cstring_nocopy(obj3)) == 0)
-                        {
-                                obj3 = prop_dictionary_get(obj2, "cur-value");
-                                float temp = MUKTOC(prop_number_integer_value(obj3));
-                                if ((int)temp >= max_threshold) {
-                                        START_COLOR("color_bad");
-                                        colorful_output = true;
-                                }
+                        obj3 = prop_dictionary_get(obj2, "cur-value");
 
-                                outwalk += sprintf(outwalk, "%.2f", temp);
-
-                                if (colorful_output) {
-                                        END_COLOR;
-                                        colorful_output = false;
-                                }
-                                break;
+                        float temp = MUKTOC(prop_number_integer_value(obj3));
+                        if ((int)temp >= max_threshold) {
+                                START_COLOR("color_bad");
+                                colorful_output = true;
                         }
 
+                        outwalk += sprintf(outwalk, "%.2f", temp);
+
+                        if (colorful_output) {
+                                END_COLOR;
+                                colorful_output = false;
+                        }
+
+                        break;
                 }
                 prop_object_iterator_release(iter2);
         }

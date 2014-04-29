@@ -30,12 +30,9 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 #define BATT_TIME "hw.acpi.battery.time"
 #define BATT_STATE "hw.acpi.battery.state"
 
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
 /* Default to acpitz(4) if no path is set. */
 #define THERMAL_ZONE "acpitz%d"
-#elif defined(__NetBSD__)
-/* Rely on envsys(4). The key of the sensor is generally cpu%d temperature */
-#define THERMAL_ZONE "cpu%d temperature"
 #endif
 
 #if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
