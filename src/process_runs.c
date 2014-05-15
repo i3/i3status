@@ -1,4 +1,4 @@
-// vim:ts=8:expandtab
+// vim:ts=8:sw=8:expandtab
 #include <stdbool.h>
 #include <glob.h>
 #include <string.h>
@@ -15,6 +15,9 @@
  * anything). kill() will return ESRCH if the process does not exist and 0 or
  * EPERM (depending on the uid) if it exists.
  *
+ * If multiple files match the glob pattern, all of them will be checked until
+ * the first running process is found.
+ *
  */
 bool process_runs(const char *path) {
         static char pidbuf[16];
@@ -23,11 +26,24 @@ bool process_runs(const char *path) {
 
         if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
                 die("glob() failed\n");
-        if (!slurp((globbuf.gl_pathc > 0 ? globbuf.gl_pathv[0] : path), pidbuf, sizeof(pidbuf))) {
+        if (globbuf.gl_pathc == 0) {
+                /* No glob matches, the specified path does not contain a wildcard. */
                 globfree(&globbuf);
-                return false;
+                if (!slurp(path, pidbuf, sizeof(pidbuf)))
+                        return false;
+                return (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM);
+        }
+        for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+                if (!slurp(globbuf.gl_pathv[i], pidbuf, sizeof(pidbuf))) {
+                        globfree(&globbuf);
+                        return false;
+                }
+                if (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM) {
+                        globfree(&globbuf);
+                        return true;
+                }
         }
         globfree(&globbuf);
 
-        return (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM);
+        return false;
 }
