@@ -89,15 +89,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         remaining = atoi(walk+1);
                 }
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
-                        present_rate = atoi(walk+1);
+                        present_rate = abs(atoi(walk+1));
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
-                        voltage = atoi(walk+1);
+                        voltage = abs(atoi(walk+1));
                 /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
                  * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
                  * unit instead of μAh. We will calculate it as we need it
                  * later. */
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
-                        present_rate = atoi(walk+1);
+                        present_rate = abs(atoi(walk+1));
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
                         status = CS_CHARGING;
                 else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
