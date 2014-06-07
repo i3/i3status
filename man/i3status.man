@@ -132,7 +132,8 @@ color_good = "#00FF00"
 
 Likewise, you can use the +color_separator+ directive to specify the color that
 will be used to paint the separator bar. The separator is always output in
-color, even when colors are disabled by the +colors+ directive.
+color, even when colors are disabled by the +colors+ directive. This option has
+no effect when +output_format+ is set to +i3bar+ or +none+.
 
 The +interval+ directive specifies the time in seconds for which i3status will
 sleep before printing the next status line.
