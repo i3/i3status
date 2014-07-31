@@ -34,23 +34,24 @@ ifeq ($(OS),GNU/kFreeBSD)
 LIBS+=-lbsd
 endif
 
-ifeq ($(OS),OpenBSD)
+ifneq (, $(filter $(OS), DragonFly FreeBSD OpenBSD))
 CFLAGS+=-I/usr/local/include/
 LDFLAGS+=-L/usr/local/lib/
-LIBS+=-lossaudio
 endif
 
-
-# This probably applies for any pkgsrc based system
-ifneq (, $(filter $(OS), NetBSD DragonFly))
-CFLAGS+=-I/usr/pkg/include/
-LDFLAGS+=-L/usr/pkg/lib/
+ifeq ($(OS),OpenBSD)
+LIBS+=-lossaudio
 endif
 
 ifeq ($(OS), NetBSD)
 LIBS+= -lprop
 endif
 
+# This probably applies for any pkgsrc based system
+ifneq (, $(filter $(OS), NetBSD DragonFly))
+CFLAGS+=-I/usr/pkg/include/
+LDFLAGS+=-L/usr/pkg/lib/
+endif
 
 V ?= 0
 ifeq ($(V),0)
