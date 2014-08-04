@@ -8,13 +8,20 @@
 
 #include "i3status.h"
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <err.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #define TZ_ZEROC 2732
 #define TZ_KELVTOC(x) (((x) - TZ_ZEROC) / 10), abs(((x) - TZ_ZEROC) % 10)
 #define TZ_AVG(x) ((x) - TZ_ZEROC) / 10
+#endif
+
+#if defined(__DragonFly__)
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#include <sys/sensors.h>
+#define MUKTOC(v) ((v - 273150000) / 1000000.0)
 #endif
 
 #if defined(__OpenBSD__)
@@ -82,7 +89,27 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
                                         colorful_output = false;
                                 }
                         }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#elif defined(__DragonFly__)
+			struct sensor th_sensor;
+			size_t th_sensorlen;
+
+			th_sensorlen = sizeof(th_sensor);
+
+			if (sysctlbyname(thermal_zone, &th_sensor, &th_sensorlen, NULL, 0) == -1) {
+				perror("sysctlbyname");
+				goto error;
+			}
+			if (MUKTOC(th_sensor.value) >= max_threshold) {
+				START_COLOR("color_bad");
+				colorful_output = true;
+			}
+			outwalk += sprintf(outwalk, "%.2f", MUKTOC(th_sensor.value));
+			if (colorful_output) {
+				END_COLOR;
+				colorful_output = false;
+			}
+
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
                         int sysctl_rslt;
                         size_t sysctl_size = sizeof(sysctl_rslt);
                         if (sysctlbyname(thermal_zone, &sysctl_rslt, &sysctl_size, NULL, 0))
