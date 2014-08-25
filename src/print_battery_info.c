@@ -124,8 +124,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
          * ampere to watt */
         if (!watt_as_unit) {
             present_rate = (((float)voltage / 1000.0) * ((float)present_rate / 1000.0));
-            remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
-            full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
+
+            if (voltage != -1) {
+                remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
+                full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
+            }
         }
 
         if ((full_design == -1) || (remaining == -1)) {
