@@ -174,8 +174,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 out:
         *outwalk = '\0';
-        OUTPUT_FULL_TEXT(buffer);
-
         if (!pbval)
 		END_COLOR;
+        OUTPUT_FULL_TEXT(buffer);
 }
