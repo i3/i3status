@@ -319,6 +319,9 @@ int main(int argc, char *argv[]) {
         cfg_opt_t battery_opts[] = {
                 CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
                 CFG_STR("format_down", "No battery", CFGF_NONE),
+                CFG_STR("status_chr", "CHR", CFGF_NONE),
+                CFG_STR("status_bat", "BAT", CFGF_NONE),
+                CFG_STR("status_full", "FULL", CFGF_NONE),
                 CFG_STR("path", "/sys/class/power_supply/BAT%d/uevent", CFGF_NONE),
                 CFG_INT("low_threshold", 30, CFGF_NONE),
                 CFG_STR("threshold_type", "time", CFGF_NONE),
@@ -585,7 +588,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("battery") {
                                 SEC_OPEN_MAP("battery");
-                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getbool(sec, "integer_battery_capacity"), cfg_getbool(sec, "hide_seconds"));
+                                print_battery_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "status_chr"), cfg_getstr(sec, "status_bat"), cfg_getstr(sec, "status_full"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getbool(sec, "integer_battery_capacity"), cfg_getbool(sec, "hide_seconds"));
                                 SEC_CLOSE_MAP;
                         }
 
