@@ -74,6 +74,9 @@ ethernet eth0 {
 battery 0 {
         format = "%status %percentage %remaining %emptytime"
         format_down = "No battery"
+        status_chr = "⚇ CHR""
+        status_bat = "⚡ BAT"
+        status_full = "☻ FULL"
         path = "/sys/class/power_supply/BAT%d/uevent"
         low_threshold = 10
 }
@@ -309,11 +312,24 @@ colored red. The low_threshold type can be of threshold_type "time" or
 "percentage". So, if you configure low_threshold to 10 and threshold_type to
 "time", and your battery lasts another 9 minutes, it will be colored red.
 
+Optionally custom strings including any UTF-8 symbols can be used for different
+battery states. This makes it possible to display individual symbols
+for each state (charging, discharging, full)
+Of course it will also work with special iconic fonts, such as FontAwesome.
+If any of this special status strings is omitted, the default (CHR, BAT, FULL)
+is used.
+
 *Example order*: +battery 0+
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
 
 *Example format_down*: +No battery+
+
+*Example status_chr*: +⚇ CHR+
+
+*Example status_bat*: +⚡ BAT+
+
+*Example status_full*: +☻ FULL+
 
 *Example low_threshold*: +30+
 
