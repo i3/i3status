@@ -55,6 +55,7 @@
 #define WIRELESS_INFO_FLAG_HAS_QUALITY                  (1 << 1)
 #define WIRELESS_INFO_FLAG_HAS_SIGNAL                   (1 << 2)
 #define WIRELESS_INFO_FLAG_HAS_NOISE                    (1 << 3)
+#define WIRELESS_INFO_FLAG_HAS_FREQUENCY                (1 << 4)
 
 #define PERCENT_VALUE(value, total) ((int)(value * 100 / (float)total + 0.5f))
 
@@ -69,6 +70,7 @@ typedef struct {
         int noise_level;
         int noise_level_max;
         int bitrate;
+        double frequency;
 } wireless_info_t;
 
 static int get_wireless_info(const char *interface, wireless_info_t *info) {
@@ -91,6 +93,11 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
                 info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
                 strncpy(&info->essid[0], wcfg.essid, IW_ESSID_MAX_SIZE);
                 info->essid[IW_ESSID_MAX_SIZE] = '\0';
+        }
+
+        if (wcfg.has_freq) {
+                info->frequency = wcfg.freq;
+                info->flags |= WIRELESS_INFO_FLAG_HAS_FREQUENCY;
         }
 
         /* If the function iw_get_stats does not return proper stats, the
@@ -393,6 +400,14 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
                         else
                                 *(outwalk++) = '?';
                         walk += strlen("essid");
+                }
+
+                if (BEGINS_WITH(walk+1, "frequency")) {
+                        if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
+                                outwalk += sprintf(outwalk, "%1.1f GHz", info.frequency / 1e9);
+                        else
+                                *(outwalk++) = '?';
+                        walk += strlen("frequency");
                 }
 
                 if (BEGINS_WITH(walk+1, "ip")) {

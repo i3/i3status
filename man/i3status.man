@@ -270,13 +270,13 @@ something is active, like for example a VPN tunnel managed by NetworkManager.
 
 === Wireless
 
-Gets the link quality and ESSID of the given wireless network interface. You
-can specify different format strings for the network being connected or not
-connected.
+Gets the link quality, frequency and ESSID of the given wireless network
+interface. You can specify different format strings for the network being
+connected or not connected.
 
 *Example order*: +wireless wlan0+
 
-*Example format*: +W: (%quality at %essid, %bitrate) %ip+
+*Example format*: +W: (%quality at %essid, %bitrate / %frequency) %ip+
 
 === Ethernet
 
