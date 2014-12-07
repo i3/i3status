@@ -56,6 +56,8 @@ static bool exit_upon_signal = false;
 
 cfg_t *cfg, *cfg_general, *cfg_section;
 
+void **cur_instance;
+
 /*
  * Set the exit_upon_signal flag, because one cannot do anything in a safe
  * manner in a signal handler (e.g. fprintf, which we really want to do for
@@ -550,6 +552,8 @@ int main(int argc, char *argv[]) {
          * (!), not individual plugins, seem very unlikely. */
         char buffer[4096];
 
+        void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
+
         while (1) {
                 if (exit_upon_signal) {
                         fprintf(stderr, "Exiting due to signal.\n");
@@ -563,6 +567,7 @@ int main(int argc, char *argv[]) {
                         /* Restore the cursor-position, clear line */
                         printf("\033[u\033[K");
                 for (j = 0; j < cfg_size(cfg, "order"); j++) {
+                        cur_instance = per_instance + j;
                         if (j > 0)
                                 print_separator(separator);
 

@@ -198,4 +198,6 @@ extern int general_socket;
 
 extern cfg_t *cfg, *cfg_general, *cfg_section;
 
+extern void **cur_instance;
+
 #endif
