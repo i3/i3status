@@ -274,6 +274,9 @@ Gets the link quality, frequency and ESSID of the given wireless network
 interface. You can specify different format strings for the network being
 connected or not connected.
 
+The special interface name `_first_` will be replaced by the first wireless
+network interface found on the system (excluding devices starting with "lo").
+
 *Example order*: +wireless wlan0+
 
 *Example format*: +W: (%quality at %essid, %bitrate / %frequency) %ip+
@@ -283,6 +286,9 @@ connected or not connected.
 Gets the IP address and (if possible) the link speed of the given ethernet
 interface. Getting the link speed requires the cap_net_admin capability. Set
 it using +setcap cap_net_admin=ep $(which i3status)+.
+
+The special interface name `_first_` will be replaced by the first non-wireless
+network interface found on the system (excluding devices starting with "lo").
 
 *Example order*: +ethernet eth0+
 
