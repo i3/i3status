@@ -44,7 +44,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         char consumptionbuf[256];
         const char *walk, *last;
         char *outwalk = buffer;
-        bool watt_as_unit;
+        bool watt_as_unit = false;
         bool colorful_output = false;
         int full_design = -1,
             remaining = -1,
