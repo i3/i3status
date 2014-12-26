@@ -29,13 +29,7 @@ apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc lib
  └────────────────────────────┘
 
 i3status is developed at
-  http://code.i3wm.org/i3status
-
-You may clone the git-repository using
-  git clone git://code.i3wm.org/i3status
-
-Please submit patches at
-  http://cr.i3wm.org/
+  https://github.com/i3/i3status
 
  ┌────────────────────────────┐
  │ Compilation                │
