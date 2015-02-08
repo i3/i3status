@@ -1,2 +1,4 @@
 *.o
 .*.swp
+i3status
+man/i3status.1
