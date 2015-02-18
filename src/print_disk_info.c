@@ -131,7 +131,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         struct mntent *m;
         bool found = false;
 
-        while ((m = getmntent(mntentfile))) {
+        while (NULL != (m = getmntent(mntentfile))) {
                 if (strcmp(m->mnt_dir, path) == 0) {
                         found = true;
                         break;
@@ -139,8 +139,8 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         }
         endmntent(mntentfile);
 
-        if(!found) {
-                *outwalk = '\0';
+        if (!found) {
+                *buffer = '\0';
                 OUTPUT_FULL_TEXT(buffer);
                 return;
         }
