@@ -125,7 +125,6 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 
         if (statvfs(path, &buf) == -1)
                 return;
-#endif
 
         FILE *mntentfile = setmntent("/etc/mtab", "r");
         struct mntent *m;
@@ -144,6 +143,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                 OUTPUT_FULL_TEXT(buffer);
                 return;
         }
+#endif
 
         if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
                 START_COLOR("color_bad");
