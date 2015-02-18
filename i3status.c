@@ -386,6 +386,7 @@ int main(int argc, char *argv[]) {
 
         cfg_opt_t disk_opts[] = {
                 CFG_STR("format", "%free", CFGF_NONE),
+                CFG_STR("format_not_mounted", NULL, CFGF_NONE),
                 CFG_STR("prefix_type", "binary", CFGF_NONE),
                 CFG_STR("threshold_type", "percentage_avail", CFGF_NONE),
                 CFG_FLOAT("low_threshold", 0, CFGF_NONE),
@@ -621,7 +622,7 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC_TITLE("disk") {
                                 SEC_OPEN_MAP("disk_info");
-                                print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "prefix_type"), cfg_getstr(sec, "threshold_type"), cfg_getfloat(sec, "low_threshold"));
+                                print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_not_mounted"), cfg_getstr(sec, "prefix_type"), cfg_getstr(sec, "threshold_type"), cfg_getfloat(sec, "low_threshold"));
                                 SEC_CLOSE_MAP;
                         }
 

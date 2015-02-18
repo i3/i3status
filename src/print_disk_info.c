@@ -108,7 +108,7 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
         const char *walk;
         char *outwalk = buffer;
         bool colorful_output = false;
@@ -126,22 +126,22 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         if (statvfs(path, &buf) == -1)
                 return;
 
-        FILE *mntentfile = setmntent("/etc/mtab", "r");
-        struct mntent *m;
-        bool found = false;
+        if (format_not_mounted != NULL) {
+                FILE *mntentfile = setmntent("/etc/mtab", "r");
+                struct mntent *m;
+                bool found = false;
 
-        while (NULL != (m = getmntent(mntentfile))) {
-                if (strcmp(m->mnt_dir, path) == 0) {
-                        found = true;
-                        break;
+                while (NULL != (m = getmntent(mntentfile))) {
+                        if (strcmp(m->mnt_dir, path) == 0) {
+                                found = true;
+                                break;
+                        }
                 }
-        }
-        endmntent(mntentfile);
+                endmntent(mntentfile);
 
-        if (!found) {
-                *buffer = '\0';
-                OUTPUT_FULL_TEXT(buffer);
-                return;
+                if (!found) {
+                        format = format_not_mounted;
+                }
         }
 #endif
 
