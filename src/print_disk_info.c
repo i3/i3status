@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <mntent.h>
 #include <stdint.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || (__OpenBSD__) || defined(__DragonFly__)
@@ -124,6 +126,24 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         if (statvfs(path, &buf) == -1)
                 return;
 #endif
+
+        FILE *mntentfile = setmntent("/etc/mtab", "r");
+        struct mntent *m;
+        bool found = false;
+
+        while ((m = getmntent(mntentfile))) {
+                if (strcmp(m->mnt_dir, path) == 0) {
+                        found = true;
+                        break;
+                }
+        }
+        endmntent(mntentfile);
+
+        if(!found) {
+                *outwalk = '\0';
+                OUTPUT_FULL_TEXT(buffer);
+                return;
+        }
 
         if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
                 START_COLOR("color_bad");
