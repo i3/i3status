@@ -424,6 +424,8 @@ the lack of ALSA,  the +device+ and +mixer+ options can be
 ignored on these systems. On these systems the OSS API is used instead to
 query +/dev/mixer+ directly if +mixer_idx+ is -1, otherwise
 +/dev/mixer+++mixer_idx+.
+On Mac OS X the +device+ option can be used to select the audio device,
+e.g.: +Built-in Output+, the +mixer+ options are ignored.
 
 *Example order*: +volume master+
 
