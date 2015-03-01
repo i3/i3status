@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <mntent.h>
 #include <stdint.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || (__OpenBSD__) || defined(__DragonFly__)
@@ -106,7 +108,7 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
         const char *walk;
         char *outwalk = buffer;
         bool colorful_output = false;
@@ -123,6 +125,24 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 
         if (statvfs(path, &buf) == -1)
                 return;
+
+        if (format_not_mounted != NULL) {
+                FILE *mntentfile = setmntent("/etc/mtab", "r");
+                struct mntent *m;
+                bool found = false;
+
+                while ((m = getmntent(mntentfile)) != NULL) {
+                        if (strcmp(m->mnt_dir, path) == 0) {
+                                found = true;
+                                break;
+                        }
+                }
+                endmntent(mntentfile);
+
+                if (!found) {
+                        format = format_not_mounted;
+                }
+        }
 #endif
 
         if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {

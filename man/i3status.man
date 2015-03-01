@@ -237,6 +237,11 @@ space is below 2 GiB, it will be colored bad. If not specified, threshold_type
 is assumed to be "percentage_avail" and low_threshold to be set to 0, which
 implies no coloring at all.
 
+You can define a different format with the option "format_not_mounted"
+which is used if the path is not a mount point. So you can just empty
+the output for the given path with adding »format_not_mounted=""«
+to the config section.
+
 *Example order*: +disk /mnt/usbstick+
 
 *Example format*: +%free (%avail)/ %total+
