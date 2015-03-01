@@ -43,8 +43,12 @@ ifeq ($(OS),OpenBSD)
 LIBS+=-lossaudio
 endif
 
-ifeq ($(OS), NetBSD)
-LIBS+= -lprop
+ifeq ($(OS),NetBSD)
+LIBS+=-lprop
+endif
+
+ifeq ($(OS),Darwin)
+LIBS+=-framework CoreFoundation -framework CoreAudio
 endif
 
 # This probably applies for any pkgsrc based system

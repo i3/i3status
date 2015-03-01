@@ -23,6 +23,10 @@
 #include <soundcard.h>
 #endif
 
+#if defined(__APPLE__)
+#include <CoreAudio/CoreAudio.h>
+#endif
+
 #include "i3status.h"
 #include "queue.h"
 
@@ -170,6 +174,129 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 }
         }
         close(mixfd);
+#endif
+#if defined(__APPLE__)
+	UInt32 size = 0;
+	OSStatus result = noErr;
+	AudioDeviceID audiodevice = 0;
+	AudioObjectPropertyAddress property = {0, 0, 0};
+
+	if (BEGINS_WITH(device, "default")) {
+		size = sizeof(audiodevice);
+		property.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
+		property.mScope    = kAudioObjectPropertyScopeGlobal;
+		property.mElement  = kAudioObjectPropertyElementMaster;
+		result = AudioObjectGetPropertyData(kAudioObjectSystemObject, &property, 0, NULL, &size, &audiodevice);
+		if (result) {
+			fprintf(stderr, "i3status: CoreAudio: Cannot to open %s output device: %d\n", device, result);
+			goto out;
+		}
+	}
+	else {
+		// Get the number of audio devices on the system.
+		property.mSelector = kAudioHardwarePropertyDevices;
+		property.mScope    = kAudioObjectPropertyScopeGlobal;
+		property.mElement  = kAudioObjectPropertyElementMaster;
+		result = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &property, 0, NULL, &size);
+		if (result) {
+			fprintf(stderr, "Error getting audio property data size: %d\n", result);
+			goto out;
+		}
+		UInt32 devices = size / sizeof(AudioDeviceID);
+
+		// Get the list of audio devices.
+		AudioDeviceID* devicelist = (AudioDeviceID*)calloc(devices, sizeof(AudioDeviceID));
+		result = AudioObjectGetPropertyData(kAudioObjectSystemObject, &property, 0, NULL, &size, devicelist);
+		if (result) {
+			fprintf(stderr, "Error getting audio device list due to: %d\n", result);
+			free(devicelist);
+			goto out;
+		}
+
+		// Search if the list of audio devices contanis a device with the same name as  given in the device parameter.
+		CFStringRef devicename = NULL;
+		size = sizeof(CFStringRef);
+		property.mSelector = kAudioObjectPropertyName;
+		property.mScope    = kAudioObjectPropertyScopeGlobal;
+		property.mElement  = kAudioObjectPropertyElementMaster;
+		for (UInt32 i = 0; i < devices; i++) {
+			result = AudioObjectGetPropertyData(devicelist[i], &property, 0, NULL, &size, &devicename);
+			if (result) {
+				continue;
+			}
+			CFIndex length = CFStringGetLength(devicename);
+			CFIndex maxsize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+			char *name = (char *)malloc(maxsize);
+			if (CFStringGetCString(devicename, name, maxsize, kCFStringEncodingUTF8)) {
+				if (BEGINS_WITH(name, device)) {
+					audiodevice = devicelist[i];
+					free(name);
+					break;
+				}
+			}
+			free(name);
+		}
+		free(devicelist);
+	}
+
+	if (!audiodevice) {
+		fprintf(stderr, "i3status: CoreAudio: No such audio device: %s\n", device);
+		goto out;
+	}
+
+	property.mSelector = kAudioDevicePropertyStreams;
+	property.mScope    = kAudioObjectPropertyScopeInput;
+	property.mElement  = kAudioObjectPropertyElementMaster;
+	result = AudioObjectGetPropertyDataSize(audiodevice, &property, 0, NULL, &size);
+	if (result) {
+		fprintf(stderr, "i3status: CoreAudio: Cannot determine stream configuration: %d\n", result);
+	}
+
+	bool input = ((size / sizeof(AudioStreamID)) > 0);
+	AudioObjectPropertyScope scope = (input) ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput;
+
+	Float32 volume = 0;
+	size = sizeof(Float32);
+	property.mSelector = kAudioDevicePropertyVolumeScalar;
+	property.mScope    = scope;
+	property.mElement  = (input) ? kAudioObjectPropertyElementMaster : 1;
+	result = AudioObjectGetPropertyData(audiodevice, &property, 0, NULL, &size, &volume);
+	if (result) {
+		fprintf(stderr, "i3status: CoreAudio: Cannot determine device volume: %d\n", result);
+		goto out;
+	}
+
+	UInt32 mute = 0;
+	size = sizeof(UInt32);
+	property.mSelector = kAudioDevicePropertyMute;
+	property.mScope    = scope;
+	property.mElement  = kAudioObjectPropertyElementMaster;
+	result = AudioObjectGetPropertyData(audiodevice, &property, 0, NULL, &size, &mute);
+	if (result) {
+		fprintf(stderr, "i3status: CoreAudio: Cannot determine mute state: %d\n", result);
+		goto out;
+	}
+	else if (mute) {
+		START_COLOR("color_degraded");
+		fmt = fmt_muted;
+		pbval = 0;
+	}
+
+	const char *walk = fmt;
+	for (; *walk != '\0'; walk++) {
+		if (*walk != '%') {
+			*(outwalk++) = *walk;
+			continue;
+		}
+		if (BEGINS_WITH(walk+1, "%")) {
+			outwalk += sprintf(outwalk, "%%");
+			walk += strlen("%");
+		}
+		if (BEGINS_WITH(walk+1, "volume")) {
+			outwalk += sprintf(outwalk, "%d%%", (int)(volume * 100));
+			walk += strlen("volume");
+		}
+	}
 #endif
 
 out:
