@@ -11,7 +11,7 @@ before_install:
   - sudo apt-get install -t utopic clang-format-3.5
   - clang-format-3.5 --version
 install:
-  - sudo apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin
+  - sudo apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin libpulse-dev
 script:
   - make -j
   - clang-format-3.5 -i **/*.[ch] && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)

@@ -18,6 +18,7 @@ CPPFLAGS+=-DVERSION=\"${GIT_VERSION}\"
 CFLAGS+=-Iinclude
 LIBS+=-lconfuse
 LIBS+=-lyajl
+LIBS+=-lpulse
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"

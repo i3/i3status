@@ -62,6 +62,9 @@ cfg_t *cfg, *cfg_general, *cfg_section;
 
 void **cur_instance;
 
+pthread_cond_t i3status_sleep_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t i3status_sleep_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /*
  * Set the exit_upon_signal flag, because one cannot do anything in a safe
  * manner in a signal handler (e.g. fprintf, which we really want to do for
@@ -547,6 +550,7 @@ int main(int argc, char *argv[]) {
     char buffer[4096];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
+    pthread_mutex_lock(&i3status_sleep_mutex);
 
     while (1) {
         if (exit_upon_signal) {
@@ -682,13 +686,16 @@ int main(int argc, char *argv[]) {
         fflush(stdout);
 
         /* To provide updates on every full second (as good as possible)
-         * we don’t use sleep(interval) but we sleep until the next
-         * second (with microsecond precision) plus (interval-1)
-         * seconds. We also align to 60 seconds modulo interval such
+         * we don’t use sleep(interval) but we sleep until the next second.
+         * We also align to 60 seconds modulo interval such
          * that we start with :00 on every new minute. */
-        struct timeval current_timeval;
-        gettimeofday(&current_timeval, NULL);
-        struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
-        nanosleep(&ts, NULL);
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += interval - (ts.tv_sec % interval);
+        ts.tv_nsec = 0;
+
+        /* Sleep to absolute time 'ts', unless the condition
+         * 'i3status_sleep_cond' is signaled from another thread */
+        pthread_cond_timedwait(&i3status_sleep_cond, &i3status_sleep_mutex, &ts);
     }
 }

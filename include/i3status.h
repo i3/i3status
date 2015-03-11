@@ -14,9 +14,13 @@ enum { O_DZEN2,
 #include <yajl/yajl_version.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
+#include <stdint.h>
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
+
+#define DEFAULT_SINK_INDEX UINT32_MAX
 
 #if defined(LINUX)
 
@@ -195,6 +199,8 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
+int volume_pulseaudio(uint32_t sink_idx);
+bool pulse_initialize(void);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
@@ -202,5 +208,8 @@ extern int general_socket;
 extern cfg_t *cfg, *cfg_general, *cfg_section;
 
 extern void **cur_instance;
+
+extern pthread_cond_t i3status_sleep_cond;
+extern pthread_mutex_t i3status_sleep_mutex;
 
 #endif
