@@ -1,4 +1,4 @@
-// vim:ts=8:sw=8:expandtab
+// vim:ts=4:sw=4:expandtab
 #include <stdbool.h>
 #include <glob.h>
 #include <string.h>
@@ -20,30 +20,30 @@
  *
  */
 bool process_runs(const char *path) {
-        static char pidbuf[16];
-        static glob_t globbuf;
-        memset(pidbuf, 0, sizeof(pidbuf));
+    static char pidbuf[16];
+    static glob_t globbuf;
+    memset(pidbuf, 0, sizeof(pidbuf));
 
-        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
-                die("glob() failed\n");
-        if (globbuf.gl_pathc == 0) {
-                /* No glob matches, the specified path does not contain a wildcard. */
-                globfree(&globbuf);
-                if (!slurp(path, pidbuf, sizeof(pidbuf)))
-                        return false;
-                return (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM);
-        }
-        for (size_t i = 0; i < globbuf.gl_pathc; i++) {
-                if (!slurp(globbuf.gl_pathv[i], pidbuf, sizeof(pidbuf))) {
-                        globfree(&globbuf);
-                        return false;
-                }
-                if (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM) {
-                        globfree(&globbuf);
-                        return true;
-                }
-        }
+    if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+        die("glob() failed\n");
+    if (globbuf.gl_pathc == 0) {
+        /* No glob matches, the specified path does not contain a wildcard. */
         globfree(&globbuf);
+        if (!slurp(path, pidbuf, sizeof(pidbuf)))
+            return false;
+        return (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM);
+    }
+    for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+        if (!slurp(globbuf.gl_pathv[i], pidbuf, sizeof(pidbuf))) {
+            globfree(&globbuf);
+            return false;
+        }
+        if (kill(strtol(pidbuf, NULL, 10), 0) == 0 || errno == EPERM) {
+            globfree(&globbuf);
+            return true;
+        }
+    }
+    globfree(&globbuf);
 
-        return false;
+    return false;
 }

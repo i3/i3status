@@ -1,7 +1,11 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
-enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
+enum { O_DZEN2,
+       O_XMOBAR,
+       O_I3BAR,
+       O_TERM,
+       O_NONE } output_format;
 
 #include <stdbool.h>
 #include <confuse.h>
@@ -45,105 +49,104 @@ enum { O_DZEN2, O_XMOBAR, O_I3BAR, O_TERM, O_NONE } output_format;
 /* Allows for the definition of a variable without opening a new scope, thus
  * suited for usage in a macro. Idea from wmii. */
 #define with(type, var, init) \
-        for (type var = (type)-1; (var == (type)-1) && ((var=(init)) || 1); )
+    for (type var = (type)-1; (var == (type)-1) && ((var = (init)) || 1);)
 
-#define CASE_SEC(name) \
-        if (BEGINS_WITH(current, name)) \
-                with(cfg_t *, sec, cfg_section = cfg_getsec(cfg, name)) \
-                        if (sec != NULL)
+#define CASE_SEC(name)              \
+    if (BEGINS_WITH(current, name)) \
+    with(cfg_t *, sec, cfg_section = cfg_getsec(cfg, name)) if (sec != NULL)
 
-#define CASE_SEC_TITLE(name) \
-        if (BEGINS_WITH(current, name)) \
-                with(const char *, title, current + strlen(name) + 1) \
-                        with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) \
-                                if (sec != NULL)
+#define CASE_SEC_TITLE(name)                              \
+    if (BEGINS_WITH(current, name))                       \
+    with(const char *, title, current + strlen(name) + 1) \
+        with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) if (sec != NULL)
 
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
-#define OUTPUT_FULL_TEXT(text) \
-	do { \
-		/* Terminate the output buffer here in any case, so that it’s \
-		 * not forgotten in the module */ \
-		*outwalk = '\0'; \
-		if (output_format == O_I3BAR) { \
-			yajl_gen_string(json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
-			yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text)); \
-		} else { \
-			printf("%s", text); \
-		} \
-	} while (0)
+#define OUTPUT_FULL_TEXT(text)                                                                   \
+    do {                                                                                         \
+        /* Terminate the output buffer here in any case, so that it’s                          \
+         * not forgotten in the module */                                                        \
+        *outwalk = '\0';                                                                         \
+        if (output_format == O_I3BAR) {                                                          \
+            yajl_gen_string(json_gen, (const unsigned char *) "full_text", strlen("full_text")); \
+            yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text));                \
+        } else {                                                                                 \
+            printf("%s", text);                                                                  \
+        }                                                                                        \
+    } while (0)
 
-#define SEC_OPEN_MAP(name) \
-	do { \
-		if (output_format == O_I3BAR) { \
-			yajl_gen_map_open(json_gen); \
-			yajl_gen_string(json_gen, (const unsigned char *)"name", strlen("name")); \
-			yajl_gen_string(json_gen, (const unsigned char *)name, strlen(name)); \
-		} \
-	} while (0)
+#define SEC_OPEN_MAP(name)                                                             \
+    do {                                                                               \
+        if (output_format == O_I3BAR) {                                                \
+            yajl_gen_map_open(json_gen);                                               \
+            yajl_gen_string(json_gen, (const unsigned char *) "name", strlen("name")); \
+            yajl_gen_string(json_gen, (const unsigned char *)name, strlen(name));      \
+        }                                                                              \
+    } while (0)
 
-#define SEC_CLOSE_MAP \
-	do { \
-		if (output_format == O_I3BAR) { \
-			char *_align = cfg_getstr(sec, "align"); \
-			if (_align) { \
-				yajl_gen_string(json_gen, (const unsigned char *)"align", strlen("align")); \
-				yajl_gen_string(json_gen, (const unsigned char *)_align, strlen(_align)); \
-			} \
-			struct min_width *_width = cfg_getptr(sec, "min_width"); \
-			if (_width) { \
-				/* if the value can be parsed as a number, we use the numerical value */ \
-				if (_width->num > 0) { \
-					yajl_gen_string(json_gen, (const unsigned char *)"min_width", strlen("min_width")); \
-					yajl_gen_integer(json_gen, _width->num); \
-				} else { \
-					yajl_gen_string(json_gen, (const unsigned char *)"min_width", strlen("min_width")); \
-					yajl_gen_string(json_gen, (const unsigned char *)_width->str, strlen(_width->str)); \
-				} \
-			} \
-			const char *_sep = cfg_getstr(cfg_general, "separator"); \
-			if (strlen(_sep) == 0) {\
-				yajl_gen_string(json_gen, (const unsigned char *)"separator", strlen("separator")); \
-				yajl_gen_bool(json_gen, false); \
-			} \
-			yajl_gen_map_close(json_gen); \
-		} \
-	} while (0)
+#define SEC_CLOSE_MAP                                                                                    \
+    do {                                                                                                 \
+        if (output_format == O_I3BAR) {                                                                  \
+            char *_align = cfg_getstr(sec, "align");                                                     \
+            if (_align) {                                                                                \
+                yajl_gen_string(json_gen, (const unsigned char *) "align", strlen("align"));             \
+                yajl_gen_string(json_gen, (const unsigned char *)_align, strlen(_align));                \
+            }                                                                                            \
+            struct min_width *_width = cfg_getptr(sec, "min_width");                                     \
+            if (_width) {                                                                                \
+                /* if the value can be parsed as a number, we use the numerical value */                 \
+                if (_width->num > 0) {                                                                   \
+                    yajl_gen_string(json_gen, (const unsigned char *) "min_width", strlen("min_width")); \
+                    yajl_gen_integer(json_gen, _width->num);                                             \
+                } else {                                                                                 \
+                    yajl_gen_string(json_gen, (const unsigned char *) "min_width", strlen("min_width")); \
+                    yajl_gen_string(json_gen, (const unsigned char *)_width->str, strlen(_width->str));  \
+                }                                                                                        \
+            }                                                                                            \
+            const char *_sep = cfg_getstr(cfg_general, "separator");                                     \
+            if (strlen(_sep) == 0) {                                                                     \
+                yajl_gen_string(json_gen, (const unsigned char *) "separator", strlen("separator"));     \
+                yajl_gen_bool(json_gen, false);                                                          \
+            }                                                                                            \
+            yajl_gen_map_close(json_gen);                                                                \
+        }                                                                                                \
+    } while (0)
 
-#define START_COLOR(colorstr) \
-	do { \
-		if (cfg_getbool(cfg_general, "colors")) { \
-			const char *_val = NULL; \
-			if (cfg_section) \
-				_val = cfg_getstr(cfg_section, colorstr); \
-			if (!_val) \
-				_val = cfg_getstr(cfg_general, colorstr); \
-			if (output_format == O_I3BAR) { \
-				yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
-				yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val)); \
-			} else { \
-				outwalk += sprintf(outwalk, "%s", color(colorstr)); \
-			} \
-		} \
-	} while (0)
+#define START_COLOR(colorstr)                                                                \
+    do {                                                                                     \
+        if (cfg_getbool(cfg_general, "colors")) {                                            \
+            const char *_val = NULL;                                                         \
+            if (cfg_section)                                                                 \
+                _val = cfg_getstr(cfg_section, colorstr);                                    \
+            if (!_val)                                                                       \
+                _val = cfg_getstr(cfg_general, colorstr);                                    \
+            if (output_format == O_I3BAR) {                                                  \
+                yajl_gen_string(json_gen, (const unsigned char *) "color", strlen("color")); \
+                yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val));        \
+            } else {                                                                         \
+                outwalk += sprintf(outwalk, "%s", color(colorstr));                          \
+            }                                                                                \
+        }                                                                                    \
+    } while (0)
 
-#define END_COLOR \
-	do { \
-		if (cfg_getbool(cfg_general, "colors") && output_format != O_I3BAR) { \
-			outwalk += sprintf(outwalk, "%s", endcolor()); \
-		} \
-	} while (0)
+#define END_COLOR                                                             \
+    do {                                                                      \
+        if (cfg_getbool(cfg_general, "colors") && output_format != O_I3BAR) { \
+            outwalk += sprintf(outwalk, "%s", endcolor());                    \
+        }                                                                     \
+    } while (0)
 
-#define INSTANCE(instance) \
-	do { \
-		if (output_format == O_I3BAR) { \
-			yajl_gen_string(json_gen, (const unsigned char *)"instance", strlen("instance")); \
-			yajl_gen_string(json_gen, (const unsigned char *)instance, strlen(instance)); \
-		} \
-	} while (0)
+#define INSTANCE(instance)                                                                     \
+    do {                                                                                       \
+        if (output_format == O_I3BAR) {                                                        \
+            yajl_gen_string(json_gen, (const unsigned char *) "instance", strlen("instance")); \
+            yajl_gen_string(json_gen, (const unsigned char *)instance, strlen(instance));      \
+        }                                                                                      \
+    } while (0)
 
-
-typedef enum { CS_DISCHARGING, CS_CHARGING, CS_FULL } charging_status_t;
+typedef enum { CS_DISCHARGING,
+               CS_CHARGING,
+               CS_FULL } charging_status_t;
 
 /*
  * The "min_width" module option may either be defined as a string or a number.
@@ -161,7 +164,7 @@ bool slurp(const char *filename, char *destination, int size);
 /* src/output.c */
 void print_separator(const char *separator);
 char *color(const char *colorstr);
-char *endcolor() __attribute__ ((pure));
+char *endcolor() __attribute__((pure));
 void reset_cursor(void);
 
 /* src/auto_detect_format.c */
@@ -172,8 +175,8 @@ void set_timezone(const char *tz);
 
 /* src/first_network_device.c */
 typedef enum {
-	NET_TYPE_WIRELESS = 0,
-	NET_TYPE_ETHERNET = 1
+    NET_TYPE_WIRELESS = 0,
+    NET_TYPE_ETHERNET = 1
 } net_type_t;
 const char *first_eth_interface(const net_type_t type);
 

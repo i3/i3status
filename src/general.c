@@ -1,4 +1,4 @@
-// vim:ts=8:expandtab
+// vim:ts=4:sw=4:expandtab
 #include <sys/types.h>
 #include <string.h>
 #include <stdarg.h>
@@ -15,18 +15,18 @@
  *
  */
 bool slurp(const char *filename, char *destination, int size) {
-        int fd;
+    int fd;
 
-        if ((fd = open(filename, O_RDONLY)) == -1)
-                return false;
+    if ((fd = open(filename, O_RDONLY)) == -1)
+        return false;
 
-        /* We need one byte for the trailing 0 byte */
-        int n = read(fd, destination, size-1);
-        if (n != -1)
-                destination[n] = '\0';
-        (void)close(fd);
+    /* We need one byte for the trailing 0 byte */
+    int n = read(fd, destination, size - 1);
+    if (n != -1)
+        destination[n] = '\0';
+    (void)close(fd);
 
-        return true;
+    return true;
 }
 
 /*
@@ -35,15 +35,15 @@ bool slurp(const char *filename, char *destination, int size) {
  *
  */
 char *skip_character(char *input, char character, int amount) {
-        char *walk;
-        size_t len = strlen(input);
-        int blanks = 0;
+    char *walk;
+    size_t len = strlen(input);
+    int blanks = 0;
 
-        for (walk = input; ((size_t)(walk - input) < len) && (blanks < amount); walk++)
-                if (*walk == character)
-                        blanks++;
+    for (walk = input; ((size_t)(walk - input) < len) && (blanks < amount); walk++)
+        if (*walk == character)
+            blanks++;
 
-        return (walk == input ? walk : walk-1);
+    return (walk == input ? walk : walk - 1);
 }
 
 /*
@@ -51,12 +51,12 @@ char *skip_character(char *input, char character, int amount) {
  *
  */
 void die(const char *fmt, ...) {
-        char buffer[512];
-        va_list ap;
-        va_start(ap, fmt);
-        (void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
-        va_end(ap);
+    char buffer[512];
+    va_list ap;
+    va_start(ap, fmt);
+    (void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
+    va_end(ap);
 
-        fprintf(stderr, "%s", buffer);
-        exit(EXIT_FAILURE);
+    fprintf(stderr, "%s", buffer);
+    exit(EXIT_FAILURE);
 }
