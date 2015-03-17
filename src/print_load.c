@@ -6,7 +6,7 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
-void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold) {
+void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_load, const float max_threshold) {
     char *outwalk = buffer;
 /* Get load */
 
@@ -18,11 +18,18 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const float
     if (getloadavg(loadavg, 3) == -1)
         goto error;
 
-    for (walk = format; *walk != '\0'; walk++) {
+    if (loadavg[0] >= max_threshold) {
+        walk = format_load;
+    } else {
+        walk = format;
+    }
+
+    for (; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
             continue;
         }
+
         if (loadavg[0] >= max_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
