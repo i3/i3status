@@ -106,7 +106,6 @@ tztime berlin {
 
 load {
 	format = "%5min"
-	format_load = "%5min"
 }
 
 cpu_temperature 0 {
