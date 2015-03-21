@@ -106,6 +106,7 @@ tztime berlin {
 
 load {
 	format = "%5min"
+	format_load = "%5min"
 }
 
 cpu_temperature 0 {
@@ -374,12 +375,15 @@ Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+ (FreeBSD/
 
 Gets the system load (number of processes waiting for CPU time in the last
 1, 5 and 15 minutes). It is possible to define a max_threshold that will
-color the load value red in case the load average of the last minute is
-getting higher than the configured threshold. Defaults to 5.
+color the load value red and use the format defined in format_load
+in case the load average of the last minute is getting higher than
+the configured threshold. Defaults to 5.
 
 *Example order*: +load+
 
 *Example format*: +%1min %5min %15min+
+
+*Example format_load*: +!%1min %5min %15min+
 
 *Example max_threshold*: +"0,1"+
 
