@@ -1,3 +1,27 @@
+2015-03-22 i3status 2.9
+
+ • meta: i3status is now on GitHub and uses clang-format
+ • allow customization of the module separator
+ • add “align” and “min_width” options for each module
+ • fix CFLAGS and LDFLAGS for DragonFly and FreeBSD
+ • add contrib/net-speed, a more light-weight reimplementation of
+   contrib/measure-net-speed.bash
+ • battery: add hide_seconds option
+ • battery: fix for systems without POWER_SUPPLY_VOLTAGE_NOW
+ • battery: for %percentage, drop leading 0 for values < 10
+ • battery: add NetBSD support
+ • battery: use absolute values for (dis)charging rates
+ • battery: introduce status_{chr,bat,full}
+ • cpu_temperature: fix displaying multiple sensors
+ • cpu_temperature: fix NetBSD support
+ • cpu_temperature: fix DragonFly support
+ • disk: introduce threshold_type and low_threshold
+ • disk: add format_not_mounted for unmounted paths
+ • ethernet, wireless: support special interface name _first_
+ • run_watch: check all matching pid files until first valid one
+ • volume: fix wrong color tags with xmobar
+ • wireless: support %frequency (2.4 vs. 5 GHz)
+
 2014-01-05 i3status 2.8
 
  • Fix build on GNU/Hurd
