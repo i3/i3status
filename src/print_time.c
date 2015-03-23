@@ -33,9 +33,12 @@ void set_timezone(const char *tz) {
     }
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *format, const char *tz, time_t t) {
+void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, time_t t) {
     char *outwalk = buffer;
     struct tm tm;
+
+    if (title != NULL)
+        INSTANCE(title);
 
     /* Convert time and format output. */
     set_timezone(tz);
