@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <err.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
@@ -139,16 +140,22 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     else
         mixerpath = defaultmixer;
 
-    if ((mixfd = open(mixerpath, O_RDWR)) < 0)
-        return;
+    if ((mixfd = open(mixerpath, O_RDWR)) < 0) {
+        warn("OSS: Cannot open mixer");
+        goto out;
+    }
 
     if (mixer_idx > 0)
         free(mixerpath);
 
-    if (ioctl(mixfd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1)
-        return;
-    if (ioctl(mixfd, MIXER_READ(0), &vol) == -1)
-        return;
+    if (ioctl(mixfd, SOUND_MIXER_READ_DEVMASK, &devmask) == -1) {
+        warn("OSS: Cannot read mixer information");
+        goto out;
+    }
+    if (ioctl(mixfd, MIXER_READ(0), &vol) == -1) {
+        warn("OSS: Cannot read mixer information");
+        goto out;
+    }
 
     if (((vol & 0x7f) == 0) && (((vol >> 8) & 0x7f) == 0)) {
         START_COLOR("color_degraded");

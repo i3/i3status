@@ -49,11 +49,13 @@ static int print_eth_speed(char *outwalk, const char *interface) {
     } else
         return sprintf(outwalk, "?");
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
-    char *ethspeed;
+    const char *ethspeed;
     struct ifmediareq ifm;
     (void)memset(&ifm, 0, sizeof(ifm));
     (void)strncpy(ifm.ifm_name, interface, sizeof(ifm.ifm_name));
-    int ret = ioctl(general_socket, SIOCGIFMEDIA, (caddr_t)&ifm);
+    if (ioctl(general_socket, SIOCGIFMEDIA, (caddr_t)&ifm) < 0) {
+        return sprintf(outwalk, "?");
+    }
 
     /* Get the description of the media type, partially taken from
      * FreeBSD's ifconfig */
