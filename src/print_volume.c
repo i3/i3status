@@ -27,6 +27,26 @@
 #include "i3status.h"
 #include "queue.h"
 
+static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
+    const char *walk = fmt;
+
+    for (; *walk != '\0'; walk++) {
+        if (*walk != '%') {
+            *(outwalk++) = *walk;
+            continue;
+        }
+        if (BEGINS_WITH(walk + 1, "%")) {
+            outwalk += sprintf(outwalk, "%%");
+            walk += strlen("%");
+        }
+        if (BEGINS_WITH(walk + 1, "volume")) {
+            outwalk += sprintf(outwalk, "%d%%", ivolume);
+            walk += strlen("volume");
+        }
+    }
+    return outwalk;
+}
+
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
     char *outwalk = buffer;
     int pbval = 1;
@@ -113,21 +133,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     snd_mixer_close(m);
     snd_mixer_selem_id_free(sid);
 
-    const char *walk = fmt;
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "%")) {
-            outwalk += sprintf(outwalk, "%%");
-            walk += strlen("%");
-        }
-        if (BEGINS_WITH(walk + 1, "volume")) {
-            outwalk += sprintf(outwalk, "%d%%", avg);
-            walk += strlen("volume");
-        }
-    }
+    outwalk = apply_volume_format(fmt, outwalk, avg);
+
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     char *mixerpath;
@@ -162,21 +169,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         pbval = 0;
     }
 
-    const char *walk = fmt;
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "%")) {
-            outwalk += sprintf(outwalk, "%%");
-            walk += strlen("%");
-        }
-        if (BEGINS_WITH(walk + 1, "volume")) {
-            outwalk += sprintf(outwalk, "%d%%", vol & 0x7f);
-            walk += strlen("volume");
-        }
-    }
+    outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f);
     close(mixfd);
 #endif
 
