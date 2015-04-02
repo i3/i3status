@@ -287,6 +287,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t run_watch_opts[] = {
         CFG_STR("pidfile", NULL, CFGF_NONE),
         CFG_STR("format", "%title: %status", CFGF_NONE),
+        CFG_STR("format_down", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -295,6 +296,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t path_exists_opts[] = {
         CFG_STR("path", NULL, CFGF_NONE),
         CFG_STR("format", "%title: %status", CFGF_NONE),
+        CFG_STR("format_down", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -603,13 +605,13 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("run_watch") {
                 SEC_OPEN_MAP("run_watch");
-                print_run_watch(json_gen, buffer, title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"));
+                print_run_watch(json_gen, buffer, title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("path_exists") {
                 SEC_OPEN_MAP("path_exists");
-                print_path_exists(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"));
+                print_path_exists(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
                 SEC_CLOSE_MAP;
             }
 

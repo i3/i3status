@@ -239,7 +239,7 @@ implies no coloring at all.
 
 You can define a different format with the option "format_not_mounted"
 which is used if the path is not a mount point. So you can just empty
-the output for the given path with adding »format_not_mounted=""«
+the output for the given path with adding +format_not_mounted=""+
 to the config section.
 
 *Example order*: +disk /mnt/usbstick+
@@ -259,6 +259,8 @@ to the config section.
 Expands the given path to a pidfile and checks if the process ID found inside
 is valid (that is, if the process is running). You can use this to check if
 a specific application, such as a VPN client or your DHCP client is running.
+There also is an option "format_down". You can hide the output with
++format_down=""+.
 
 *Example order*: +run_watch DHCP+
 
@@ -268,6 +270,8 @@ a specific application, such as a VPN client or your DHCP client is running.
 
 Checks if the given path exists in the filesystem. You can use this to check if
 something is active, like for example a VPN tunnel managed by NetworkManager.
+There also is an option "format_down". You can hide the output with
++format_down=""+.
 
 *Example order*: +path_exists VPN+
 

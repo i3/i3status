@@ -6,17 +6,23 @@
 #include <sys/stat.h>
 #include "i3status.h"
 
-void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format) {
+void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down) {
     const char *walk;
     char *outwalk = buffer;
     struct stat st;
     const bool exists = (stat(path, &st) == 0);
 
+    if (exists || format_down == NULL) {
+        walk = format;
+    } else {
+        walk = format_down;
+    }
+
     INSTANCE(path);
 
     START_COLOR((exists ? "color_good" : "color_bad"));
 
-    for (walk = format; *walk != '\0'; walk++) {
+    for (; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
             continue;
