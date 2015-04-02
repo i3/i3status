@@ -10,7 +10,11 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#if defined(__OpenBSD__)
+#include <sys/sched.h>
+#else
 #include <sys/dkstat.h>
+#endif
 #endif
 
 #if defined(__DragonFly__)
