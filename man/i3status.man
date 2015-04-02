@@ -433,6 +433,7 @@ query +/dev/mixer+ directly if +mixer_dix+ is -1, otherwise
 *Example order*: +volume master+
 
 *Example format*: +♪: %volume+
+
 *Example format_muted*: +♪: 0%%+
 
 *Example configuration*:
