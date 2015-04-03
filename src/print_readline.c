@@ -17,7 +17,7 @@ void print_readline(yajl_gen json_gen, char *buffer, const char *title, const ch
     int fd = open(path, O_RDONLY);
     if (fd >= 0 || format_down == NULL) {
         walk = format;
-        read(fd, line, sizeof(line)-1);
+        read(fd, line, sizeof(line) - 1);
         close(fd);
     } else {
         walk = format_down;
@@ -26,25 +26,24 @@ void print_readline(yajl_gen json_gen, char *buffer, const char *title, const ch
     // Sanitize the line.
     for (const char *in = ptr = line; *in != 0; in++) {
         // End at newlines.
-        if(*in == '\r' || *in == '\n') {
+        if (*in == '\r' || *in == '\n') {
             *ptr = 0;
             break;
         }
 
         // Replace non-printable characters by whitespaces, but do not
         // emit multiple consecutive whitespaces.
-        if(isprint(*in) == 0) {
-            if(ptr != line && ptr[-1] != ' ') {
+        if (isprint(*in) == 0) {
+            if (ptr != line && ptr[-1] != ' ') {
                 *ptr++ = ' ';
             }
-        }
-        else {
+        } else {
             *ptr++ = *in;
         }
     }
 
     // Strip a trailing whitespace.
-    if(*ptr == ' ') {
+    if (*ptr == ' ') {
         ptr--;
     }
 
