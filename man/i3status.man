@@ -426,13 +426,26 @@ details on the format string.
 
 === Volume
 
-Outputs the volume of the specified mixer on the specified device. Works only
-on Linux because it uses ALSA.
-A simplified configuration can be used on FreeBSD and OpenBSD due to
-the lack of ALSA,  the +device+ and +mixer+ options can be
-ignored on these systems. On these systems the OSS API is used instead to
-query +/dev/mixer+ directly if +mixer_dix+ is -1, otherwise
-+/dev/mixer++mixer_idx+.
+Outputs the volume of the specified mixer on the specified device.  PulseAudio
+and ALSA (Linux only) are supported.  If PulseAudio is absent, a simplified
+configuration can be used on FreeBSD and OpenBSD due to the lack of ALSA,  the
++device+ and +mixer+ options can be ignored on these systems. On these systems
+the OSS API is used instead to query +/dev/mixer+ directly if +mixer_idx+ is
+-1, otherwise +/dev/mixer++mixer_idx+.
+
+To get PulseAudio volume information, one must use the following format in the
+device line:
+
+ device = "pulse"
+
+or
+
+ device = "pulse:N"
+
+where N is the index of the PulseAudio sink. If no sink is specified the
+default is used. If the device string is missing or is set to "default",
+PulseAudio will be tried if detected and will fallback to ALSA (Linux)
+or OSS (FreeBSD/OpenBSD).
 
 *Example order*: +volume master+
 
@@ -448,6 +461,14 @@ volume master {
 	device = "default"
 	mixer = "Master"
 	mixer_idx = 0
+}
+-------------------------------------------------------------
+*Example configuration (PulseAudio)*:
+-------------------------------------------------------------
+volume master {
+	format = "♪: %volume"
+	format_muted = "♪: muted (%volume)"
+	device = "pulse:1"
 }
 -------------------------------------------------------------
 

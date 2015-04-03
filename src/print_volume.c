@@ -51,13 +51,40 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     char *outwalk = buffer;
     int pbval = 1;
 
-    /* Printing volume only works with ALSA at the moment */
+    /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {
         char *instance;
         asprintf(&instance, "%s.%s.%d", device, mixer, mixer_idx);
         INSTANCE(instance);
         free(instance);
     }
+
+    /* Try PulseAudio first */
+
+    /* If the device name has the format "pulse[:N]" where N is the
+     * index of the PulseAudio sink then force PulseAudio, optionally
+     * overriding the default sink */
+    if (!strncasecmp(device, "pulse", strlen("pulse"))) {
+        uint32_t sink_idx = device[5] == ':' ? (uint32_t)atoi(device + 6)
+                                             : DEFAULT_SINK_INDEX;
+        int ivolume = pulse_initialize() ? volume_pulseaudio(sink_idx) : 0;
+        /* negative result means error, stick to 0 */
+        if (ivolume < 0)
+            ivolume = 0;
+        outwalk = apply_volume_format(fmt, outwalk, ivolume);
+        goto out;
+    } else if (!strcasecmp(device, "default") && pulse_initialize()) {
+        /* no device specified or "default" set */
+        int ivolume = volume_pulseaudio(DEFAULT_SINK_INDEX);
+        if (ivolume >= 0) {
+            outwalk = apply_volume_format(fmt, outwalk, ivolume);
+            goto out;
+        }
+        /* negative result means error, fail PulseAudio attempt */
+    }
+/* If some other device was specified or PulseAudio is not detected,
+ * proceed to ALSA / OSS */
+
 #ifdef LINUX
     int err;
     snd_mixer_t *m;
