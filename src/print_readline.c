@@ -15,10 +15,13 @@ void print_readline(yajl_gen json_gen, char *buffer, const char *title, const ch
     memset(line, 0, sizeof(line));
 
     int fd = open(path, O_RDONLY);
-    if (fd >= 0 || format_down == NULL) {
-        walk = format;
+    if (fd >= 0) {
         read(fd, line, sizeof(line) - 1);
         close(fd);
+    }
+
+    if (format_down == NULL) {
+        walk = format;
     } else {
         walk = format_down;
     }
