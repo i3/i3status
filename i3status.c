@@ -298,6 +298,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "%title: %status", CFGF_NONE),
         CFG_STR("format_down", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 

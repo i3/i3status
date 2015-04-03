@@ -52,6 +52,8 @@ void print_readline(yajl_gen json_gen, char *buffer, const char *title, const ch
 
     INSTANCE(path);
 
+    START_COLOR((ptr != line ? "color_good" : "color_bad"));
+
     for (; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
@@ -62,10 +64,11 @@ void print_readline(yajl_gen json_gen, char *buffer, const char *title, const ch
             outwalk += sprintf(outwalk, "%s", title);
             walk += strlen("title");
         } else if (BEGINS_WITH(walk + 1, "status")) {
-            outwalk += sprintf(outwalk, "%s", line);
+            outwalk += sprintf(outwalk, "%s", ptr != line ? line : "no");
             walk += strlen("status");
         }
     }
 
+    END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
 }
