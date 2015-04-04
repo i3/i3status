@@ -44,13 +44,23 @@ ifaces=$(ls /sys/class/net | grep -E '^(eth|wlan)')
 # Interval must be the same as in i3status.conf
 #interval=5
 
+if [ -z "$XDG_CONFIG_HOME" ]; then
+  XDG_CONFIG_HOME="${HOME}/.config"
+fi
+
 # Auto detect
-if [ -f ~/.i3status.conf ]; then
+if [ -f "${XDG_CONFIG_HOME}/i3status/config" ]; then
+  i3status_conf="${XDG_CONFIG_HOME}/i3status/config"
+elif [ -f ~/.i3status.conf ]; then
   i3status_conf=~/.i3status.conf
 else
   i3status_conf="/etc/i3status.conf"
 fi
-interval=$(grep -o '^[[:space:]]*interval[[:space:]]*=[[:space:]]*[[:digit:]]\+' $i3status_conf | grep -o '[[:digit:]]\+')
+
+if [ -f "$i3status_conf" ]; then
+  interval=$(grep -o '^[[:space:]]*interval[[:space:]]*=[[:space:]]*[[:digit:]]\+' $i3status_conf | grep -o '[[:digit:]]\+')
+fi
+
 if [ x"$interval" = x ]; then
   interval=5
 fi
