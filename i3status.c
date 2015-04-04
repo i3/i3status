@@ -282,6 +282,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("output_format", "auto", CFGF_NONE),
         CFG_BOOL("colors", 1, CFGF_NONE),
         CFG_STR("separator", "default", CFGF_NONE),
+        CFG_INT("separator_block_width", 9, CFGF_NONE),
         CFG_STR("color_separator", "#333333", CFGF_NONE),
         CFG_INT("interval", 1, CFGF_NONE),
         CFG_COLOR_OPTS("#00FF00", "#FFFF00", "#FF0000"),
