@@ -308,10 +308,9 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
             strlcpy(nr.nr_ifname, interface, sizeof(nr.nr_ifname));
 
             if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
+                info->signal_level = nr.nr_rssi;
                 if (nr.nr_max_rssi)
-                    info->signal_level_max = IEEE80211_NODEREQ_RSSI(&nr);
-                else
-                    info->signal_level = nr.nr_rssi;
+                    info->signal_level_max = nr.nr_max_rssi;
 
                 info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
             }
