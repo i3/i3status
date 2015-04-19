@@ -67,17 +67,33 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     if (!strncasecmp(device, "pulse", strlen("pulse"))) {
         uint32_t sink_idx = device[5] == ':' ? (uint32_t)atoi(device + 6)
                                              : DEFAULT_SINK_INDEX;
-        int ivolume = pulse_initialize() ? volume_pulseaudio(sink_idx) : 0;
+        int cvolume = pulse_initialize() ? volume_pulseaudio(sink_idx) : 0;
+        int ivolume = DECOMPOSE_VOLUME(cvolume);
+        bool muted = DECOMPOSE_MUTED(cvolume);
+        if (muted) {
+            START_COLOR("color_degraded");
+            pbval = 0;
+        }
         /* negative result means error, stick to 0 */
         if (ivolume < 0)
             ivolume = 0;
-        outwalk = apply_volume_format(fmt, outwalk, ivolume);
+        outwalk = apply_volume_format(muted ? fmt_muted : fmt,
+                                      outwalk,
+                                      ivolume);
         goto out;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
-        int ivolume = volume_pulseaudio(DEFAULT_SINK_INDEX);
+        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX);
+        int ivolume = DECOMPOSE_VOLUME(cvolume);
+        bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0) {
-            outwalk = apply_volume_format(fmt, outwalk, ivolume);
+            if (muted) {
+                START_COLOR("color_degraded");
+                pbval = 0;
+            }
+            outwalk = apply_volume_format(muted ? fmt_muted : fmt,
+                                          outwalk,
+                                          ivolume);
             goto out;
         }
         /* negative result means error, fail PulseAudio attempt */

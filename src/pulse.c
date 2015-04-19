@@ -79,14 +79,15 @@ static void store_volume_from_sink_cb(pa_context *c,
 
     int avg_vol = pa_cvolume_avg(&info->volume);
     int vol_perc = (int)((long long)avg_vol * 100 / PA_VOLUME_NORM);
+    int composed_volume = COMPOSE_VOLUME_MUTE(vol_perc, info->mute);
 
     /* if this is the default sink we must try to save it twice: once with
      * DEFAULT_SINK_INDEX as the index, and another with its proper value
      * (using bitwise OR to avoid early-out logic) */
     if ((info->index == default_sink_idx &&
-         save_volume(DEFAULT_SINK_INDEX, vol_perc)) |
-        save_volume(info->index, vol_perc)) {
-        /* if the volume changed, wake the main thread */
+         save_volume(DEFAULT_SINK_INDEX, composed_volume)) |
+        save_volume(info->index, composed_volume)) {
+        /* if the volume or mute flag changed, wake the main thread */
         pthread_mutex_lock(&i3status_sleep_mutex);
         pthread_cond_broadcast(&i3status_sleep_cond);
         pthread_mutex_unlock(&i3status_sleep_mutex);

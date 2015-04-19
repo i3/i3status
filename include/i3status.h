@@ -21,6 +21,9 @@ enum { O_DZEN2,
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define DEFAULT_SINK_INDEX UINT32_MAX
+#define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
+#define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
+#define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
 
 #if defined(LINUX)
 
