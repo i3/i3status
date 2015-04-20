@@ -2,16 +2,24 @@ language: c
 compiler:
   - gcc
   - clang
-before_install:
-  # The travis VMs run on Ubuntu 12.04 which is very old and a huge pain to get
-  # into a state where we can build a recent version of i3status :(.
-  - "echo 'APT::Default-Release \"precise\";' | sudo tee /etc/apt/apt.conf.d/default-release"
-  - "echo 'deb http://archive.ubuntu.com/ubuntu/ utopic main universe' | sudo tee /etc/apt/sources.list.d/utopic.list"
-  - sudo apt-get update
-  - sudo apt-get install -t utopic clang-format-3.5
-  - clang-format-3.5 --version
-install:
-  - sudo apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin libpulse-dev
+addons:
+  # See http://docs.travis-ci.com/user/apt/
+  apt:
+    sources:
+    - llvm-toolchain-precise-3.5
+    # ubuntu-toolchain-r-test contains libstdc++6 >= 4.8 which libllvm3.5 needs.
+    - ubuntu-toolchain-r-test
+    packages:
+    - libconfuse-dev
+    - libyajl-dev
+    - libasound2-dev
+    - libiw-dev
+    - asciidoc
+    # xmlto pulls in a2x which we need for generating manpages from asciidoc.
+    - xmlto
+    - libcap2-bin
+    - clang-format-3.5
+    - libllvm3.5
 script:
   - make -j
-  - clang-format-3.5 -i **/*.[ch] && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+  - clang-format-3.5 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
