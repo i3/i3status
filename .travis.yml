@@ -13,6 +13,7 @@ addons:
     - libconfuse-dev
     - libyajl-dev
     - libasound2-dev
+    - libpulse-dev
     - libiw-dev
     - asciidoc
     # xmlto pulls in a2x which we need for generating manpages from asciidoc.
