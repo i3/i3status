@@ -3,7 +3,7 @@
  *
  * i3status – Generates a status line for dzen2 or xmobar
  *
- * Copyright © 2008-2012 Michael Stapelberg and contributors
+ * Copyright © 2008 Michael Stapelberg and contributors
  * Copyright © 2009 Thorsten Toepper <atsutane at freethoughts dot de>
  * Copyright © 2010 Axel Wagner <mail at merovius dot de>
  * Copyright © 2010 Fernando Tarlá Cardoso Lemos <fernandotcl at gmail dot com>
@@ -460,12 +460,12 @@ int main(int argc, char *argv[]) {
         if ((char)o == 'c')
             configfile = optarg;
         else if ((char)o == 'h') {
-            printf("i3status " VERSION " © 2008-2012 Michael Stapelberg and contributors\n"
+            printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
                    "Syntax: %s [-c <configfile>] [-h] [-v]\n",
                    argv[0]);
             return 0;
         } else if ((char)o == 'v') {
-            printf("i3status " VERSION " © 2008-2012 Michael Stapelberg and contributors\n");
+            printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n");
             return 0;
         }
 
