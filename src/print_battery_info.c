@@ -245,7 +245,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         minutes = remaining;
         hours = minutes / 60;
         minutes -= (hours * 60);
-        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02dh%02d",
+        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
                        max(hours, 0), max(minutes, 0));
         if (strcasecmp(threshold_type, "percentage") == 0 && present_rate < low_threshold) {
             START_COLOR("color_bad");
@@ -310,7 +310,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     /* Can't give a meaningful value for remaining minutes if we're charging. */
     if (status != CS_CHARGING) {
-        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%d", apm_info.minutes_left);
+        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d", apm_info.minutes_left / 60, apm_info.minutes_left % 60);
     } else {
         (void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
     }
