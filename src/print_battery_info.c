@@ -137,6 +137,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
     float percentage_remaining = (((float)remaining / (float)full_design) * 100);
+    /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
+     * charged, even though that’s plainly wrong. For people who chose to see
+     * the percentage calculated based on the last full capacity, we clamp the
+     * value to 100%, as that makes more sense.
+     * See http://bugs.debian.org/785398 */
+    if (last_full_capacity && percentage_remaining > 100) {
+        percentage_remaining = 100;
+    }
     if (integer_battery_capacity) {
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00f%%", percentage_remaining);
     } else {
