@@ -410,6 +410,14 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t keyboard_layout_opts[] = {
+        CFG_STR("format", "L: %s", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()
+    };
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -421,6 +429,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("keyboard_layout", keyboard_layout_opts, CFGF_NONE),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
@@ -656,6 +665,12 @@ int main(int argc, char *argv[]) {
                              cfg_getstr(sec, "device"),
                              cfg_getstr(sec, "mixer"),
                              cfg_getint(sec, "mixer_idx"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("keyboard_layout") {
+                SEC_OPEN_MAP("keyboard_layout");
+                print_keyboard_layout(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
 
