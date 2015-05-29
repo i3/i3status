@@ -124,10 +124,11 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 #else
     struct statvfs buf;
 
-    if (statvfs(path, &buf) == -1)
-        return;
-
-    if (format_not_mounted != NULL) {
+    if (statvfs(path, &buf) == -1) {
+        /* If statvfs errors, e.g., due to the path not existing,
+         * we use the format for a not mounted device. */
+        format = format_not_mounted;
+    } else if (format_not_mounted != NULL) {
         FILE *mntentfile = setmntent("/etc/mtab", "r");
         struct mntent *m;
         bool found = false;
