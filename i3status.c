@@ -410,6 +410,17 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t brightness_opts[] = {
+        CFG_STR("format_numeric", "☀: %brightness", CFGF_NONE),
+        CFG_STR("format_symbolic", " ▁▂▃▄▅▆▇█", CFGF_NONE),
+        CFG_STR("format_type", "numeric", CFGF_NONE),
+        CFG_STR("device_cur", "/sys/class/backlight/intel_backlight/brightness", CFGF_NONE),
+        CFG_STR("device_max", "/sys/class/backlight/intel_backlight/max_brightness", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -427,6 +438,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("brightness", brightness_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -656,6 +668,16 @@ int main(int argc, char *argv[]) {
                              cfg_getstr(sec, "device"),
                              cfg_getstr(sec, "mixer"),
                              cfg_getint(sec, "mixer_idx"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("brightness") {
+                SEC_OPEN_MAP("brightness");
+                print_brightness(json_gen, buffer, cfg_getstr(sec, "format_symbolic"),
+                                 cfg_getstr(sec, "format_numeric"),
+                                 cfg_getstr(sec, "format_type"),
+                                 cfg_getstr(sec, "device_cur"),
+                                 cfg_getstr(sec, "device_max"));
                 SEC_CLOSE_MAP;
             }
 
