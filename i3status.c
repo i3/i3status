@@ -74,14 +74,21 @@ pthread_mutex_t i3status_sleep_mutex = PTHREAD_MUTEX_INITIALIZER;
  */
 void fatalsig(int signum) {
     exit_upon_signal = true;
+    // Broadcast ensures swift reaction times
+    // pthread_mutex_lock(&i3status_sleep_mutex);
+    pthread_cond_broadcast(&i3status_sleep_cond);
+    // pthread_mutex_unlock(&i3status_sleep_mutex);
 }
 
 /*
- * Do nothing upon SIGUSR1. Running this signal handler will nevertheless
- * interrupt nanosleep() so that i3status immediately generates new output.
+ * Here, we wake up the main thread sleeping. 
+ * This restores the lost capability to react to the SIGUSR1 signal.
  *
  */
 void sigusr1(int signum) {
+    // pthread_mutex_lock(&i3status_sleep_mutex);
+    pthread_cond_broadcast(&i3status_sleep_cond);
+    // pthread_mutex_unlock(&i3status_sleep_mutex);
 }
 
 /*
