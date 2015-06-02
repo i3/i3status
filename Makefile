@@ -12,6 +12,9 @@ ifndef SYSCONFDIR
   endif
 endif
 
+# Support for conditional async build
+ASYNC=1
+
 CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-std=gnu99
@@ -22,6 +25,11 @@ CFLAGS+=-Iinclude
 LIBS+=-lconfuse
 LIBS+=-lyajl
 LIBS+=-lpulse
+
+ifeq ($(ASYNC), 1)
+	CFLAGS+=-DASYNC
+	LIBS+=-lpthread
+endif
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
