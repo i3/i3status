@@ -47,8 +47,8 @@ ifeq ($(OS),OpenBSD)
 LIBS+=-lossaudio
 endif
 
-ifeq ($(OS), NetBSD)
-LIBS+= -lprop
+ifeq ($(OS),NetBSD)
+LIBS+=-lprop
 endif
 
 # This probably applies for any pkgsrc based system
