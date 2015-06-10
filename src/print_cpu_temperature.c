@@ -261,8 +261,8 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     OUTPUT_FULL_TEXT(buffer);
     return;
 error:
-#endif
     free(thermal_zone);
+#endif
 
     OUTPUT_FULL_TEXT("can't read temp");
     (void)fputs("i3status: Cannot read temperature. Verify that you have a thermal zone in /sys/class/thermal or disable the cpu_temperature module in your i3status config.\n", stderr);
