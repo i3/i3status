@@ -264,6 +264,6 @@ error:
 #endif
     free(thermal_zone);
 
-    OUTPUT_FULL_TEXT("cant read temp");
+    OUTPUT_FULL_TEXT("can't read temp");
     (void)fputs("i3status: Cannot read temperature. Verify that you have a thermal zone in /sys/class/thermal or disable the cpu_temperature module in your i3status config.\n", stderr);
 }
