@@ -692,7 +692,12 @@ int main(int argc, char *argv[]) {
          * We also align to 60 seconds modulo interval such
          * that we start with :00 on every new minute. */
         struct timespec ts;
+#if defined(__APPLE__)
+        gettimeofday(&tv, NULL);
+        ts.tv_sec = tv.tv_sec;
+#else
         clock_gettime(CLOCK_REALTIME, &ts);
+#endif
         ts.tv_sec += interval - (ts.tv_sec % interval);
         ts.tv_nsec = 0;
 
