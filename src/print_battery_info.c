@@ -172,6 +172,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
                 START_COLOR("color_bad");
                 colorful_output = true;
+            } else if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining > 100.0) {
+                START_COLOR("color_degraded");
+                colorful_output = true;
             } else if (strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
                 START_COLOR("color_bad");
                 colorful_output = true;
@@ -208,6 +211,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
                 START_COLOR("color_bad");
                 colorful_output = true;
+            } else if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining > 100.0) {
+                START_COLOR("color_degraded");
+                colorful_output = true;
+            } else {
+                colorful_output = false;
             }
         }
     }
