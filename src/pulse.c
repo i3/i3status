@@ -1,6 +1,7 @@
 // vim:ts=4:sw=4:expandtab
 #include <string.h>
 #include <stdio.h>
+#ifdef WITH_PULSEAUDIO
 #include <pulse/pulseaudio.h>
 #include "i3status.h"
 #include "queue.h"
@@ -244,3 +245,4 @@ bool pulse_initialize(void) {
     }
     return true;
 }
+#endif
