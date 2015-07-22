@@ -12,6 +12,10 @@ ifndef SYSCONFDIR
   endif
 endif
 
+ifndef WITH_PULSEAUDIO
+  WITH_PULSEAUDIO=yes
+endif
+
 CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-std=gnu99
@@ -21,7 +25,10 @@ CPPFLAGS+=-DVERSION=\"${GIT_VERSION}\"
 CFLAGS+=-Iinclude
 LIBS+=-lconfuse
 LIBS+=-lyajl
+ifeq ($(WITH_PULSEAUDIO),yes)
 LIBS+=-lpulse
+CFLAGS+=-DWITH_PULSEAUDIO
+endif
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"

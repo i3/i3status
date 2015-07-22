@@ -59,6 +59,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         free(instance);
     }
 
+#ifdef WITH_PULSEAUDIO
     /* Try PulseAudio first */
 
     /* If the device name has the format "pulse[:N]" where N is the
@@ -100,6 +101,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 /* If some other device was specified or PulseAudio is not detected,
  * proceed to ALSA / OSS */
+#endif
 
 #ifdef LINUX
     int err;
