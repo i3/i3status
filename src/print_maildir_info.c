@@ -11,21 +11,23 @@
 
 #include "i3status.h"
 
-#define MBNAMELEN   100
+#define MBNAMELEN 100
 
-#define do_or_die(x)              if (!(x)) return false;
+#define do_or_die(x) \
+    if (!(x))        \
+        return false;
 
 typedef struct exclude_t exclude_t;
 struct exclude_t {
-    char        name[PATH_MAX];
-    exclude_t  *next;
+    char name[PATH_MAX];
+    exclude_t *next;
 };
 
 typedef struct mailbox_t mailbox_t;
 struct mailbox_t {
-    char        path[PATH_MAX];
-    size_t      count;
-    mailbox_t  *next;
+    char path[PATH_MAX];
+    size_t count;
+    mailbox_t *next;
 };
 
 char *maildir;
@@ -192,7 +194,7 @@ static bool find_maildirs(const char *path) {
     struct dirent *dent;
     char npath[PATH_MAX];
 
-    do_or_die(dir = opendir(path))
+    do_or_die(dir = opendir(path));
 
     while ((dent = readdir(dir)) != NULL) {
         snprintf(npath, PATH_MAX, "%s/%s", path, dent->d_name);
