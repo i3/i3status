@@ -18,8 +18,8 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 
     INSTANCE(path);
 
-    if (stat(path, &sb) == 0 && S_ISREG(sb.st_mode)) {
-        if (sb.st_atim.tv_sec <= sb.st_mtim.tv_sec) {
+    if (stat(path, &sb) == 0 && S_ISREG(sb.st_mode) && sb.st_size != 0) {
+        if (sb.st_atime <= sb.st_mtime) {
             START_COLOR("color_bad");
             outwalk += sprintf(outwalk, "%s", prefix);
             if (strcmp(label, "default") == 0) {
