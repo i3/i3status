@@ -68,6 +68,11 @@ CFLAGS += -idirafter yajl-fallback
 OBJS:=$(wildcard src/*.c *.c)
 OBJS:=$(OBJS:.c=.o)
 
+ifeq ($(OS),OpenBSD)
+OBJS:=$(filter-out src/pulse.o, $(OBJS))
+LIBS:=$(filter-out -lpulse, $(LIBS)) -lpthread
+endif
+
 src/%.o: src/%.c include/i3status.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
