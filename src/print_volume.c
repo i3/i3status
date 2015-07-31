@@ -151,7 +151,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         snd_mixer_selem_id_free(sid);
         goto out;
     }
-#endif
 
     /* Get the volume range to convert the volume later */
     snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
@@ -194,7 +193,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     if ((mixfd = open(mixerpath, O_RDWR)) < 0) {
 #if defined(__OpenBSD__)
-        warn("AUDIO: Cannot open mixer");
+        warn("audioio: Cannot open mixer");
 #else
         warn("OSS: Cannot open mixer");
 #endif
@@ -278,6 +277,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         pbval = 0;
     }
 
+#endif
     outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f);
     close(mixfd);
 #endif
