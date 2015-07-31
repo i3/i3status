@@ -223,14 +223,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     devinfo2.index = 0;
     while (ioctl(mixfd, AUDIO_MIXER_DEVINFO, &devinfo2) >= 0) {
-        if ((devinfo2.type == AUDIO_MIXER_VALUE)
-        &&  (devinfo2.mixer_class == oclass_idx)
-        &&  (strncmp(devinfo2.label.name, AudioNmaster, MAX_AUDIO_DEV_LEN) == 0))
+        if ((devinfo2.type == AUDIO_MIXER_VALUE) && (devinfo2.mixer_class == oclass_idx) && (strncmp(devinfo2.label.name, AudioNmaster, MAX_AUDIO_DEV_LEN) == 0))
             master_idx = devinfo2.index;
 
-        if ((devinfo2.type == AUDIO_MIXER_ENUM)
-        &&  (devinfo2.mixer_class == oclass_idx)
-        &&  (strncmp(devinfo2.label.name, AudioNmute, MAX_AUDIO_DEV_LEN) == 0))
+        if ((devinfo2.type == AUDIO_MIXER_ENUM) && (devinfo2.mixer_class == oclass_idx) && (strncmp(devinfo2.label.name, AudioNmute, MAX_AUDIO_DEV_LEN) == 0))
             master_mute_idx = devinfo2.index;
 
         devinfo2.index++;
