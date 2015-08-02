@@ -67,6 +67,14 @@ enum { O_DZEN2,
     with(const char *, title, current + strlen(name) + 1) \
         with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) if (sec != NULL)
 
+/* One memory page which each plugin can use to buffer output.
+ * Even though it’s unclean, we just assume that the user will not
+ * specify a format string which expands to something longer than 4096
+ * bytes — given that the output of i3status is used to display
+ * information on screen, more than 1024 characters for the full line
+ * (!), not individual plugins, seem very unlikely. */
+#define BUFFER_SIZE 4096
+
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
 #define OUTPUT_FULL_TEXT(text)                                                                   \

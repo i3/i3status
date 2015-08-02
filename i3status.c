@@ -558,7 +558,7 @@ int main(int argc, char *argv[]) {
      * bytes — given that the output of i3status is used to display
      * information on screen, more than 1024 characters for the full line
      * (!), not individual plugins, seem very unlikely. */
-    char buffer[4096];
+    char buffer[BUFFER_SIZE];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
     pthread_mutex_lock(&i3status_sleep_mutex);
