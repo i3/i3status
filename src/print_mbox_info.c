@@ -14,8 +14,13 @@
 #define LINELEN 1000
 
 /*
- * Check whether path references regular file, and if it does, check access
- * and modification times
+ * Check whether path references regular file, and if it does, parse the file,
+ * search for continuous blocks of text starting with unquoted "From " line.
+ * Assume that such blocks are mail headers, and search "Status" header with
+ * "RO" body.  Assume that messages with such header are read, and substract
+ * them from total number of messages.
+ * When done, restore mtime and atime attributes of mbox, so that it remains
+ * visible on next check.
  *
  */
 void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_no_mail) {
@@ -44,11 +49,11 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             if (after_newline && BEGINS_WITH(s, "From ")) {
                 messages++;
                 in_header = true;
-            } else if (in_header, BEGINS_WITH(s, "Status: RO")) {
+            } else if (in_header && BEGINS_WITH(s, "Status: RO")) {
                 messages--;
             }
             
-            if (*s = '\n') {
+            if (*s == '\n') {
                 after_newline = true;
                 in_header = false;
             } else {
