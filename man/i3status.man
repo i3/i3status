@@ -216,13 +216,12 @@ best available public IPv6 address on your computer).
 === Mbox
 
 Verifies mail in a single UNIX mailbox file. Presentation is controled with
-two variables: "format" (by default set to filename of mailbox) and
-"format_no_mail".
+two variables: "format" and "format_no_mail".
 
 *Example configuration*:
 -------------------------------------------------------------
 mail "/var/mail/user" {
-    format = "new mail"
+    format = "%mails new messages"
     format_no_mail = "no mail"
 }
 -------------------------------------------------------------
