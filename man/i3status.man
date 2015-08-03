@@ -218,6 +218,9 @@ best available public IPv6 address on your computer).
 Verifies mail in a single UNIX mailbox file. Presentation is controled with
 two variables: "format" and "format_no_mail".
 
+Note, the mbox implementation in this module expects "mboxo" mboxes, so it may
+report wrong numbers for other types of mboxes.
+
 *Example configuration*:
 -------------------------------------------------------------
 mail "/var/mail/user" {
