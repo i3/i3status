@@ -19,7 +19,8 @@
  *
  */
 void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_no_mail) {
-    char *outwalk = buffer, *p;
+    char *outwalk = buffer;
+    const char *walk = format;
     struct stat sb;
     struct timeval times[2];
     bool exists = !stat(path, &sb);
@@ -64,12 +65,22 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         (void)utimes(path, times);
 
         START_COLOR("color_degraded");
-        for (*outwalk = '\0'; (p = strstr(format, "%mails")) != NULL; format = p + 6) {
-            (void)strncat(buffer, format, p - format);
-            outwalk += p - format;
-            outwalk += sprintf(outwalk, "%zu", messages);
+        for (; *walk != '\0'; walk++) {
+            if (*walk != '%') {
+                *(outwalk++) = *walk;
+                continue;
+            }
+
+            if (BEGINS_WITH(walk + 1, "mails")) {
+                outwalk += sprintf(outwalk, "%zu", messages);
+                walk += strlen("mails");
+            }
+
+            if (BEGINS_WITH(walk + 1, "%")) {
+                outwalk += sprintf(outwalk, "%%");
+                walk += strlen("%");
+            }
         }
-        outwalk += sprintf(outwalk, "%s", format);
     } else if (exists && !S_ISREG(sb.st_mode)) {
         START_COLOR("color_bad");
         outwalk += sprintf(outwalk, "%s is not an mbox", path);
