@@ -48,7 +48,7 @@ general {
 }
 
 order += "ipv6"
-order += "mbox"
+order += "mbox /var/mail/root"
 order += "disk /"
 order += "run_watch DHCP"
 order += "run_watch VPNC"
@@ -62,7 +62,7 @@ order += "tztime local"
 order += "tztime berlin"
 
 mbox "/var/mail/root" {
-	label "root's mbox"
+	label "new mail for root"
 }
 
 wireless wlan0 {
@@ -216,19 +216,14 @@ best available public IPv6 address on your computer).
 === Mbox
 
 Verifies mail in a single UNIX mailbox file. Presentation is controled with
-four variables: "prefix", "label", "label_no_mail", and "postfix". Note, 
-"prefix" and "postfix" are concatinated with "label" (or "label_no_mail") with
-no additional spaces, so sufficient whitespace must be provided. By default, all
-these are empty except for "label", which is set to filename (last component of
-path to) mailbox.
+two variables: "format" (by default set to filename of mailbox) and
+"format_no_mail".
 
 *Example configuration*:
 -------------------------------------------------------------
 mail "/var/mail/user" {
-    prefix = "found "
-    label = "some"
-    label_no_mail = "no"
-    postfix = " mail"
+    format = "new mail"
+    format_no_mail = "no mail"
 }
 -------------------------------------------------------------
 

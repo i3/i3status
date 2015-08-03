@@ -12,28 +12,22 @@
  * and modification times
  *
  */
-void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const char *prefix, const char *postfix, const char *label, const char *label_no_mail) {
+void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_no_mail) {
     char *outwalk = buffer;
     struct stat sb;
     int exists = !stat(path, &sb);
 
     INSTANCE(path);
 
-    if (!prefix)
-        prefix = "";
-
-    if (!postfix)
-        postfix = "";
-
     if (exists && S_ISREG(sb.st_mode) && sb.st_size != 0 && sb.st_atime <= sb.st_mtime) {
         START_COLOR("color_degraded");
-        outwalk += sprintf(outwalk, "%s%s%s", prefix, label ? label : basename(path), postfix);
+        outwalk += sprintf(outwalk, "%s", format ? format : basename(path));
     } else if (exists && !S_ISREG(sb.st_mode)) {
         START_COLOR("color_bad");
         outwalk += sprintf(outwalk, "%s is not an mbox", path);
-    } else if (label_no_mail) {
+    } else if (format_no_mail) {
         START_COLOR("color_good");
-        outwalk += sprintf(outwalk, "%s%s%s", prefix, label_no_mail, postfix);
+        outwalk += sprintf(outwalk, "%s", format_no_mail);
     }
 
     END_COLOR;

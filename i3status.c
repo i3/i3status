@@ -411,10 +411,8 @@ int main(int argc, char *argv[]) {
         CFG_END()};
 
     cfg_opt_t mbox_opts[] = {
-        CFG_STR("prefix", NULL, CFGF_NONE),
-        CFG_STR("postfix", NULL, CFGF_NONE),
-        CFG_STR("label", NULL, CFGF_NONE),
-        CFG_STR("label_no_mail", NULL, CFGF_NONE),
+        CFG_STR("format", NULL, CFGF_NONE),
+        CFG_STR("format_no_mail", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -592,7 +590,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("mbox") {
                 SEC_OPEN_MAP("mbox");
-                print_mbox_info(json_gen, buffer, title, cfg_getstr(sec, "prefix"), cfg_getstr(sec, "postfix"), cfg_getstr(sec, "label"), cfg_getstr(sec, "label_no_mail"));
+                print_mbox_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_no_mail"));
                 SEC_CLOSE_MAP;
             }
 
