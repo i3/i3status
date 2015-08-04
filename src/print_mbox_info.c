@@ -31,7 +31,7 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     char *outwalk = buffer;
     const char *walk = format;
     struct stat sb;
-    bool exists = !stat(path, &sb);
+    bool exists = !stat(path, &sb), mtime_changed = (sb.st_mtim.tv_sec != times[1].tv_sec);
     bool after_newline = true, in_header = false;
     FILE *f;
     char s[LINELEN];
@@ -39,7 +39,7 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     INSTANCE(path);
 
     if ((exists && S_ISREG(sb.st_mode)) || !exists) {
-        if (!exists || sb.st_size == 0 || (sb.st_mtim.tv_sec == times[1].tv_sec && messages == 0)) {
+        if (!exists || sb.st_size == 0 || (!mtime_changed && messages == 0)) {
             if (format_no_mail) {
                 START_COLOR("color_good");
                 outwalk += sprintf(outwalk, "%s", format_no_mail);
@@ -48,7 +48,7 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         } else if (exists) {
             /* If modification time didn't change, apparently the contents is
              * the same; avoid disk operations then */
-            if (sb.st_mtim.tv_sec != times[1].tv_sec) {
+            if (mtime_changed) {
                 messages = 0;
                 /* Read the file and count the "From" header instances */
                 if ((f = fopen(path, "rw")) == NULL) {
@@ -93,7 +93,6 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                 TIMESPEC_TO_TIMEVAL(&times[0], &(sb.st_atim))
                 TIMESPEC_TO_TIMEVAL(&times[1], &sb.st_mtim)
                 (void)utimes(path, times);
-            } else {
             }
             if (messages == 0) {
                 if (format_no_mail) {
