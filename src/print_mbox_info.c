@@ -119,11 +119,13 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             if (BEGINS_WITH(walk + 1, "mails")) {
                 outwalk += sprintf(outwalk, "%zu", messages);
                 walk += strlen("mails");
+                continue;
             }
 
             if (BEGINS_WITH(walk + 1, "%")) {
                 outwalk += sprintf(outwalk, "%%");
                 walk += strlen("%");
+                continue;
             }
         }
         END_COLOR;
