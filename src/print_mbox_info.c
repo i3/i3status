@@ -32,7 +32,7 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     const char *walk = format;
     struct stat sb;
     bool exists = !stat(path, &sb), mtime_changed = (sb.st_mtim.tv_sec != times[1].tv_sec);
-    bool after_newline = true, in_header = false;
+    bool after_blank_line = true, in_header = false;
     FILE *f;
     char s[LINELEN];
 
@@ -60,7 +60,7 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                     goto out;
                 }
                 while (fgets(s, LINELEN, f) != NULL) {
-                    if (after_newline && BEGINS_WITH(s, "From ")) {
+                    if (after_blank_line && BEGINS_WITH(s, "From ")) {
                         messages++;
                         in_header = true;
                     } else if (in_header && BEGINS_WITH(s, "Status:") && strchr(s, 'O') != NULL) {
@@ -68,10 +68,10 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
                     }
 
                     if (*s == '\n') {
-                        after_newline = true;
+                        after_blank_line = true;
                         in_header = false;
                     } else {
-                        after_newline = false;
+                        after_blank_line = false;
                     }
                 }
 
