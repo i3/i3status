@@ -13,11 +13,9 @@
 
 #define LINELEN 1000
 
-/* These variables are used to store data between calls to print_mbox_info().
- * The purpose of such */
-struct timeval times[2];
-size_t messages = 0;
-bool initialized = false;
+/* These variables are used to store data between calls to print_mbox_info(). */
+static struct timeval times[2] = { 0 };
+static size_t messages = 0;
 
 /*
  * Check whether path references regular file, and if it does, parse the file,
@@ -39,11 +37,6 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     char s[LINELEN];
 
     INSTANCE(path);
-
-    if (!initialized) {
-        times[1].tv_sec = 0;
-        initialized = true;
-    }
 
     if ((exists && S_ISREG(sb.st_mode)) || !exists) {
         if (!exists || sb.st_size == 0 || (sb.st_mtim.tv_sec == times[1].tv_sec && messages == 0)) {
