@@ -48,8 +48,8 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     if (!exists || sb.st_size == 0 || (!mtime_changed && messages == 0)) {
         if (format_no_mail) {
             START_COLOR("color_good");
-            outwalk += sprintf(outwalk, "%s", format_no_mail);
-            END_COLOR;
+            walk = format_no_mail;
+            goto fmt;
         }
         goto out;
     }
@@ -105,31 +105,47 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     if (messages == 0) {
         if (format_no_mail) {
             START_COLOR("color_good");
-            outwalk += sprintf(outwalk, "%s", format_no_mail);
-            END_COLOR;
+            walk = format_no_mail;
+            goto fmt;
         }
+        goto out;
     } else {
         START_COLOR("color_degraded");
-        for (; *walk != '\0'; walk++) {
-            if (*walk != '%') {
-                *(outwalk++) = *walk;
-                continue;
-            }
-
-            if (BEGINS_WITH(walk + 1, "mails")) {
-                outwalk += sprintf(outwalk, "%zu", messages);
-                walk += strlen("mails");
-                continue;
-            }
-
-            if (BEGINS_WITH(walk + 1, "%")) {
-                outwalk += sprintf(outwalk, "%%");
-                walk += strlen("%");
-                continue;
-            }
-        }
-        END_COLOR;
+        goto fmt;
     }
+
+fmt:
+    for (; *walk != '\0'; walk++) {
+        if (*walk != '%') {
+            *(outwalk++) = *walk;
+            continue;
+        }
+
+        if (BEGINS_WITH(walk + 1, "path")) {
+            outwalk += sprintf(outwalk, "%s", path);
+            walk += strlen("path");
+            continue;
+        }
+
+        if (BEGINS_WITH(walk + 1, "name")) {
+            outwalk += sprintf(outwalk, "%s", basename(path));
+            walk += strlen("name");
+            continue;
+        }
+
+        if (BEGINS_WITH(walk + 1, "messages")) {
+            outwalk += sprintf(outwalk, "%zu", messages);
+            walk += strlen("messages");
+            continue;
+        }
+
+        if (BEGINS_WITH(walk + 1, "%")) {
+            outwalk += sprintf(outwalk, "%%");
+            walk += strlen("%");
+            continue;
+        }
+    }
+    END_COLOR;
 
 out:
     OUTPUT_FULL_TEXT(buffer);

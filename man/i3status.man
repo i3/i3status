@@ -62,7 +62,7 @@ order += "tztime local"
 order += "tztime berlin"
 
 mbox "/var/mail/root" {
-	label "new mail for root"
+	label "%name:%messages"
 }
 
 wireless wlan0 {
@@ -216,15 +216,18 @@ best available public IPv6 address on your computer).
 === Mbox
 
 Verifies mail in a single UNIX mailbox file. Presentation is controled with
-two variables: "format" and "format_no_mail".
+two variables: "format" and "format_no_mail". Keywords "%messages", "%name" and
+"%path" in format strings would be expanded into message count, last element of
+path and whole path respectively.
 
-Note, the mbox implementation in this module expects "mboxo" mboxes, so it may
-report wrong numbers for other types of mboxes.
+The mbox implementation in this module expects "mboxo" mboxes, so it may report
+wrong numbers for other types of mboxes.  In particular, it doesn't check
+"Content-Length" header.
 
 *Example configuration*:
 -------------------------------------------------------------
 mail "/var/mail/user" {
-    format = "%mails new messages"
+    format = "%mails new messages for %name"
     format_no_mail = "no mail"
 }
 -------------------------------------------------------------
