@@ -14,7 +14,7 @@
 #define LINELEN 1000
 
 /* These variables are used to store data between calls to print_mbox_info(). */
-static struct timeval times[2] = { 0 };
+static struct timeval times[2] = {0};
 static size_t messages = 0;
 
 /*
