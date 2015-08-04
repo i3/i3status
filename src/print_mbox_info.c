@@ -62,8 +62,8 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         if ((f = fopen(path, "rw")) == NULL) {
             START_COLOR("color_bad");
             outwalk += sprintf(outwalk, "mbox: ");
-            (void)strerror_r(errno, outwalk, sizeof(buffer) - (outwalk - buffer));
-            outwalk = buffer + strnlen(buffer, sizeof(buffer));
+            (void)strerror_r(errno, outwalk, BUFFER_SIZE - (outwalk - buffer));
+            outwalk = buffer + strnlen(buffer, BUFFER_SIZE);
             END_COLOR;
             goto out;
         }
@@ -89,8 +89,8 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             (void)fclose(f);
             START_COLOR("color_bad");
             outwalk += sprintf(outwalk, "mbox: ");
-            (void)strerror_r(errno, outwalk, sizeof(buffer) - (outwalk - buffer));
-            outwalk = buffer + strnlen(buffer, sizeof(buffer));
+            (void)strerror_r(errno, outwalk, BUFFER_SIZE - (outwalk - buffer));
+            outwalk = buffer + strnlen(buffer, BUFFER_SIZE);
             END_COLOR;
             goto out;
         }
