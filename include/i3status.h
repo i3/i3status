@@ -67,6 +67,14 @@ enum { O_DZEN2,
     with(const char *, title, current + strlen(name) + 1) \
         with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) if (sec != NULL)
 
+/* One memory page which each plugin can use to buffer output.
+ * Even though it’s unclean, we just assume that the user will not
+ * specify a format string which expands to something longer than 4096
+ * bytes — given that the output of i3status is used to display
+ * information on screen, more than 1024 characters for the full line
+ * (!), not individual plugins, seem very unlikely. */
+#define BUFFER_SIZE 4096
+
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
 #define OUTPUT_FULL_TEXT(text)                                                                   \
@@ -188,6 +196,7 @@ typedef enum {
 const char *first_eth_interface(const net_type_t type);
 
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
+void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_no_mail);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, time_t t);

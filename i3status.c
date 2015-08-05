@@ -410,9 +410,18 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t mbox_opts[] = {
+        CFG_STR("format", "✉: %messages", CFGF_NONE),
+        CFG_STR("format_no_mail", NULL, CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
+        CFG_SEC("mbox", mbox_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("path_exists", path_exists_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
@@ -549,7 +558,7 @@ int main(int argc, char *argv[]) {
      * bytes — given that the output of i3status is used to display
      * information on screen, more than 1024 characters for the full line
      * (!), not individual plugins, seem very unlikely. */
-    char buffer[4096];
+    char buffer[BUFFER_SIZE];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
     pthread_mutex_lock(&i3status_sleep_mutex);
@@ -576,6 +585,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
                 print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("mbox") {
+                SEC_OPEN_MAP("mbox");
+                print_mbox_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_no_mail"));
                 SEC_CLOSE_MAP;
             }
 

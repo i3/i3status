@@ -48,6 +48,7 @@ general {
 }
 
 order += "ipv6"
+order += "mbox /var/mail/root"
 order += "disk /"
 order += "run_watch DHCP"
 order += "run_watch VPNC"
@@ -59,6 +60,10 @@ order += "cpu_temperature 0"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
+
+mbox "" {
+	label "%messages for root"
+}
 
 wireless wlan0 {
         format_up = "W: (%quality at %essid, %bitrate) %ip"
@@ -207,6 +212,29 @@ best available public IPv6 address on your computer).
 *Example format_up*: +%ip+
 
 *Example format_down*: +no IPv6+
+
+=== Mbox
+
+Verifies mail in a single UNIX mailbox file. If filename is not provided (as in
+example below), system mailbox is assumed.  If filename starts with "~/", it is
+assumed to be relative to user's home directory.  Presentation is controled with
+two variables: "format" and "format_no_mail". Keyword "%messages" in format
+strings would be expanded into message count.
+
+The mbox implementation in this module expects "mboxo" mboxes, so it may report
+wrong numbers for other types of mboxes.  In particular, it doesn't check
+"Content-Length" header.
+
+*Example configuration*:
+-------------------------------------------------------------
+# Note extra space after "mbox" on the next line
+order += "mbox "
+
+mail "" {
+    format = "%messages new messages"
+    format_no_mail = "no mail"
+}
+-------------------------------------------------------------
 
 === Disk
 
