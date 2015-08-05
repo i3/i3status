@@ -61,8 +61,8 @@ order += "load"
 order += "tztime local"
 order += "tztime berlin"
 
-mbox "/var/mail/root" {
-	label "%messages"
+mbox "" {
+	label "%messages for root"
 }
 
 wireless wlan0 {
@@ -215,7 +215,9 @@ best available public IPv6 address on your computer).
 
 === Mbox
 
-Verifies mail in a single UNIX mailbox file. Presentation is controled with
+Verifies mail in a single UNIX mailbox file. If filename is not provided (as in
+example below), system mailbox is assumed.  If filename starts with "~/", it is
+assumed to be relative to user's home directory.  Presentation is controled with
 two variables: "format" and "format_no_mail". Keyword "%messages" in format
 strings would be expanded into message count.
 
@@ -225,9 +227,12 @@ wrong numbers for other types of mboxes.  In particular, it doesn't check
 
 *Example configuration*:
 -------------------------------------------------------------
-mail "/var/mail/user" {
-    format = "%messages new messages for %name"
-    format_no_mail = "no mail for %name"
+# Note extra space after "mbox" on the next line
+order += "mbox "
+
+mail "" {
+    format = "%messages new messages"
+    format_no_mail = "no mail"
 }
 -------------------------------------------------------------
 

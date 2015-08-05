@@ -1,8 +1,9 @@
 // vim:ts=4:sw=4:expandtab
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <libgen.h>
+#include <pwd.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -16,6 +17,7 @@
 /* These variables are used to store data between calls to print_mbox_info(). */
 static struct timeval times[2] = {0};
 static size_t messages = 0;
+static char mbox[PATH_MAX] = "";
 
 /*
  * Check whether path references regular file, and if it does, parse the file,
@@ -31,12 +33,25 @@ void print_mbox_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     char *outwalk = buffer;
     const char *walk = format;
     struct stat sb;
-    bool exists = !stat(path, &sb), mtime_changed = (sb.st_mtim.tv_sec != times[1].tv_sec);
-    bool after_blank_line = true, in_header = false;
+    bool exists, mtime_changed, after_blank_line = true, in_header = false;
     FILE *f;
     char s[LINELEN];
 
+    if (*mbox == '\0' && *path != '/') {
+        struct passwd *pw = getpwuid(getuid());
+
+        if (strnlen(path, PATH_MAX) == 0)
+            (void)snprintf(mbox, PATH_MAX, "%s%s", pw->pw_dir, path + 1);
+        else if (BEGINS_WITH(path, "~/"))
+            (void)snprintf(mbox, PATH_MAX, "/var/mail/%s", pw->pw_name);
+
+        path = mbox;
+    }
+
     INSTANCE(path);
+
+    exists = !stat(path, &sb);
+    mtime_changed = sb.st_mtim.tv_sec != times[1].tv_sec;
 
     if (exists && !S_ISREG(sb.st_mode)) {
         START_COLOR("color_bad");
