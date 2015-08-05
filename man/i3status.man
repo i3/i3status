@@ -227,8 +227,8 @@ wrong numbers for other types of mboxes.  In particular, it doesn't check
 *Example configuration*:
 -------------------------------------------------------------
 mail "/var/mail/user" {
-    format = "%mails new messages for %name"
-    format_no_mail = "no mail"
+    format = "%messages new messages for %name"
+    format_no_mail = "no mail for %name"
 }
 -------------------------------------------------------------
 

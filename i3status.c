@@ -411,7 +411,7 @@ int main(int argc, char *argv[]) {
         CFG_END()};
 
     cfg_opt_t mbox_opts[] = {
-        CFG_STR("format", "✉: %mails", CFGF_NONE),
+        CFG_STR("format", "✉: %messages", CFGF_NONE),
         CFG_STR("format_no_mail", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
