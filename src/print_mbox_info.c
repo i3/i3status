@@ -121,18 +121,6 @@ fmt:
             continue;
         }
 
-        if (BEGINS_WITH(walk + 1, "path")) {
-            outwalk += sprintf(outwalk, "%s", path);
-            walk += strlen("path");
-            continue;
-        }
-
-        if (BEGINS_WITH(walk + 1, "name")) {
-            outwalk += sprintf(outwalk, "%s", basename(path));
-            walk += strlen("name");
-            continue;
-        }
-
         if (BEGINS_WITH(walk + 1, "messages")) {
             outwalk += sprintf(outwalk, "%zu", messages);
             walk += strlen("messages");
