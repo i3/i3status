@@ -48,6 +48,7 @@ general {
 }
 
 order += "ipv6"
+order += "mail my mail"
 order += "disk /"
 order += "run_watch DHCP"
 order += "run_watch VPNC"
@@ -59,6 +60,12 @@ order += "cpu_temperature 0"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
+
+mail "my mail" {
+	mailpath = "/home/user/Mail:/var/mail/user"
+	format "M: {%name:%messages,} %total total"
+	ignore = "Drafts:Spam:Trash"
+}
 
 wireless wlan0 {
         format_up = "W: (%quality at %essid, %bitrate) %ip"
@@ -207,6 +214,53 @@ best available public IPv6 address on your computer).
 *Example format_up*: +%ip+
 
 *Example format_down*: +no IPv6+
+
+=== Mail
+
+Checks for mail in mailboxes specified in mailpath. Supports maildir and mbox
+mailboxes. If mailpath is not specified, system mailbox (/var/mail/username) is
+checked.
+
+Presentation of check results is controled with two variables: "format" and
+"format_no_mail". Variable format has following syntax: "prefix{body}postfix";
+"prefix" is printed once, then "body" is printed for each mailbox, and then
+postfix is printed once. Alternatively, "format" may specify only "body" part,
+with no braces; in such case title of the mailchecker will be used as prefix.
+Keywords "%mailbox" and "%messages" are expanded in "body"; keyword "%total" -
+in "prefix" and "postfix". Nothing is expanded in "format_no_mail".
+
+The mbox implementation in this module expects "mboxo" type of mboxes, so it may
+report wrong numbers for other types of mboxes.  In particular, it does not
+check "Content-Length" header.
+
+The maildir implementation supports Courier-style ("maildir++") nested maildirs.
+Effectively it would search for directories containing subdirectory "new" and
+count regular files there. It would detect maildirs creation and deletion in
+flight.
+
+Variable "ignore" may be set to names of mailboxes that should not be checked
+for mail. The number of messages in ignored mailboxes will not affect total
+message count as well.
+
+Mail reports tend to take a lot of space for highly populated maildirs. To save
+some space this module agressively compresses whitesapce. Also, the width of
+report is limited to 1024 bytes by default; this amount may be reduced further
+by setting variable "width". If report exceeds the limit, it will be trimmed,
+and a trim indicator will be placed in the end of the string. Trim indicator may
+be altered by setting variable "replacement".
+
+*Example configuration*:
+-------------------------------------------------------------
+order += "mail my"
+
+mail "my" {
+    mailpath = "/home/user/Mail:/var/mail/user"
+    ignore = "Junk:Drafts:Trash"
+    format = "%total new messages: {%mailbox:%messages}"
+    format_no_mail = "no mail"
+    replacement = " ..."
+}
+-------------------------------------------------------------
 
 === Disk
 

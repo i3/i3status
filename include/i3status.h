@@ -19,11 +19,14 @@ enum { O_DZEN2,
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) > (b) ? (b) : (a))
 
 #define DEFAULT_SINK_INDEX UINT32_MAX
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
 #define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
+
+#define MAIL_REPORT_WIDTH 1024
 
 #if defined(LINUX)
 
@@ -66,6 +69,14 @@ enum { O_DZEN2,
     if (BEGINS_WITH(current, name))                       \
     with(const char *, title, current + strlen(name) + 1) \
         with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) if (sec != NULL)
+
+/* One memory page which each plugin can use to buffer output.
+ * Even though it’s unclean, we just assume that the user will not
+ * specify a format string which expands to something longer than 4096
+ * bytes — given that the output of i3status is used to display
+ * information on screen, more than 1024 characters for the full line
+ * (!), not individual plugins, seem very unlikely. */
+#define BUFFER_SIZE 4096
 
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
@@ -133,6 +144,7 @@ enum { O_DZEN2,
             } else {                                                                         \
                 outwalk += sprintf(outwalk, "%s", color(colorstr));                          \
             }                                                                                \
+            *outwalk = '\0';                                                                 \
         }                                                                                    \
     } while (0)
 
@@ -188,6 +200,7 @@ typedef enum {
 const char *first_eth_interface(const net_type_t type);
 
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
+void print_mail_info(yajl_gen json_gen, char *buffer, const char *title, char *mailpath, const char *ignore, const size_t width, char *format, const char *format_no_mail, const char *replacement);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, time_t t);

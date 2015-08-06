@@ -410,9 +410,22 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t mail_opts[] = {
+        CFG_STR("mailpath", NULL, CFGF_NONE),
+        CFG_STR("ignore", NULL, CFGF_NONE),
+        CFG_INT("width", MAIL_REPORT_WIDTH, CFGF_NONE),
+        CFG_STR("format", "✉: {%mailbox:%messages}", CFGF_NONE),
+        CFG_STR("format_no_mail", NULL, CFGF_NONE),
+        CFG_STR("replacement", " …", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
+        CFG_SEC("mail", mail_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("path_exists", path_exists_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
@@ -543,13 +556,7 @@ int main(int argc, char *argv[]) {
 
     int interval = cfg_getint(cfg_general, "interval");
 
-    /* One memory page which each plugin can use to buffer output.
-     * Even though it’s unclean, we just assume that the user will not
-     * specify a format string which expands to something longer than 4096
-     * bytes — given that the output of i3status is used to display
-     * information on screen, more than 1024 characters for the full line
-     * (!), not individual plugins, seem very unlikely. */
-    char buffer[4096];
+    char buffer[BUFFER_SIZE];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
     pthread_mutex_lock(&i3status_sleep_mutex);
@@ -576,6 +583,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
                 print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("mail") {
+                SEC_OPEN_MAP("mail");
+                print_mail_info(json_gen, buffer, title, cfg_getstr(sec, "mailpath"), cfg_getstr(sec, "ignore"), cfg_getint(sec, "width"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_no_mail"), cfg_getstr(sec, "replacement"));
                 SEC_CLOSE_MAP;
             }
 
