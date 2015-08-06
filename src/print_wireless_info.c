@@ -342,7 +342,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
             START_COLOR((info.quality < info.quality_average ? "color_degraded" : "color_good"));
         else
-            START_COLOR("color_good");
+            START_COLOR((BEGINS_WITH(ip_address, "no IP") ? "color_degraded" : "color_good"));
     } else {
         walk = format_down;
         START_COLOR("color_bad");
