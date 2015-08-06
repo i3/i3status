@@ -126,7 +126,10 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
         goto out;
     }
 
-    START_COLOR("color_good");
+    if (BEGINS_WITH(ip_address, "no IP"))
+        START_COLOR("color_degraded");
+    else
+        START_COLOR("color_good");
 
     for (walk = format_up; *walk != '\0'; walk++) {
         if (*walk != '%') {
