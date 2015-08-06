@@ -144,6 +144,7 @@ enum { O_DZEN2,
             } else {                                                                         \
                 outwalk += sprintf(outwalk, "%s", color(colorstr));                          \
             }                                                                                \
+            *outwalk = '\0';                                                                 \
         }                                                                                    \
     } while (0)
 
