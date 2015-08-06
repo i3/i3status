@@ -543,13 +543,7 @@ int main(int argc, char *argv[]) {
 
     int interval = cfg_getint(cfg_general, "interval");
 
-    /* One memory page which each plugin can use to buffer output.
-     * Even though it’s unclean, we just assume that the user will not
-     * specify a format string which expands to something longer than 4096
-     * bytes — given that the output of i3status is used to display
-     * information on screen, more than 1024 characters for the full line
-     * (!), not individual plugins, seem very unlikely. */
-    char buffer[4096];
+    char buffer[BUFFER_SIZE];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
     pthread_mutex_lock(&i3status_sleep_mutex);
