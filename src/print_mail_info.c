@@ -109,7 +109,7 @@ static bool filter(const char *name) {
  * This is the only function in the module that does format string parsing.
  *
  */
-static bool report_mailbox(const char *name, const size_t messages) {
+static bool report_mailbox(const char *name, const long long messages) {
     const char *walk = checker->body;
     char *outwalk = buf + strnlen(buf, sizeof(buf));
 
