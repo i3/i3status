@@ -373,6 +373,12 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t ibus_opts[] = {
+        CFG_STR("format", "%longname (%description)", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t usage_opts[] = {
         CFG_STR("format", "%usage", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
@@ -426,6 +432,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
+        CFG_SEC("ibus", ibus_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_END()};
 
@@ -628,6 +635,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("load") {
                 SEC_OPEN_MAP("load");
                 print_load(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getfloat(sec, "max_threshold"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("ibus") {
+                SEC_OPEN_MAP("ibus");
+                print_ibus(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
 
