@@ -47,6 +47,17 @@ ifeq ($(OS),NetBSD)
 LIBS+=-lprop
 endif
 
+ifeq ($(OS),Linux)
+CFLAGS+=-pthread
+CFLAGS+=-I/usr/include/ibus-1.0
+CFLAGS+=-I/usr/include/glib-2.0
+CFLAGS+=-I/usr/lib64/glib-2.0/include
+LIBS+=-libus-1.0
+LIBS+=-lgio-2.0
+LIBS+=-lgobject-2.0
+LIBS+=-lglib-2.0
+endif
+
 # This probably applies for any pkgsrc based system
 ifneq (, $(filter $(OS), NetBSD DragonFly))
 CFLAGS+=-I/usr/pkg/include/
@@ -67,6 +78,10 @@ CFLAGS += -idirafter yajl-fallback
 
 OBJS:=$(wildcard src/*.c *.c)
 OBJS:=$(OBJS:.c=.o)
+
+ifneq ($(OS),Linux)
+OBJS:=$(filter-out src/print-ibus.o, $(OBJS))
+endif
 
 ifeq ($(OS),OpenBSD)
 OBJS:=$(filter-out src/pulse.o, $(OBJS))
