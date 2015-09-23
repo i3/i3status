@@ -410,6 +410,13 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t custom_opts[] = {
+      CFG_STR("exec", "echo \"\"", CFGF_NONE),
+      CFG_CUSTOM_ALIGN_OPT,
+      CFG_CUSTOM_COLOR_OPTS,
+      CFG_CUSTOM_MIN_WIDTH_OPT,
+      CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -427,6 +434,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("custom", custom_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()};
 
     char *configfile = NULL;
@@ -670,7 +678,15 @@ int main(int argc, char *argv[]) {
                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
+
+            CASE_SEC_TITLE("custom") 
+            {
+                SEC_OPEN_MAP("custom");
+                print_custom(json_gen, buffer, sizeof(buffer), cfg_getstr(sec, "exec"));
+                SEC_CLOSE_MAP;
+            }
         }
+
         if (output_format == O_I3BAR) {
             yajl_gen_array_close(json_gen);
             const unsigned char *buf;

@@ -1,4 +1,16 @@
+
+#editor temp files
+*~
+.\#*
+\#*
+
+#executable binaries and related
+#main
+#build
+#*.hi
 *.o
-.*.swp
-i3status
-man/i3status.1
+
+#my files
+my_*
+
+TAGS
