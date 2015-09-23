@@ -201,10 +201,17 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format);
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
-void print_custom(yajl_gen json_gen, char *buffer, size_t buffer_len, const char *title, const char *cmd);
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx);
 bool pulse_initialize(void);
+
+/* Running custom scripts sections */
+typedef struct {
+  char *cmd;
+  char buffer[4096];
+} custom_args_t;
+void print_custom(yajl_gen json_gen, const char *title, custom_args_t *container);
+void *custom_thread_fn(void *_args);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;

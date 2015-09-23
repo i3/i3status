@@ -32,6 +32,7 @@ CPPFLAGS+=-DLINUX
 CPPFLAGS+=-D_GNU_SOURCE
 LIBS+=-liw
 LIBS+=-lasound
+LIBS+=-lpthread
 endif
 
 ifeq ($(OS),GNU/kFreeBSD)

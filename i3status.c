@@ -411,7 +411,7 @@ int main(int argc, char *argv[]) {
         CFG_END()};
 
     cfg_opt_t custom_opts[] = {
-      CFG_STR("exec", "echo \"\"", CFGF_NONE),
+      CFG_STR("exec", "printf \"\"", CFGF_NONE),
       CFG_CUSTOM_ALIGN_OPT,
       CFG_CUSTOM_COLOR_OPTS,
       CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -562,6 +562,34 @@ int main(int argc, char *argv[]) {
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
     pthread_mutex_lock(&i3status_sleep_mutex);
 
+    /* TODO:  Make this cross system compatible, including -lpthread in the Makefile*/
+
+    //Create the per-thread parameters for the number of custom sections there are
+    // and start the respective threads
+    int nCustoms = 0;
+    for(j = 0; j < cfg_size(cfg, "order"); j++) 
+      if(BEGINS_WITH(cfg_getnstr(cfg, "order", j), "custom"))
+        nCustoms++;
+
+    //Create the thread parameters and custom thread arg containers for each custom section
+    pthread_t custom_threads[nCustoms];
+    custom_args_t custom_args[nCustoms];
+    
+    //Start the threads for the custom sections giving the each thread its own buffer to write to
+    int custom_i = 0;
+    for(j = 0; j < cfg_size(cfg, "order"); j++)
+    {
+      const char *current = cfg_getnstr(cfg, "order", j);
+      CASE_SEC_TITLE("custom")
+      {
+        //The pointer address copy is a safe way to transfer the string of exec as this string has already
+        // been allocated properly inside of `sec` and the cfg_getstr function simply returns its pointer
+        (custom_args + custom_i)->cmd = cfg_getstr(sec, "exec");
+        pthread_create(custom_threads + custom_i, NULL, custom_thread_fn, custom_args + custom_i);
+        custom_i++;
+      }
+    }
+
     while (1) {
         if (exit_upon_signal) {
             fprintf(stderr, "Exiting due to signal.\n");
@@ -574,7 +602,10 @@ int main(int argc, char *argv[]) {
         else if (output_format == O_TERM)
             /* Restore the cursor-position, clear line */
             printf("\033[u\033[K");
-        for (j = 0; j < cfg_size(cfg, "order"); j++) {
+
+        //The variable `custom_i` will keep track of the offset in the custom sections own container array
+        // as the custom sections use different buffers than `buffer`
+        for (j = 0, custom_i = 0; j < cfg_size(cfg, "order"); j++) {
             cur_instance = per_instance + j;
             if (j > 0)
                 print_separator(separator);
@@ -679,10 +710,13 @@ int main(int argc, char *argv[]) {
                 SEC_CLOSE_MAP;
             }
 
-            CASE_SEC_TITLE("custom") 
+            CASE_SEC_TITLE("custom")
             {
                 SEC_OPEN_MAP("custom");
-                print_custom(json_gen, buffer, sizeof(buffer), title, cfg_getstr(sec, "exec"));
+                print_custom(json_gen, title, custom_args + custom_i);
+
+                //Update the index for the custom section
+                custom_i++;
                 SEC_CLOSE_MAP;
             }
         }
