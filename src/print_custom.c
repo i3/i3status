@@ -7,30 +7,26 @@
 
 #include "i3status.h"
 
-void print_custom(yajl_gen json_gen, char *buffer, size_t buffer_len, const char *cmd)
+void print_custom(yajl_gen json_gen, char *buffer, size_t buffer_len, const char *title, const char *cmd)
 {
-/*char *outwalk = buffer;
-    struct tm tm;
+  char *outwalk = buffer;
 
-    if (title != NULL)
-        INSTANCE(title);
-
-    //Convert time and format output.
-    set_timezone(tz);
-    localtime_r(&t, &tm);
-    outwalk += strftime(outwalk, 4095, format, &tm);
-    *outwalk = '\0';
-    OUTPUT_FULL_TEXT(buffer);*/
-
-/* TODO:  I do not think that custom blocks need titles, so they can be removed
- Also, make this section of the code use the macros as above to follow with the custom they use
- Also, comment a bit, note that buf is safe from overflow as fgets is cognizant of buffer sizes as per the 2nd arg*/
+  if(title != NULL)
+    INSTANCE(title);
 
   FILE *pipe;
   pipe = popen(cmd, "r");
 
+  //fgets is guaranteed to terminate buffer with \000 correctly,  even in the 
+  // case that it needs to be cut short due to the `buffer_len` limit
   fgets(buffer, buffer_len, pipe);
-  printf("%s\n", buffer);
 
+  //It is unknown how much data is written into buffer. Therefore, in order to prevent
+  // a premature capping of outwalk in OUTPUT_FULL_TEXT, simply increase the
+  // pointer to its last allocated byte
+  outwalk += buffer_len - 1;
+  OUTPUT_FULL_TEXT(buffer);
+
+  //Being proper and closing the opened pipe
   pclose(pipe);
 }

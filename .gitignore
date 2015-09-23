@@ -5,7 +5,7 @@
 \#*
 
 #executable binaries and related
-#main
+i3status
 #build
 #*.hi
 *.o

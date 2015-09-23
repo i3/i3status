@@ -682,7 +682,7 @@ int main(int argc, char *argv[]) {
             CASE_SEC_TITLE("custom") 
             {
                 SEC_OPEN_MAP("custom");
-                print_custom(json_gen, buffer, sizeof(buffer), cfg_getstr(sec, "exec"));
+                print_custom(json_gen, buffer, sizeof(buffer), title, cfg_getstr(sec, "exec"));
                 SEC_CLOSE_MAP;
             }
         }
