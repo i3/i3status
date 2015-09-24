@@ -56,7 +56,7 @@ enum { O_DZEN2,
 /* Allows for the definition of a variable without opening a new scope, thus
  * suited for usage in a macro. Idea from wmii. */
 #define with(type, var, init) \
-    for (type var = (type)-1; (var == (type)-1) && ((var = (init)) || 1);)
+    for (type var = (type)-1; (var == (type)-1) && ((var = (init)) || 1); var = (type)1)
 
 #define CASE_SEC(name)              \
     if (BEGINS_WITH(current, name)) \
