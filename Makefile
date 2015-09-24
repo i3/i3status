@@ -30,7 +30,8 @@ OS:=$(shell uname)
 ifeq ($(OS),Linux)
 CPPFLAGS+=-DLINUX
 CPPFLAGS+=-D_GNU_SOURCE
-LIBS+=-liw
+CFLAGS += $(shell pkg-config --cflags libnl-genl-3.0)
+LIBS += $(shell pkg-config --libs libnl-genl-3.0)
 LIBS+=-lasound
 endif
 

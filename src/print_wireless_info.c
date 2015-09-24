@@ -5,11 +5,14 @@
 #include <yajl/yajl_version.h>
 
 #ifdef LINUX
-#include <iwlib.h>
-#else
-#ifndef __FreeBSD__
+#include <errno.h>
+#include <net/if.h>
+#include <netlink/netlink.h>
+#include <netlink/genl/genl.h>
+#include <netlink/genl/ctrl.h>
+#include <linux/nl80211.h>
+#include <linux/if_ether.h>
 #define IW_ESSID_MAX_SIZE 32
-#endif
 #endif
 
 #ifdef __FreeBSD__
@@ -62,6 +65,7 @@
 typedef struct {
     int flags;
     char essid[IW_ESSID_MAX_SIZE + 1];
+    uint8_t bssid[ETH_ALEN];
     int quality;
     int quality_max;
     int quality_average;
@@ -73,128 +77,235 @@ typedef struct {
     double frequency;
 } wireless_info_t;
 
+// Like iw_print_bitrate, but without the dependency on libiw.
+static void print_bitrate(char *buffer, int buflen, int bitrate) {
+    const int kilo = 1e3;
+    const int mega = 1e6;
+    const int giga = 1e9;
+
+    const double rate = bitrate;
+    char scale;
+    int divisor;
+
+    if (rate >= giga) {
+        scale = 'G';
+        divisor = giga;
+    } else if (rate >= mega) {
+        scale = 'M';
+        divisor = mega;
+    } else {
+        scale = 'k';
+        divisor = kilo;
+    }
+    snprintf(buffer, buflen, "%g %cb/s", rate / divisor, scale);
+}
+
+static uint32_t nl80211_xbm_to_percent(int32_t xbm, uint32_t divisor) {
+#define NOISE_FLOOR_DBM -90
+#define SIGNAL_MAX_DBM -20
+
+    xbm /= divisor;
+    if (xbm < NOISE_FLOOR_DBM)
+        xbm = NOISE_FLOOR_DBM;
+    if (xbm > SIGNAL_MAX_DBM)
+        xbm = SIGNAL_MAX_DBM;
+
+    return 100 - 70 * (((float)SIGNAL_MAX_DBM - (float)xbm) / ((float)SIGNAL_MAX_DBM - (float)NOISE_FLOOR_DBM));
+}
+
+#define WLAN_EID_SSID 0
+
+static void find_ssid(uint8_t *ies, uint32_t ies_len, uint8_t **ssid, uint32_t *ssid_len) {
+    *ssid = NULL;
+    *ssid_len = 0;
+
+    while (ies_len > 2 && ies[0] != WLAN_EID_SSID) {
+        ies_len -= ies[1] + 2;
+        ies += ies[1] + 2;
+    }
+    if (ies_len < 2)
+        return;
+    if (ies_len < 2 + ies[1])
+        return;
+
+    *ssid_len = ies[1];
+    *ssid = ies + 2;
+}
+
+static int gwi_sta_cb(struct nl_msg *msg, void *data) {
+    wireless_info_t *info = data;
+
+    struct nlattr *tb[NL80211_ATTR_MAX + 1];
+    struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+    struct nlattr *sinfo[NL80211_STA_INFO_MAX + 1];
+    struct nlattr *rinfo[NL80211_RATE_INFO_MAX + 1];
+    static struct nla_policy stats_policy[NL80211_STA_INFO_MAX + 1] = {
+            [NL80211_STA_INFO_RX_BITRATE] = {.type = NLA_NESTED},
+    };
+
+    static struct nla_policy rate_policy[NL80211_RATE_INFO_MAX + 1] = {
+            [NL80211_RATE_INFO_BITRATE32] = {.type = NLA_U32},
+    };
+
+    if (nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0), genlmsg_attrlen(gnlh, 0), NULL) < 0)
+        return NL_SKIP;
+
+    if (tb[NL80211_ATTR_STA_INFO] == NULL)
+        return NL_SKIP;
+
+    if (nla_parse_nested(sinfo, NL80211_STA_INFO_MAX, tb[NL80211_ATTR_STA_INFO], stats_policy))
+        return NL_SKIP;
+
+    if (sinfo[NL80211_STA_INFO_RX_BITRATE] == NULL)
+        return NL_SKIP;
+
+    if (nla_parse_nested(rinfo, NL80211_RATE_INFO_MAX, sinfo[NL80211_STA_INFO_RX_BITRATE], rate_policy))
+        return NL_SKIP;
+
+    if (rinfo[NL80211_RATE_INFO_BITRATE32] == NULL)
+        return NL_SKIP;
+
+    // NL80211_RATE_INFO_BITRATE32 is specified in units of 100 kbit/s, but iw
+    // used to specify bit/s, so we convert to use the same code path.
+    info->bitrate = nla_get_u32(rinfo[NL80211_RATE_INFO_BITRATE32]) * 100 * 1000;
+
+    return NL_SKIP;
+}
+
+static int gwi_scan_cb(struct nl_msg *msg, void *data) {
+    wireless_info_t *info = data;
+    struct genlmsghdr *gnlh = genlmsg_hdr(nlmsg_hdr(msg));
+    struct nlattr *tb[NL80211_ATTR_MAX + 1];
+    struct nlattr *bss[NL80211_BSS_MAX + 1];
+    struct nla_policy bss_policy[NL80211_BSS_MAX + 1] = {
+            [NL80211_BSS_FREQUENCY] = {.type = NLA_U32},
+            [NL80211_BSS_BSSID] = {.type = NLA_UNSPEC},
+            [NL80211_BSS_INFORMATION_ELEMENTS] = {.type = NLA_UNSPEC},
+            [NL80211_BSS_SIGNAL_MBM] = {.type = NLA_U32},
+            [NL80211_BSS_SIGNAL_UNSPEC] = {.type = NLA_U8},
+            [NL80211_BSS_STATUS] = {.type = NLA_U32},
+    };
+
+    if (nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0), genlmsg_attrlen(gnlh, 0), NULL) < 0)
+        return NL_SKIP;
+
+    if (tb[NL80211_ATTR_BSS] == NULL)
+        return NL_SKIP;
+
+    if (nla_parse_nested(bss, NL80211_BSS_MAX, tb[NL80211_ATTR_BSS], bss_policy))
+        return NL_SKIP;
+
+    if (bss[NL80211_BSS_STATUS] == NULL)
+        return NL_SKIP;
+
+    const uint32_t status = nla_get_u32(bss[NL80211_BSS_STATUS]);
+
+    if (status != NL80211_BSS_STATUS_ASSOCIATED &&
+        status != NL80211_BSS_STATUS_IBSS_JOINED)
+        return NL_SKIP;
+
+    if (bss[NL80211_BSS_BSSID] == NULL)
+        return NL_SKIP;
+
+    memcpy(info->bssid, nla_data(bss[NL80211_BSS_BSSID]), ETH_ALEN);
+
+    if (bss[NL80211_BSS_FREQUENCY]) {
+        info->flags |= WIRELESS_INFO_FLAG_HAS_FREQUENCY;
+        info->frequency = (double)nla_get_u32(bss[NL80211_BSS_FREQUENCY]) * 1e6;
+    }
+
+    if (bss[NL80211_BSS_SIGNAL_UNSPEC]) {
+        info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+        info->signal_level = nla_get_u8(bss[NL80211_BSS_SIGNAL_UNSPEC]);
+        info->signal_level_max = 100;
+
+        info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
+        info->quality = info->signal_level;
+        info->quality_max = 100;
+        info->quality_average = 50;
+    }
+
+    if (bss[NL80211_BSS_SIGNAL_MBM]) {
+        info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+        info->signal_level = (int)nla_get_u32(bss[NL80211_BSS_SIGNAL_MBM]) / 100;
+
+        info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
+        info->quality = nl80211_xbm_to_percent(nla_get_u32(bss[NL80211_BSS_SIGNAL_MBM]), 100);
+        info->quality_max = 100;
+        info->quality_average = 50;
+    }
+
+    if (bss[NL80211_BSS_INFORMATION_ELEMENTS]) {
+        uint8_t *ssid;
+        uint32_t ssid_len;
+
+        find_ssid(nla_data(bss[NL80211_BSS_INFORMATION_ELEMENTS]),
+                  nla_len(bss[NL80211_BSS_INFORMATION_ELEMENTS]),
+                  &ssid, &ssid_len);
+        if (ssid && ssid_len) {
+            info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
+            snprintf(info->essid, sizeof(info->essid), "%.*s", ssid_len, ssid);
+        }
+    }
+
+    return NL_SKIP;
+}
+
 static int get_wireless_info(const char *interface, wireless_info_t *info) {
     memset(info, 0, sizeof(wireless_info_t));
 
 #ifdef LINUX
-    int skfd = iw_sockets_open();
-    if (skfd < 0) {
-        perror("iw_sockets_open");
-        return 0;
-    }
+    struct nl_sock *sk = nl_socket_alloc();
+    if (genl_connect(sk) != 0)
+        goto error1;
 
-    wireless_config wcfg;
-    if (iw_get_basic_config(skfd, interface, &wcfg) < 0) {
-        close(skfd);
-        return 0;
-    }
+    if (nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, gwi_scan_cb, info) < 0)
+        goto error1;
 
-    if (wcfg.has_essid && wcfg.essid_on) {
-        info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
-        strncpy(&info->essid[0], wcfg.essid, IW_ESSID_MAX_SIZE);
-        info->essid[IW_ESSID_MAX_SIZE] = '\0';
-    }
+    const int nl80211_id = genl_ctrl_resolve(sk, "nl80211");
+    if (nl80211_id < 0)
+        goto error1;
 
-    if (wcfg.has_freq) {
-        info->frequency = wcfg.freq;
-        info->flags |= WIRELESS_INFO_FLAG_HAS_FREQUENCY;
-    }
+    const unsigned int ifidx = if_nametoindex(interface);
+    if (ifidx == 0)
+        goto error1;
 
-    /* If the function iw_get_stats does not return proper stats, the
-     * wifi is considered as down.
-     * Since ad-hoc network does not have theses stats, we need to return
-     * here for this mode. */
-    if (wcfg.mode == 1) {
-        close(skfd);
-        return 1;
-    }
+    struct nl_msg *msg = NULL;
+    if ((msg = nlmsg_alloc()) == NULL)
+        goto error1;
 
-    /* Wireless quality is a relative value in a driver-specific range.
-     * Signal and noise level can be either relative or absolute values
-     * in dBm. Furthermore, noise and quality can be expressed directly
-     * in dBm or in RCPI (802.11k), which we convert to dBm. When those
-     * values are expressed directly in dBm, they range from -192 to 63,
-     * and since the values are packed into 8 bits, we need to perform
-     * 8-bit arithmetic on them. Assume absolute values if everything
-     * else fails (driver bug). */
+    if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, nl80211_id, 0, NLM_F_DUMP, NL80211_CMD_GET_SCAN, 0) ||
+        nla_put_u32(msg, NL80211_ATTR_IFINDEX, ifidx) < 0)
+        goto error2;
 
-    iwrange range;
-    if (iw_get_range_info(skfd, interface, &range) < 0) {
-        close(skfd);
-        return 0;
-    }
+    if (nl_send_sync(sk, msg) < 0)
+        // nl_send_sync calls nlmsg_free()
+        goto error1;
+    msg = NULL;
 
-    iwstats stats;
-    if (iw_get_stats(skfd, interface, &stats, &range, 1) < 0) {
-        close(skfd);
-        return 0;
-    }
+    if (nl_socket_modify_cb(sk, NL_CB_VALID, NL_CB_CUSTOM, gwi_sta_cb, info) < 0)
+        goto error1;
 
-    if (stats.qual.level != 0 || (stats.qual.updated & (IW_QUAL_DBM | IW_QUAL_RCPI))) {
-        if (!(stats.qual.updated & IW_QUAL_QUAL_INVALID)) {
-            info->quality = stats.qual.qual;
-            info->quality_max = range.max_qual.qual;
-            info->quality_average = range.avg_qual.qual;
-            info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
-        }
+    if ((msg = nlmsg_alloc()) == NULL)
+        goto error1;
 
-        if (stats.qual.updated & IW_QUAL_RCPI) {
-            if (!(stats.qual.updated & IW_QUAL_LEVEL_INVALID)) {
-                info->signal_level = stats.qual.level / 2.0 - 110 + 0.5;
-                info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
-            }
-            if (!(stats.qual.updated & IW_QUAL_NOISE_INVALID)) {
-                info->noise_level = stats.qual.noise / 2.0 - 110 + 0.5;
-                info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
-            }
-        } else {
-            if ((stats.qual.updated & IW_QUAL_DBM) || stats.qual.level > range.max_qual.level) {
-                if (!(stats.qual.updated & IW_QUAL_LEVEL_INVALID)) {
-                    info->signal_level = stats.qual.level;
-                    if (info->signal_level > 63)
-                        info->signal_level -= 256;
-                    info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
-                }
-                if (!(stats.qual.updated & IW_QUAL_NOISE_INVALID)) {
-                    info->noise_level = stats.qual.noise;
-                    if (info->noise_level > 63)
-                        info->noise_level -= 256;
-                    info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
-                }
-            } else {
-                if (!(stats.qual.updated & IW_QUAL_LEVEL_INVALID)) {
-                    info->signal_level = stats.qual.level;
-                    info->signal_level_max = range.max_qual.level;
-                    info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
-                }
-                if (!(stats.qual.updated & IW_QUAL_NOISE_INVALID)) {
-                    info->noise_level = stats.qual.noise;
-                    info->noise_level_max = range.max_qual.noise;
-                    info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
-                }
-            }
-        }
-    } else {
-        if (!(stats.qual.updated & IW_QUAL_QUAL_INVALID)) {
-            info->quality = stats.qual.qual;
-            info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
-        }
-        if (!(stats.qual.updated & IW_QUAL_LEVEL_INVALID)) {
-            info->quality = stats.qual.level;
-            info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
-        }
-        if (!(stats.qual.updated & IW_QUAL_NOISE_INVALID)) {
-            info->quality = stats.qual.noise;
-            info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
-        }
-    }
+    if (!genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, nl80211_id, 0, NLM_F_DUMP, NL80211_CMD_GET_STATION, 0) || nla_put_u32(msg, NL80211_ATTR_IFINDEX, ifidx) < 0 || nla_put(msg, NL80211_ATTR_MAC, 6, info->bssid) < 0)
+        goto error2;
 
-    struct iwreq wrq;
-    if (iw_get_ext(skfd, interface, SIOCGIWRATE, &wrq) >= 0)
-        info->bitrate = wrq.u.bitrate.value;
+    if (nl_send_sync(sk, msg) < 0)
+        // nl_send_sync calls nlmsg_free()
+        goto error1;
+    msg = NULL;
 
-    close(skfd);
+    nl_socket_free(sk);
     return 1;
+
+error2:
+    nlmsg_free(msg);
+error1:
+    nl_socket_free(sk);
+    return 0;
+
 #endif
 #if defined(__FreeBSD__) || defined(__DragonFly__)
     int s, inwid;
@@ -426,7 +537,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (BEGINS_WITH(walk + 1, "bitrate")) {
             char br_buffer[128];
 
-            iw_print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
 
             outwalk += sprintf(outwalk, "%s", br_buffer);
             walk += strlen("bitrate");
