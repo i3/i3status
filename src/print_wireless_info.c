@@ -125,7 +125,7 @@ static void find_ssid(uint8_t *ies, uint32_t ies_len, uint8_t **ssid, uint32_t *
     }
     if (ies_len < 2)
         return;
-    if (ies_len < 2 + ies[1])
+    if (ies_len < 2 + (uint8_t)ies[1])
         return;
 
     *ssid_len = ies[1];
