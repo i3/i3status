@@ -174,7 +174,7 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
 
 static int gwi_scan_cb(struct nl_msg *msg, void *data) {
     wireless_info_t *info = data;
-    struct genlmsghdr *gnlh = genlmsg_hdr(nlmsg_hdr(msg));
+    struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
     struct nlattr *tb[NL80211_ATTR_MAX + 1];
     struct nlattr *bss[NL80211_BSS_MAX + 1];
     struct nla_policy bss_policy[NL80211_BSS_MAX + 1] = {
