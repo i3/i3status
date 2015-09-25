@@ -100,6 +100,7 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
     snprintf(buffer, buflen, "%g %cb/s", rate / divisor, scale);
 }
 
+// Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
 static uint32_t nl80211_xbm_to_percent(int32_t xbm, uint32_t divisor) {
 #define NOISE_FLOOR_DBM -90
 #define SIGNAL_MAX_DBM -20
@@ -113,9 +114,9 @@ static uint32_t nl80211_xbm_to_percent(int32_t xbm, uint32_t divisor) {
     return 100 - 70 * (((float)SIGNAL_MAX_DBM - (float)xbm) / ((float)SIGNAL_MAX_DBM - (float)NOISE_FLOOR_DBM));
 }
 
-#define WLAN_EID_SSID 0
-
+// Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
 static void find_ssid(uint8_t *ies, uint32_t ies_len, uint8_t **ssid, uint32_t *ssid_len) {
+#define WLAN_EID_SSID 0
     *ssid = NULL;
     *ssid_len = 0;
 
