@@ -144,7 +144,7 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
     };
 
     static struct nla_policy rate_policy[NL80211_RATE_INFO_MAX + 1] = {
-            [NL80211_RATE_INFO_BITRATE32] = {.type = NLA_U32},
+            [NL80211_RATE_INFO_BITRATE] = {.type = NLA_U16},
     };
 
     if (nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0), genlmsg_attrlen(gnlh, 0), NULL) < 0)
@@ -162,12 +162,12 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
     if (nla_parse_nested(rinfo, NL80211_RATE_INFO_MAX, sinfo[NL80211_STA_INFO_RX_BITRATE], rate_policy))
         return NL_SKIP;
 
-    if (rinfo[NL80211_RATE_INFO_BITRATE32] == NULL)
+    if (rinfo[NL80211_RATE_INFO_BITRATE] == NULL)
         return NL_SKIP;
 
-    // NL80211_RATE_INFO_BITRATE32 is specified in units of 100 kbit/s, but iw
+    // NL80211_RATE_INFO_BITRATE is specified in units of 100 kbit/s, but iw
     // used to specify bit/s, so we convert to use the same code path.
-    info->bitrate = nla_get_u32(rinfo[NL80211_RATE_INFO_BITRATE32]) * 100 * 1000;
+    info->bitrate = (int)nla_get_u16(rinfo[NL80211_RATE_INFO_BITRATE]) * 100 * 1000;
 
     return NL_SKIP;
 }
