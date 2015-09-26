@@ -585,6 +585,14 @@ int main(int argc, char *argv[]) {
         //The pointer address copy is a safe way to transfer the string of exec as this string has already
         // been allocated properly inside of `sec` and the cfg_getstr function simply returns its pointer
         (custom_args + custom_i)->cmd = cfg_getstr(sec, "exec");
+
+        //Initialize the pthread sleep cond_wait variables to their default values
+        pthread_cond_init(&(custom_args + custom_i)->sleep_cond, NULL);
+        pthread_mutex_init(&(custom_args + custom_i)->sleep_mutex, NULL);
+
+        //For safety, cut the buffer short just in case it is printed before it is filled with legitimate data
+        *(custom_args + custom_i)->buffer = 0;
+
         pthread_create(custom_threads + custom_i, NULL, custom_thread_fn, custom_args + custom_i);
         custom_i++;
       }
@@ -714,6 +722,14 @@ int main(int argc, char *argv[]) {
             {
                 SEC_OPEN_MAP("custom");
                 print_custom(json_gen, title, custom_args + custom_i);
+
+                //After printing custom, re-wake the said custom thread to perform another calculation
+                // In this case, the mutex lock and unlock functions are not required as the code will 
+                // work as intended as a missed wake up broadcast from the cond_breadcast is not fatal.
+                // However, for good practice, they are included regardless
+                pthread_mutex_lock(&(custom_args + custom_i)->sleep_mutex);
+                pthread_cond_broadcast(&(custom_args + custom_i)->sleep_cond);
+                pthread_mutex_unlock(&(custom_args + custom_i)->sleep_mutex);
 
                 //Update the index for the custom section
                 custom_i++;
