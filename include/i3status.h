@@ -207,11 +207,11 @@ bool pulse_initialize(void);
 
 /* Running custom scripts sections */
 typedef struct {
-  char *cmd;
-  pthread_cond_t sleep_cond;
-  pthread_mutex_t sleep_mutex;
+    char *cmd;
+    pthread_cond_t sleep_cond;
+    pthread_mutex_t sleep_mutex;
 
-  char buffer[4096];
+    char buffer[4096];
 } custom_args_t;
 void print_custom(yajl_gen json_gen, const char *title, custom_args_t *container);
 void *custom_thread_fn(void *_args);
