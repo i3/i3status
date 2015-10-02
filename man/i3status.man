@@ -5,7 +5,7 @@ v2.9, March 2015
 
 == NAME
 
-i3status - Generates a status line for i3bar, dzen2 or xmobar
+i3status - Generates a status line for i3bar, dzen2, xmobar or lemonbar
 
 == SYNOPSIS
 
@@ -25,7 +25,7 @@ configuration files in the following order:
 == DESCRIPTION
 
 i3status is a small program (about 1500 SLOC) for generating a status bar for
-i3bar, dzen2, xmobar or similar programs. It is designed to be very
+i3bar, dzen2, xmobar, lemonbar or similar programs. It is designed to be very
 efficient by issuing a very small number of system calls, as one generally
 wants to update such a status line every second. This ensures that even under
 high load, your status bar is updated correctly. Also, it saves a bit of energy
@@ -157,6 +157,9 @@ managers like dwm, wmii and xmonad though it will work with any windowmanger
 xmobar::
 xmobar is a minimalistic, text based, status bar. It was designed to work
 with the xmonad Window Manager.
+lemonbar::
+lemonbar is a lightweight bar based entirely on XCB. It has full UTF-8 support
+and is EWMH compliant.
 term::
 Use ANSI Escape sequences to produce a terminal-output as close as possible to
 the graphical outputs. This makes debugging your config file a little bit

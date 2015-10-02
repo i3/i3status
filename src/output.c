@@ -11,7 +11,8 @@
 #include "i3status.h"
 
 /*
- * Returns the correct color format for dzen (^fg(color)) or xmobar (<fc=color>)
+ * Returns the correct color format for dzen (^fg(color)), xmobar (<fc=color>)
+ * or lemonbar (%{Fcolor})
  *
  */
 char *color(const char *colorstr) {
@@ -24,6 +25,8 @@ char *color(const char *colorstr) {
         (void)snprintf(colorbuf, sizeof(colorbuf), "^fg(%s)", cfg_getstr(cfg_general, colorstr));
     else if (output_format == O_XMOBAR)
         (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", cfg_getstr(cfg_general, colorstr));
+    else if (output_format == O_LEMONBAR)
+        (void)snprintf(colorbuf, sizeof(colorbuf), "%%{F%s}", cfg_getstr(cfg_general, colorstr));
     else if (output_format == O_TERM) {
         /* The escape-sequence for color is <CSI><col>;1m (bright/bold
          * output), where col is a 3-bit rgb-value with b in the
@@ -61,6 +64,8 @@ void print_separator(const char *separator) {
         printf("^fg(%s)%s^fg()", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_XMOBAR)
         printf("<fc=%s>%s</fc>", cfg_getstr(cfg_general, "color_separator"), separator);
+    else if (output_format == O_LEMONBAR)
+        printf("%%{F%s}%s%%{F-}", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_TERM)
         printf("%s%s%s", color("color_separator"), separator, endcolor());
     else if (output_format == O_NONE)

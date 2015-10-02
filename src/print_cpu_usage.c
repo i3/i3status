@@ -102,7 +102,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
         }
 
         if (BEGINS_WITH(walk + 1, "usage")) {
-            outwalk += sprintf(outwalk, "%02d%%", diff_usage);
+            outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
             walk += strlen("usage");
         }
     }
