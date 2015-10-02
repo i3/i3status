@@ -146,9 +146,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         percentage_remaining = 100;
     }
     if (integer_battery_capacity) {
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00f%%", percentage_remaining);
+        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00f%s", percentage_remaining, pct_mark);
     } else {
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%%", percentage_remaining);
+        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%s", percentage_remaining, pct_mark);
     }
 
     if (present_rate > 0) {
@@ -245,8 +245,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
-    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%",
-                   present_rate);
+    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
+                   present_rate, pct_mark);
 
     if (state == 1) {
         int hours, minutes;
@@ -304,7 +304,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
     /* integer_battery_capacity is implied as battery_life is already in whole numbers. */
-    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%%", apm_info.battery_life);
+    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%s", apm_info.battery_life, pct_mark);
 
     if (status == CS_DISCHARGING && low_threshold > 0) {
         if (strcasecmp(threshold_type, "percentage") == 0 && apm_info.battery_life < low_threshold) {
@@ -494,13 +494,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     if (integer_battery_capacity)
         (void)snprintf(percentagebuf,
                        sizeof(percentagebuf),
-                       "%d%%",
-                       (int)percentage_remaining);
+                       "%d%s",
+                       (int)percentage_remaining, pct_mark);
     else
         (void)snprintf(percentagebuf,
                        sizeof(percentagebuf),
-                       "%.02f%%",
-                       percentage_remaining);
+                       "%.02f%s",
+                       percentage_remaining, pct_mark);
 
     /*
      * Handle percentage low_threshold here, and time low_threshold when
