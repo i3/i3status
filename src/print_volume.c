@@ -37,11 +37,11 @@ static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
             continue;
         }
         if (BEGINS_WITH(walk + 1, "%")) {
-            outwalk += sprintf(outwalk, "%%");
+            outwalk += sprintf(outwalk, "%s", pct_mark);
             walk += strlen("%");
         }
         if (BEGINS_WITH(walk + 1, "volume")) {
-            outwalk += sprintf(outwalk, "%d%%", ivolume);
+            outwalk += sprintf(outwalk, "%d%s", ivolume, pct_mark);
             walk += strlen("volume");
         }
     }

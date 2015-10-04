@@ -4,8 +4,11 @@
 enum { O_DZEN2,
        O_XMOBAR,
        O_I3BAR,
+       O_LEMONBAR,
        O_TERM,
        O_NONE } output_format;
+
+char *pct_mark;
 
 #include <stdbool.h>
 #include <confuse.h>

@@ -163,11 +163,21 @@ static int parse_min_width(cfg_t *context, cfg_opt_t *option, const char *value,
  *
  */
 static int valid_color(const char *value) {
-    if (strlen(value) != 7)
-        return 0;
+    const int len = strlen(value);
+
+    if (output_format == O_LEMONBAR) {
+        /* lemonbar supports an optional alpha channel */
+        if (len != strlen("#rrggbb") && len != strlen("#aarrggbb")) {
+            return 0;
+        }
+    } else {
+        if (len != strlen("#rrggbb")) {
+            return 0;
+        }
+    }
     if (value[0] != '#')
         return 0;
-    for (int i = 1; i < 7; ++i) {
+    for (int i = 1; i < len; ++i) {
         if (value[i] >= '0' && value[i] <= '9')
             continue;
         if (value[i] >= 'a' && value[i] <= 'f')
@@ -501,6 +511,8 @@ int main(int argc, char *argv[]) {
         output_format = O_XMOBAR;
     else if (strcasecmp(output_str, "i3bar") == 0)
         output_format = O_I3BAR;
+    else if (strcasecmp(output_str, "lemonbar") == 0)
+        output_format = O_LEMONBAR;
     else if (strcasecmp(output_str, "term") == 0)
         output_format = O_TERM;
     else if (strcasecmp(output_str, "none") == 0)
@@ -509,6 +521,9 @@ int main(int argc, char *argv[]) {
         die("Unknown output format: \"%s\"\n", output_str);
 
     const char *separator = cfg_getstr(cfg_general, "separator");
+
+    /* lemonbar needs % to be escaped with another % */
+    pct_mark = (output_format == O_LEMONBAR) ? "%%" : "%";
 
     // if no custom separator has been provided, use the default one
     if (strcasecmp(separator, "default") == 0)
