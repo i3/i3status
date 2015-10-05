@@ -78,3 +78,46 @@ void print_separator(const char *separator) {
 void reset_cursor(void) {
     printf("\033[?25h");
 }
+
+/*
+ * Escapes ampersand, less-than, greater-than, single-quote, and double-quote
+ * characters with the corresponding Pango markup strings if markup is enabled.
+ * See the glib implementation:
+ * https://git.gnome.org/browse/glib/tree/glib/gmarkup.c?id=03db1f455b4265654e237d2ad55464b4113cba8a#n2142
+ *
+ */
+void maybe_escape_markup(char *text, char **buffer) {
+    if (markup_format == M_NONE) {
+        *buffer += sprintf(*buffer, "%s", text);
+        return;
+    }
+    for (; *text != '\0'; text++) {
+        switch (*text) {
+            case '&':
+                *buffer += sprintf(*buffer, "%s", "&amp;");
+                break;
+            case '<':
+                *buffer += sprintf(*buffer, "%s", "&lt;");
+                break;
+            case '>':
+                *buffer += sprintf(*buffer, "%s", "&gt;");
+                break;
+            case '\'':
+                *buffer += sprintf(*buffer, "%s", "&apos;");
+                break;
+            case '"':
+                *buffer += sprintf(*buffer, "%s", "&quot;");
+                break;
+            default:
+                if ((0x1 <= *text && *text <= 0x8) ||
+                    (0xb <= *text && *text <= 0xc) ||
+                    (0xe <= *text && *text <= 0x1f) ||
+                    (0x7f <= *text && *text <= 0x84) ||
+                    (0x86 <= *text && *text <= 0x9f))
+                    *buffer += sprintf(*buffer, "&#x%x;", *text);
+                else
+                    *(*buffer)++ = *text;
+                break;
+        }
+    }
+}

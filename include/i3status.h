@@ -8,6 +8,9 @@ enum { O_DZEN2,
        O_TERM,
        O_NONE } output_format;
 
+enum { M_PANGO,
+       M_NONE } markup_format;
+
 char *pct_mark;
 
 #include <stdbool.h>
@@ -78,6 +81,9 @@ char *pct_mark;
          * not forgotten in the module */                                                        \
         *outwalk = '\0';                                                                         \
         if (output_format == O_I3BAR) {                                                          \
+            char *_markup = cfg_getstr(cfg_general, "markup");                                   \
+            yajl_gen_string(json_gen, (const unsigned char *) "markup", strlen("markup"));       \
+            yajl_gen_string(json_gen, (const unsigned char *)_markup, strlen(_markup));          \
             yajl_gen_string(json_gen, (const unsigned char *) "full_text", strlen("full_text")); \
             yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text));                \
         } else {                                                                                 \
@@ -176,6 +182,7 @@ void print_separator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
+void maybe_escape_markup(char *text, char **buffer);
 
 /* src/auto_detect_format.c */
 char *auto_detect_format();
@@ -193,7 +200,7 @@ const char *first_eth_interface(const net_type_t type);
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, time_t t);
+void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *format_time, time_t t);
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr(const char *interface);
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);

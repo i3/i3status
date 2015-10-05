@@ -33,17 +33,36 @@ void set_timezone(const char *tz) {
     }
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, time_t t) {
+void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *format_time, time_t t) {
+    const char *walk;
     char *outwalk = buffer;
     struct tm tm;
+    char timebuf[1024];
 
     if (title != NULL)
         INSTANCE(title);
 
-    /* Convert time and format output. */
     set_timezone(tz);
     localtime_r(&t, &tm);
-    outwalk += strftime(outwalk, 4095, format, &tm);
+
+    if (format_time == NULL) {
+        strftime(timebuf, sizeof(timebuf), format, &tm);
+        maybe_escape_markup(timebuf, &outwalk);
+    } else {
+        for (walk = format; *walk != '\0'; walk++) {
+            if (*walk != '%') {
+                *(outwalk++) = *walk;
+                continue;
+            }
+
+            if (BEGINS_WITH(walk + 1, "time")) {
+                strftime(timebuf, sizeof(timebuf), format_time, &tm);
+                maybe_escape_markup(timebuf, &outwalk);
+                walk += strlen("time");
+            }
+        }
+    }
+
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
 }
