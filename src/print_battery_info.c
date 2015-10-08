@@ -12,6 +12,7 @@
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <dev/acpica/acpiio.h>
 #endif
 
 #if defined(__OpenBSD__)
@@ -236,7 +237,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     state = sysctl_rslt;
     if (state == 0 && present_rate == 100)
         status = CS_FULL;
-    else if (state == 0 && present_rate < 100)
+    else if ((state & ACPI_BATT_STAT_CHARGING) && present_rate < 100)
         status = CS_CHARGING;
     else
         status = CS_DISCHARGING;
@@ -248,7 +249,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
                    present_rate, pct_mark);
 
-    if (state == 1) {
+    if (state == ACPI_BATT_STAT_DISCHARG) {
         int hours, minutes;
         minutes = remaining;
         hours = minutes / 60;
