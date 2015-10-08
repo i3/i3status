@@ -65,7 +65,9 @@
 typedef struct {
     int flags;
     char essid[IW_ESSID_MAX_SIZE + 1];
+#ifdef LINUX
     uint8_t bssid[ETH_ALEN];
+#endif
     int quality;
     int quality_max;
     int quality_average;
@@ -77,6 +79,7 @@ typedef struct {
     double frequency;
 } wireless_info_t;
 
+#ifdef LINUX
 // Like iw_print_bitrate, but without the dependency on libiw.
 static void print_bitrate(char *buffer, int buflen, int bitrate) {
     const int kilo = 1e3;
@@ -251,6 +254,7 @@ static int gwi_scan_cb(struct nl_msg *msg, void *data) {
 
     return NL_SKIP;
 }
+#endif
 
 static int get_wireless_info(const char *interface, wireless_info_t *info) {
     memset(info, 0, sizeof(wireless_info_t));
