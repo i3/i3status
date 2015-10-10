@@ -420,6 +420,18 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t ratio_watch_opts[] = {
+        CFG_STR("format_down", "", CFGF_NONE),
+        CFG_STR("format_high", "☼: %percentage", CFGF_NONE),
+        CFG_STR("format_low", "☾: %percentage", CFGF_NONE),
+        CFG_STR("path_numerator", "/sys/class/backlight/*/brightness", CFGF_NONE),
+        CFG_STR("path_denominator", "/sys/class/backlight/*/max_brightness", CFGF_NONE),
+        CFG_FLOAT("low_threshold", 50, CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -437,6 +449,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("ratio_watch", ratio_watch_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()};
 
     char *configfile = NULL;
@@ -637,6 +650,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC_TITLE("disk") {
                 SEC_OPEN_MAP("disk_info");
                 print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_not_mounted"), cfg_getstr(sec, "prefix_type"), cfg_getstr(sec, "threshold_type"), cfg_getfloat(sec, "low_threshold"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("ratio_watch") {
+                SEC_OPEN_MAP("ratio_watch");
+                print_ratio_watch(json_gen, buffer, title, cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_high"), cfg_getstr(sec, "format_low"), cfg_getstr(sec, "path_numerator"), cfg_getstr(sec, "path_denominator"), cfg_getfloat(sec, "low_threshold"));
                 SEC_CLOSE_MAP;
             }
 
