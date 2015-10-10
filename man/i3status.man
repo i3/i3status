@@ -59,6 +59,7 @@ order += "cpu_temperature 0"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
+order += "ratio_watch backlight"
 
 wireless wlan0 {
         format_up = "W: (%quality at %essid, %bitrate) %ip"
@@ -115,6 +116,15 @@ cpu_temperature 0 {
 
 disk "/" {
 	format = "%free"
+}
+
+ratio_watch backlight {
+  format_down = "N/A"
+  format_high = "☼: %percentage"
+  format_low = "☾: %percentage"
+  # globs are allowed in paths
+  path_numerator = "/sys/class/backlight/*/brightness"
+  path_denominator = "/sys/class/backlight/*/max_brightness"
 }
 -------------------------------------------------------------
 
@@ -472,6 +482,32 @@ volume master {
 	format = "♪: %volume"
 	format_muted = "♪: muted (%volume)"
 	device = "pulse:1"
+}
+-------------------------------------------------------------
+
+=== Ratio-watch
+
+Displays a ratio between two numbers found in files (e.g., backlight brigtness).
+Expands two given paths, the "path_numerator" and the "path_denominator", parses
+the content as numbers and computes the current ratio. The ratio is displayed as
+a percentage.
+
+*Example order*: +ratio_watch 0
+
+*Example format_down*: N/A
+
+*Example format_high*: ☼: %percentage
+
+*Example format_low*: ☾: %percentage
+
+*Example configuration*:
+-------------------------------------------------------------
+ratio_watch 0 {
+  format_down = ""
+  format_high = "☼: %percentage"
+  format_low = "☾: %percentage"
+  path_numerator = "/sys/class/backlight/*/brightness"
+  path_denominator = "/sys/class/backlight/*/max_brightness"
 }
 -------------------------------------------------------------
 
