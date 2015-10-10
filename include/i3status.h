@@ -204,6 +204,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format);
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
+void print_ratio_watch(yajl_gen json_gen, char *buffer, const char *title, const char *format_down, const char *format_high, const char *format_low, const char *path_numerator, const char *path_denominator, const float low_threshold);
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx);
 bool pulse_initialize(void);
