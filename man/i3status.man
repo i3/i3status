@@ -119,12 +119,12 @@ disk "/" {
 }
 
 ratio_watch backlight {
-  format_down = "N/A"
-  format_high = "☼: %percentage"
-  format_low = "☾: %percentage"
-  # globs are allowed in paths
-  path_numerator = "/sys/class/backlight/*/brightness"
-  path_denominator = "/sys/class/backlight/*/max_brightness"
+	format_down = "N/A"
+	format_high = "☼: %percentage"
+	format_low = "☾: %percentage"
+	# globs are allowed in paths
+	path_numerator = "/sys/class/backlight/*/brightness"
+	path_denominator = "/sys/class/backlight/*/max_brightness"
 }
 -------------------------------------------------------------
 
@@ -503,11 +503,11 @@ a percentage.
 *Example configuration*:
 -------------------------------------------------------------
 ratio_watch 0 {
-  format_down = ""
-  format_high = "☼: %percentage"
-  format_low = "☾: %percentage"
-  path_numerator = "/sys/class/backlight/*/brightness"
-  path_denominator = "/sys/class/backlight/*/max_brightness"
+	format_down = ""
+	format_high = "☼: %percentage"
+	format_low = "☾: %percentage"
+	path_numerator = "/sys/class/backlight/*/brightness"
+	path_denominator = "/sys/class/backlight/*/max_brightness"
 }
 -------------------------------------------------------------
 
