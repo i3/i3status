@@ -104,7 +104,7 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
 }
 
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
-static uint32_t nl80211_xbm_to_percent(int32_t xbm, uint32_t divisor) {
+static uint32_t nl80211_xbm_to_percent(int32_t xbm, int32_t divisor) {
 #define NOISE_FLOOR_DBM -90
 #define SIGNAL_MAX_DBM -20
 
