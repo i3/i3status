@@ -1,6 +1,7 @@
 // vim:ts=4:sw=4:expandtab
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 #include <pulse/pulseaudio.h>
 #include "i3status.h"
 #include "queue.h"
@@ -78,7 +79,7 @@ static void store_volume_from_sink_cb(pa_context *c,
         return;
 
     int avg_vol = pa_cvolume_avg(&info->volume);
-    int vol_perc = (int)((long long)avg_vol * 100 / PA_VOLUME_NORM);
+    int vol_perc = roundf((float)avg_vol * 100 / PA_VOLUME_NORM);
     int composed_volume = COMPOSE_VOLUME_MUTE(vol_perc, info->mute);
 
     /* if this is the default sink we must try to save it twice: once with
