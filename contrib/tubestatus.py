@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 
-# Iarnród 
 #
 # Copyright:   Conor O'Callghan 2015
-# Version:     v1.0.1
+# Version:     v1.1.1
 # 
 # Please feel free to fork this project, modify the code and improve 
 # it on the github repo https://github.com/brioscaibriste/iarnrod 
-
+ 
 # i3status
 #
 # This script works with i3status, though probably not as it should :[
@@ -41,56 +40,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
-import json
-import sys
-from urllib.request import urlopen
+import tubestatusdef
 
-# Parse our command line argument for the line name
-parser = argparse.ArgumentParser()
-parser.add_argument('--line',dest='LineName',help='Specify the London line you want to report on')
-args = parser.parse_args()
+# Iarnrod Tuning options
+Throttling = "True"
+PollInterval = 5 # This is the status polling interval in minutes  
+StatusOutput = "small" # You can set this to small or large and it will change the output format
+TFileName = '/tmp/iarn-i3-temp' # Where to store the timestamp file for poll throttling
+SFileName = '/tmp/iarn-i3-stat' # Where to store the cache of the line status
 
-# Convert the line name to lower case for easy comparison
-Line = (args.LineName)
-Line = Line.lower()
+# Parse the command line arguments
+Line = tubestatusdef.ParseArgs()
 
-if Line not in ('district','circle','victoria','central','northern',
-     'bakerloo','hammersmith-city','jubilee','metropolitan', 
-     'piccadilly','waterloo-city','dlr',):
-     print ("\nError, you have specified " + Line + " as your line. You must specify one of the following: "
-            "\n\tDistrict"
-            "\n\tCircle"
-            "\n\tVictora"
-            "\n\tCentral"
-            "\n\tNorthern"
-            "\n\tPiccadilly"
-            "\n\tBakerloo"
-            "\n\thammersmith-city"
-            "\n\twaterloo-city"
-            "\n\tDLR"
-            "\n\tMetropolitan"
-            "\n\tJubilee\n")
-     sys.exit(1)
+# Throttling
+Run = tubestatusdef.Throttle(PollInterval,Throttling,TFileName)
 
-# You can set this to small or large and it will change the output format
-StatusOutput = "small"
-
-# TFL Unified API URL
-TFLDataURL = "https://api.tfl.gov.uk/Line/" + Line + ("/Status?detail=False"
-    "&app_id=&app_key=")
-
-# Read all the information from JSON at the specified URL
-RawData = urlopen(TFLDataURL).readall().decode('utf8') or die("Error, failed to "
-    "retrieve the data from the TFL website")
-TFLData = json.loads(RawData)
-
-# Sanitize the data to get the line status
-Scratch = (TFLData[0]['lineStatuses'])
-LineStatusData = (Scratch[0]['statusSeverityDescription'])
-
-# Convert the tube line back to upper case for nice display
-Line = Line.upper()
+# Gather the line status data
+LineStatusData = tubestatusdef.RetrieveTFLData(Line,Run,SFileName)
 
 # Generate the status output and print
 if (StatusOutput == "small") and (LineStatusData == "Good Service"):
