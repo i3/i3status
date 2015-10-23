@@ -2,7 +2,7 @@
 
 #
 # Copyright:   Conor O'Callghan 2015
-# Version:     v1.1.1
+# Version:     v1.1.2
 # 
 # Please feel free to fork this project, modify the code and improve 
 # it on the github repo https://github.com/brioscaibriste/iarnrod 
@@ -43,8 +43,8 @@
 import tubestatusdef
 
 # Iarnrod Tuning options
-Throttling = "True"
-PollInterval = 5 # This is the status polling interval in minutes  
+Throttling = "True" # Limit the burden on the API, throttle the connections
+PollIntervalMinutes = 5 # This is the status polling interval in minutes  
 StatusOutput = "small" # You can set this to small or large and it will change the output format
 TFileName = '/tmp/iarn-i3-temp' # Where to store the timestamp file for poll throttling
 SFileName = '/tmp/iarn-i3-stat' # Where to store the cache of the line status
@@ -53,7 +53,7 @@ SFileName = '/tmp/iarn-i3-stat' # Where to store the cache of the line status
 Line = tubestatusdef.ParseArgs()
 
 # Throttling
-Run = tubestatusdef.Throttle(PollInterval,Throttling,TFileName)
+Run = tubestatusdef.Throttle(PollIntervalMinutes,Throttling,TFileName)
 
 # Gather the line status data
 LineStatusData = tubestatusdef.RetrieveTFLData(Line,Run,SFileName)
