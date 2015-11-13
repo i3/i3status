@@ -22,7 +22,7 @@ void print_lst(yajl_gen json_gen, char *buffer, const char *title, const char *l
     now = time(NULL);
     d = (now / 86400.0) + 2440587.5 - 2451545.0; /* days since 2000 Jan 1 1200h UTC */
     t = d / 36525;                               /* centuries since 2000 Jan 1 1200h UTC */
-    GMST_s = 24110.54841 + 8640184.812866 * t + 0.093104 * t * t - 0.0000062 * t * t * t;
+    GMST_s = 24110.54841 + 8640184.812866 * t + 0.093104 * pow(t, 2) - 0.0000062 * pow(t, 3);
     GMST_s += now;
     GMST_s = GMST_s - 86400.0 * floor(GMST_s / 86400.0);
 
