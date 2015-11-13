@@ -362,6 +362,12 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t lst_opts[] = {
+        CFG_STR("lon", "0", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t tztime_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S %Z", CFGF_NONE),
         CFG_STR("timezone", "", CFGF_NONE),
@@ -433,6 +439,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
+        CFG_SEC("lst", lst_opts, CFGF_NONE),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
@@ -649,6 +656,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("time") {
                 SEC_OPEN_MAP("time");
                 print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, tv.tv_sec);
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("lst") {
+                SEC_OPEN_MAP("lst");
+                print_lst(json_gen, buffer, NULL, cfg_getstr(sec, "lon"));
                 SEC_CLOSE_MAP;
             }
 
