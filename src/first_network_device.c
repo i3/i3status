@@ -23,6 +23,13 @@ const char *first_eth_interface(const net_type_t type) {
          addrp = addrp->ifa_next) {
         if (strncasecmp("lo", addrp->ifa_name, strlen("lo")) == 0)
             continue;
+        if (addrp->ifa_addr == NULL)
+            continue;
+        // Skip PF_PACKET addresses (MAC addresses), as they are present on any
+        // ethernet interface.
+        if (addrp->ifa_addr->sa_family != AF_INET &&
+            addrp->ifa_addr->sa_family != AF_INET6)
+            continue;
         // Skip this interface if it is a wireless interface.
         snprintf(path, sizeof(path), "/sys/class/net/%s/wireless", addrp->ifa_name);
         const bool is_wireless = (stat(path, &stbuf) == 0);
