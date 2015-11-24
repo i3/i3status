@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <ifaddrs.h>
