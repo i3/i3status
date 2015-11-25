@@ -427,6 +427,15 @@ details on the format string.
 
 *Example format*: +%{%a, %b %d%}, %Y%N - %H+
 
+=== LST
+
+Outputs the local mean sidereal time at a specified longitude.
+If no longitude is provided, 0deg is used.
+
+*Example order*: +lst+
+
+*Example lon*: +-70.40417+
+
 === Volume
 
 Outputs the volume of the specified mixer on the specified device.  PulseAudio
