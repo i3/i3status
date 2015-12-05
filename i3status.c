@@ -295,6 +295,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("color_separator", "#333333", CFGF_NONE),
         CFG_INT("interval", 1, CFGF_NONE),
         CFG_COLOR_OPTS("#00FF00", "#FFFF00", "#FF0000"),
+        CFG_STR("markup", "none", CFGF_NONE),
         CFG_END()};
 
     cfg_opt_t run_watch_opts[] = {
@@ -365,6 +366,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t tztime_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S %Z", CFGF_NONE),
         CFG_STR("timezone", "", CFGF_NONE),
+        CFG_STR("format_time", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
@@ -532,6 +534,14 @@ int main(int argc, char *argv[]) {
     if (!valid_color(cfg_getstr(cfg_general, "color_good")) || !valid_color(cfg_getstr(cfg_general, "color_degraded")) || !valid_color(cfg_getstr(cfg_general, "color_bad")) || !valid_color(cfg_getstr(cfg_general, "color_separator")))
         die("Bad color format");
 
+    char *markup_str = cfg_getstr(cfg_general, "markup");
+    if (strcasecmp(markup_str, "pango") == 0)
+        markup_format = M_PANGO;
+    else if (strcasecmp(markup_str, "none") == 0)
+        markup_format = M_NONE;
+    else
+        die("Unknown markup format: \"%s\"\n", markup_str);
+
 #if YAJL_MAJOR >= 2
     yajl_gen json_gen = yajl_gen_alloc(NULL);
 #else
@@ -648,13 +658,13 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("time") {
                 SEC_OPEN_MAP("time");
-                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, tv.tv_sec);
+                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, NULL, tv.tv_sec);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("tztime") {
                 SEC_OPEN_MAP("tztime");
-                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), tv.tv_sec);
+                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), cfg_getstr(sec, "format_time"), tv.tv_sec);
                 SEC_CLOSE_MAP;
             }
 

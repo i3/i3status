@@ -184,6 +184,13 @@ format as the separator is drawn by i3bar directly otherwise. For the other
 output formats, the provided non-empty string will be automatically enclosed
 with the necessary coloring bits if color support is enabled.
 
+i3bar supports Pango markup, allowing your format strings to specify font
+color, size, etc. by setting the +markup+ directive to "pango". Note that the
+ampersand ("&"), less-than ("<"), greater-than (">"), single-quote ("'"), and
+double-quote (""") characters need to be replaced with "`&amp;`", "`&lt;`",
+"`&gt;`", "`&apos;`", and "`&quot;`" respectively. This is done automatically
+for generated content (e.g. wireless ESSID, time).
+
 *Example configuration*:
 -------------------------------------------------------------
 general {
@@ -416,6 +423,18 @@ in the +tztime+ module.
 *Example format*: +%Y-%m-%d %H:%M:%S %Z+
 
 *Example timezone*: +Europe/Berlin+
+
+If you would like to use markup in this section, there is a separate
++format_time+ option that is automatically escaped. Its output then replaces
+%time in the format string.
+
+*Example configuration (markup)*:
+-------------------------------------------------------------
+tztime time {
+	format = "<span foreground='#ffffff'>time:</span> %time"
+	format_time = "%H:%M %Z"
+}
+-------------------------------------------------------------
 
 === DDate
 

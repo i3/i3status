@@ -519,7 +519,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
         if (BEGINS_WITH(walk + 1, "essid")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
-                outwalk += sprintf(outwalk, "%s", info.essid);
+                maybe_escape_markup(info.essid, &outwalk);
             else
                 *(outwalk++) = '?';
             walk += strlen("essid");
