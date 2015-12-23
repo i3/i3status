@@ -22,7 +22,7 @@ i3status has the following dependencies:
 
 On debian-based systems, the following line will install all requirements:
 ```bash
-apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin libpulse-dev
+apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin libpulse-dev libnl-genl-3-dev
 ```
 
 ## Upstream
