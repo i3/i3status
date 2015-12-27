@@ -44,7 +44,7 @@ static bool parse_proc_stat(pid_t pid, char **outname, pid_t *outppid) {
 }
 
 static char *format_for_process(const char *name) {
-    if (strcasecmp(name, "i3bar") == 0)
+    if (strcasecmp(name, "i3bar") == 0 || strcasecmp(name, "swaybar") == 0)
         return "i3bar";
     else if (strcasecmp(name, "dzen2") == 0)
         return "dzen2";
