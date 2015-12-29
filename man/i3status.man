@@ -59,6 +59,12 @@ order += "cpu_temperature 0"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
+order += "file_contents Unread"
+
+file_contents Unread {
+        path = "/run/user/1000/notmuch/unread"
+        format = "%title: %contents"
+}
 
 wireless wlan0 {
         format_up = "W: (%quality at %essid, %bitrate) %ip"
@@ -208,6 +214,17 @@ disk "/" {
     format = "%avail"
 }
 -------------------------------------------------------------
+
+=== File Contents
+
+This module reads and displays file contents in i3status. The canonical example
+is to cache counts for emails somewhere on disk.
+
+*Example order*: +file_contents Unread+
+
+*Example path*: +path = "/run/user/1000/notmuch/unread"+
+
+*Example format*: +%title: %contents+
 
 === IPv6
 
