@@ -1,3 +1,31 @@
+2016-01-01 i3status 2.10
+
+ • man: fix typo in battery example
+ • Pass the "instance" JSON property key for tztime blocks
+ • Fix build (and build warnings) on FreeBSD
+ • Fix build on OpenBSD
+ • path_exists, run_watch: add format_down
+ • volume: add PulseAudio support. This significantly reduces battery
+   consumption on systems that use PulseAudio, which is the default on any
+   modern Linux desktop.
+ • wireless/OpenBSD: use the maximum rssi, not the scaled percentage for the
+   signal level.
+ • make: Add support for differing PREFIX and MANPREFIX.
+ • battery: make output HH:MM across all platforms.
+ • battery: clamp the percentage at 100% when last_full_capacity is enabled.
+ • Use format_not_mounted if the directory for a disk_info block does not
+   exist.
+ • disk_info/OS X: Fix build.
+ • volume/OpenBSD: use SndIO.
+ • eth, wireless: Use "color_degraded" when interface has no IP.
+ • eth, wireless/FreeBSD: Fix for recent FreeBSD versions.
+ • wireless/Linux: switch from libiw to libnl. This allows you to run i3status
+   on kernels which don’t have the wext compatibility module enabled.
+ • battery/FreeBSD: properly detect charging status
+ • eth: first_eth_interface: ignore MAC addresses, look for IPv4/IPv6 addresses
+ • Implement support for Pango markup.
+ • format detection: recognise swaybar
+
 2015-03-22 i3status 2.9
 
  • meta: i3status is now on GitHub and uses clang-format
