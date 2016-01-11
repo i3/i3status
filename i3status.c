@@ -82,6 +82,7 @@ void fatalsig(int signum) {
  *
  */
 void sigusr1(int signum) {
+    pthread_cond_broadcast(&i3status_sleep_cond);
 }
 
 /*
