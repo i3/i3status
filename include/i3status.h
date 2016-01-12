@@ -222,7 +222,5 @@ extern cfg_t *cfg, *cfg_general, *cfg_section;
 
 extern void **cur_instance;
 
-extern pthread_cond_t i3status_sleep_cond;
-extern pthread_mutex_t i3status_sleep_mutex;
-
+extern pthread_t main_thread;
 #endif
