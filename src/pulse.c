@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 #include <pulse/pulseaudio.h>
 #include "i3status.h"
 #include "queue.h"
@@ -89,9 +90,7 @@ static void store_volume_from_sink_cb(pa_context *c,
          save_volume(DEFAULT_SINK_INDEX, composed_volume)) |
         save_volume(info->index, composed_volume)) {
         /* if the volume or mute flag changed, wake the main thread */
-        pthread_mutex_lock(&i3status_sleep_mutex);
-        pthread_cond_broadcast(&i3status_sleep_cond);
-        pthread_mutex_unlock(&i3status_sleep_mutex);
+        pthread_kill(main_thread, SIGUSR1);
     }
 }
 
