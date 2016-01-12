@@ -74,8 +74,8 @@ ethernet eth0 {
 battery 0 {
         format = "%status %percentage %remaining %emptytime"
         format_down = "No battery"
-        status_chr = "⚇ CHR"
-        status_bat = "⚡ BAT"
+        status_chr = "⚡ CHR"
+        status_bat = "🔋 BAT"
         status_full = "☻ FULL"
         path = "/sys/class/power_supply/BAT%d/uevent"
         low_threshold = 10
@@ -350,9 +350,9 @@ is used.
 
 *Example format_down*: +No battery+
 
-*Example status_chr*: +⚇ CHR+
+*Example status_chr*: +⚡ CHR+
 
-*Example status_bat*: +⚡ BAT+
+*Example status_bat*: +🔋 BAT+
 
 *Example status_full*: +☻ FULL+
 
