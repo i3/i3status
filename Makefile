@@ -108,6 +108,11 @@ install:
 	install -m 644 i3status.conf $(DESTDIR)$(SYSCONFDIR)/i3status.conf
 	install -m 644 man/i3status.1 $(DESTDIR)$(MANPREFIX)/share/man/man1
 
+uninstall:
+	rm $(DESTDIR)$(PREFIX)/bin/i3status
+	rm $(DESTDIR)$(SYSCONFDIR)/i3status.conf
+	rm $(DESTDIR)$(MANPREFIX)/share/man/man1/i3status.*
+
 release:
 	[ -f i3status-${VERSION} ] || rm -rf i3status-${VERSION}
 	mkdir i3status-${VERSION}
