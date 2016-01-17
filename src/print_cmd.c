@@ -6,11 +6,9 @@
 
 #include "i3status.h"
 
-#define BUFSIZE 1024
-
 void print_cmd(yajl_gen json_gen, char *buffer, const char *cmd) {
     char *outwalk = buffer;
-    char path[BUFSIZE];
+    char path[1024];
     FILE *fp;
     fp = popen(cmd, "r");
     fgets(path, sizeof(path) - 1, fp);
