@@ -13,11 +13,11 @@ void print_cmd(yajl_gen json_gen, char *buffer, const char *cmd) {
     char path[BUFSIZE];
     FILE *fp;
     fp = popen(cmd, "r");
-    fgets(path, sizeof(path)-1, fp);
+    fgets(path, sizeof(path) - 1, fp);
     pclose(fp);
 
     char *nl = index(path, '\n');
-    if(nl != NULL){
+    if (nl != NULL) {
         *nl = '\0';
     }
     maybe_escape_markup(path, &outwalk);

@@ -707,7 +707,6 @@ int main(int argc, char *argv[]) {
                 print_cmd(json_gen, buffer, cfg_getstr(sec, "cmd"));
                 SEC_CLOSE_MAP;
             }
-
         }
         if (output_format == O_I3BAR) {
             yajl_gen_array_close(json_gen);
