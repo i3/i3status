@@ -494,6 +494,22 @@ volume master {
 }
 -------------------------------------------------------------
 
+=== Custom command
+
+Outputs the first line of the stdout of the given shell command passed to *sh
+-c*. Note that the last newline is automatically removed.
+
+*Example order*: +cmd quodlibet+
+
+*Example cmd*: +pkill -0 quodlibet && quodlibet --print-playing+
+
+*Example configuration*:
+-------------------------------------------------------------
+cmd quodlibet {
+	cmd = "pkill -0 quodlibet && quodlibet --print-playing"
+}
+-------------------------------------------------------------
+
 == Universal module options
 
 When using the i3bar output format, there are a few additional options that

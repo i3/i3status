@@ -421,6 +421,12 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t cmd_opts[] = {
+        CFG_STR("cmd", "echo 'hello world'", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -434,6 +440,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
+        CFG_SEC("cmd", cmd_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
@@ -694,6 +701,13 @@ int main(int argc, char *argv[]) {
                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
+
+            CASE_SEC("cmd") {
+                SEC_OPEN_MAP("cmd");
+                print_cmd(json_gen, buffer, cfg_getstr(sec, "cmd"));
+                SEC_CLOSE_MAP;
+            }
+
         }
         if (output_format == O_I3BAR) {
             yajl_gen_array_close(json_gen);
