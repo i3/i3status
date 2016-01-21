@@ -82,6 +82,9 @@ def check_mail(label, nomail, ignore, colors):
             else:
                 return nomail, colors[0]
 
+        except IOError, exception:
+            return '{0}: {1}'.format(name, exception.strerror), colors[2]
+
         except:
             pass
 
