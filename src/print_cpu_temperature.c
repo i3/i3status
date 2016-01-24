@@ -65,7 +65,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     // colorized output for normal color
     START_COLOR("color_good");
     colorful_output = true;
-    
+
     for (walk = format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
