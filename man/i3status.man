@@ -362,6 +362,13 @@ is used.
 
 *Example path*: +/sys/class/power_supply/CMB1/uevent+
 
+=== CPU-Frequency
+Sums the frequency of all CPUs and outputs an average frequency in MHz.
+
+*Example order*: +cpu_freq+
+
+*Example format*: +%MHz+
+
 === CPU-Temperature
 
 Gets the temperature of the given thermal zone. It is possible to
