@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 
 #
-# Copyright:   Conor O'Callghan 2015
-# Version:     v1.1.2
+# Copyright:   Conor O'Callghan 2016
+# Version:     v1.1.3
 # 
 # Please feel free to fork this project, modify the code and improve 
 # it on the github repo https://github.com/brioscaibriste/iarnrod 
- 
+#
+# Powered by TfL Open Data	
+#
 # i3status
 #
 # This script works with i3status, though probably not as it should :[
