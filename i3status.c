@@ -390,6 +390,12 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t cpufreq_opts[] = {
+        CFG_STR("format", "%MHz", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t temp_opts[] = {
         CFG_STR("format", "%degrees C", CFGF_NONE),
         CFG_STR("path", NULL, CFGF_NONE),
@@ -429,6 +435,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ethernet", ethernet_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("battery", battery_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("cpu_freq", cpufreq_opts, CFGF_NONE),
         CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
@@ -680,6 +687,12 @@ int main(int argc, char *argv[]) {
                              cfg_getstr(sec, "device"),
                              cfg_getstr(sec, "mixer"),
                              cfg_getint(sec, "mixer_idx"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("cpu_freq") {
+                SEC_OPEN_MAP("cpu_freq");
+                print_cpu_freq(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
 
