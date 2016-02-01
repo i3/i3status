@@ -513,6 +513,15 @@ min_width::
 	set a sensible minimum width regardless of which font you are using, and at
 	what particular size. Please note that a number enclosed with quotes will
 	still be treated as a number.
+separator::
+	A boolean value which specifies whether a separator line should be drawn
+	after this block. The default is true, meaning the separator line will be
+	drawn. Note that if you disable the separator line, there will still be a
+	gap after the block, unless you also use separator_block_width.
+separator_block_width::
+	The amount of pixels to leave blank after the block. In the middle of this
+	gap, a separator symbol will be drawn unless separator is disabled. This is
+	why the specified width should leave enough space for the separator symbol.
 
 *Example configuration*:
 -------------------------------------------------------------
@@ -520,6 +529,8 @@ disk "/" {
     format = "%avail"
     align = "left"
     min_width = 100
+    separator = false
+    separator_block_width = 1
 }
 -------------------------------------------------------------
 
