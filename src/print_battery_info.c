@@ -63,6 +63,10 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     sprintf(batpath, path, number);
     INSTANCE(batpath);
 
+    // colorized output for normal color
+    START_COLOR("color_good");
+    colorful_output = true;
+
 #define BATT_STATUS_NAME(status) \
     (status == CS_CHARGING ? status_chr : (status == CS_DISCHARGING ? status_bat : status_full))
 
@@ -176,8 +180,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             } else if (strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
                 START_COLOR("color_bad");
                 colorful_output = true;
-            } else {
-                colorful_output = false;
             }
         }
 
