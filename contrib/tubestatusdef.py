@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 
 #
 # Copyright:   Conor O'Callghan 2016
@@ -30,13 +30,11 @@ import os
 from urllib.request import urlopen
 
 '''
-
 ParseArgs
 
 A simple function to parse the command line arguments passed to the function. 
 The function does very little sanitisation on the input variables. The 
 argument passed is then returned from the function.  
-
 '''
 
 def ParseArgs():
@@ -81,7 +79,6 @@ def ParseArgs():
     return Line    
 
 '''
-
 RetrieveTFLData
 
 Inputs: 
@@ -93,14 +90,17 @@ SFileName - The file in which to store the line status cache
 This function takes the Line variable (a name of a Transport For London line 
 name) and polls the TFL API. The function then returns the current line
 status for the specified line. 
-
 '''
 
 def RetrieveTFLData(Line,Run,SFileName):
 
+    # TFL data configuration, this could be moved to a configuration file
+    APIKey = ""
+    AppID = ""
+
     # TFL Unified API URL
     TFLDataURL = "https://api.tfl.gov.uk/Line/" + Line + ("/Status?detail=False"
-    "&app_id=&app_key=")
+    "&app_id=") + AppID + ("&app_key=") + APIKey
 
     if Run: 
         # Read all the information from JSON at the specified URL, can be re-done with requests?
@@ -125,7 +125,6 @@ def RetrieveTFLData(Line,Run,SFileName):
     return LineStatusData
 
 '''
-
 Throttle
 
 Inputs 

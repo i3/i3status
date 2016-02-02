@@ -1,8 +1,18 @@
 # tubestatus
 
+**To use this script, you need an a free Application Programming Interface (API)
+ key and AppID from TFL, you can sign up for these here 
+https://api-portal.tfl.gov.uk/**
+
+Once you have these details you need to add them to the script tubestatusdef.py.
+
+You can then follow the normal running steps below.
+
+## Overview
+
 This script is a very crude JSON retrieval/parse system which utilises the 
-Transport For London (TFL) Application Interface (API) to retrieve the current 
-service status of a given TFL rail line. 
+Transport For London (TFL) API to retrieve the current service status of a 
+given TFL rail line. 
 
 The script does not carry out any validation on the data recieved from TFL and
  there is very little sanitisation of the data fed via the command line.
@@ -19,8 +29,6 @@ Before you modify and use this code, you should read the TFL API rules on the
 
 ## General usage
 
-  * **You must sign up for a free TFL API key from
-      https://api-portal.tfl.gov.uk/**
   * **This script requires python3** 
   * **This script can currently only deal with one line specified**
 
