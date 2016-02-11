@@ -116,6 +116,13 @@ cpu_temperature 0 {
 disk "/" {
 	format = "%free"
 }
+
+brightness {
+    cur = "/sys/class/backlight/intel_backlight/brightness"
+    max = "/sys/class/backlight/intel_backlight/max_brightness"
+    # by default, an UTF8 sun
+    txt = "brightness: "
+}
 -------------------------------------------------------------
 
 === General
@@ -396,6 +403,18 @@ getting higher than the configured threshold. Defaults to 5.
 *Example format*: +%1min %5min %15min+
 
 *Example max_threshold*: +"0,1"+
+
+=== Screen Brightness
+
+Outputs the crurrent brightness level of your screen. Mostly useless.
+
+*Example order*: +brightness+
+
+*Example cur*: +/sys/class/backlight/intel_backlight/brightness+
+
+*Example max*: +/sys/class/backlight/intel_backlight/max_brightness+
+
+*Example txt*: +brightness: +
 
 === Time
 

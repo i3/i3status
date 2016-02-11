@@ -293,6 +293,14 @@ static char *get_default_separator() {
 int main(int argc, char *argv[]) {
     unsigned int j;
 
+    cfg_opt_t brightness_opts[] = {
+        CFG_STR("max", NULL, CFGF_NONE),
+        CFG_STR("cur", NULL, CFGF_NONE),
+        CFG_STR("txt", "☀: ", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t general_opts[] = {
         CFG_STR("output_format", "auto", CFGF_NONE),
         CFG_BOOL("colors", 1, CFGF_NONE),
@@ -472,6 +480,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("brightness", brightness_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -630,6 +639,12 @@ int main(int argc, char *argv[]) {
                 print_separator(separator);
 
             const char *current = cfg_getnstr(cfg, "order", j);
+
+            CASE_SEC("brightness") {
+                SEC_OPEN_MAP("brightness");
+                print_brightness(json_gen, buffer, cfg_getstr(sec, "max"), cfg_getstr(sec, "cur"), cfg_getstr(sec, "txt"));
+                SEC_CLOSE_MAP;
+            }
 
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
