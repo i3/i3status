@@ -45,6 +45,7 @@ char *pct_mark;
 #endif
 #define BATT_LIFE "hw.acpi.battery.life"
 #define BATT_TIME "hw.acpi.battery.time"
+#define BATT_RATE "hw.acpi.battery.rate"
 #define BATT_STATE "hw.acpi.battery.state"
 
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
