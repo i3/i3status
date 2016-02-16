@@ -254,7 +254,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
                    percentage_remaining, pct_mark);
 
-
     if (state == ACPI_BATT_STAT_DISCHARG) {
         int hours, minutes;
         minutes = remaining;
@@ -270,7 +269,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             colorful_output = true;
         }
         (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
-                       ((float)present_rate / 1000.0 ));
+                       ((float)present_rate / 1000.0));
     }
 #elif defined(__OpenBSD__)
     /*
