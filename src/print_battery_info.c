@@ -224,12 +224,10 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     }
 
     percentage_remaining = sysctl_rslt;
-    if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
-        OUTPUT_FULL_TEXT(format_down);
-        return;
+    if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) == 0) {
+        remaining = sysctl_rslt;
     }
 
-    remaining = sysctl_rslt;
     if (sysctlbyname(BATT_RATE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
         return;
