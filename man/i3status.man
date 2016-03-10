@@ -19,7 +19,7 @@ configuration files in the following order:
 
 1. ~/.i3status.conf
 2. ~/.config/i3status/config (or $XDG_CONFIG_HOME/i3status/config if set)
-3. /etc/i3status.conf
+3. /etc/i3status/config
 4. /etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
 
 == DESCRIPTION
