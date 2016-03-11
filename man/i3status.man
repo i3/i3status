@@ -613,7 +613,7 @@ Put that in some script, say +.bin/my_i3status.sh+ and execute that instead of i
 
 Note that if you want to use the JSON output format (with colors in i3bar), you
 need to use a slightly more complex wrapper script. There are examples in the
-contrib/ folder, see http://code.i3wm.org/i3status/tree/contrib
+contrib/ folder, see http://code.i3wm.org/i3status/tree/master/contrib
 
 == SIGNALS
 
