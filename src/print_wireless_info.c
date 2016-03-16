@@ -450,7 +450,7 @@ error1:
     return 0;
 }
 
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *quality_leading_character) {
     const char *walk;
     char *outwalk = buffer;
     wireless_info_t info;
@@ -483,9 +483,15 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
         if (BEGINS_WITH(walk + 1, "quality")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
-                if (info.quality_max)
+                if (info.quality_max) {
+                    char *start = outwalk;
                     outwalk += sprintf(outwalk, "%03d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
-                else
+                    if (quality_leading_character != NULL && strlen(quality_leading_character)>0)
+                        if (start[0] == '0') {
+                            start[0] = *quality_leading_character;
+                            if (start[1] == '0') start[1] = *quality_leading_character;
+                        }
+                } else
                     outwalk += sprintf(outwalk, "%d", info.quality);
             } else {
                 *(outwalk++) = '?';
