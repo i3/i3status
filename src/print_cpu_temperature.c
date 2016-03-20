@@ -1,6 +1,7 @@
 // vim:ts=4:sw=4:expandtab
 #include <stdlib.h>
 #include <limits.h>
+#include <glob.h>
 #include <stdio.h>
 #include <string.h>
 #include <yajl/yajl_gen.h>
@@ -57,8 +58,19 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
     if (path == NULL)
         asprintf(&thermal_zone, THERMAL_ZONE, zone);
-    else
-        asprintf(&thermal_zone, path, zone);
+    else {
+        static glob_t globbuf;
+        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+            die("glob() failed\n");
+        if (globbuf.gl_pathc == 0) {
+            /* No glob matches, the specified path does not contain a wildcard. */
+            asprintf(&thermal_zone, path, zone);
+        } else {
+            /* glob matched, we take the first match and ignore the others */
+            asprintf(&thermal_zone, "%s", globbuf.gl_pathv[0]);
+        }
+        globfree(&globbuf);
+    }
 
     INSTANCE(thermal_zone);
 
