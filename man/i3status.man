@@ -76,6 +76,7 @@ battery 0 {
         format_down = "No battery"
         status_chr = "⚡ CHR"
         status_bat = "🔋 BAT"
+        status_unk = "? UNK"
         status_full = "☻ FULL"
         path = "/sys/class/power_supply/BAT%d/uevent"
         low_threshold = 10
@@ -315,7 +316,7 @@ network interface found on the system (excluding devices starting with "lo").
 
 === Battery
 
-Gets the status (charging, discharging, running), percentage, remaining
+Gets the status (charging, discharging, unknown, full), percentage, remaining
 time and power consumption (in Watts) of the given battery and when it's
 estimated to be empty. If you want to use the last full capacity instead of the
 design capacity (when using the design capacity, it may happen that your
@@ -339,10 +340,10 @@ colored red. The low_threshold type can be of threshold_type "time" or
 
 Optionally custom strings including any UTF-8 symbols can be used for different
 battery states. This makes it possible to display individual symbols
-for each state (charging, discharging, full)
+for each state (charging, discharging, unknown, full)
 Of course it will also work with special iconic fonts, such as FontAwesome.
-If any of this special status strings is omitted, the default (CHR, BAT, FULL)
-is used.
+If any of these special status strings are omitted, the default (CHR, BAT, UNK,
+FULL) is used.
 
 *Example order*: +battery 0+
 
@@ -353,6 +354,8 @@ is used.
 *Example status_chr*: +⚡ CHR+
 
 *Example status_bat*: +🔋 BAT+
+
+*Example status_unk*: +? UNK+
 
 *Example status_full*: +☻ FULL+
 

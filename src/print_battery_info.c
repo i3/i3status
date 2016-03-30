@@ -34,7 +34,7 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
     time_t empty_time;
     struct tm *empty_tm;
     char buf[1024];
@@ -64,7 +64,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     INSTANCE(batpath);
 
 #define BATT_STATUS_NAME(status) \
-    (status == CS_CHARGING ? status_chr : (status == CS_DISCHARGING ? status_bat : status_full))
+    (status == CS_CHARGING ? status_chr : (status == CS_DISCHARGING ? status_bat : (status == CS_UNKNOWN ? status_unk : status_full)))
 
 #if defined(LINUX)
     if (!slurp(batpath, buf, sizeof(buf))) {
@@ -101,6 +101,10 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             status = CS_CHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
             status = CS_FULL;
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging"))
+            status = CS_DISCHARGING;
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
+            status = CS_UNKNOWN;
         else {
             /* The only thing left is the full capacity */
             if (last_full_capacity) {

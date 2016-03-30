@@ -170,6 +170,7 @@ char *pct_mark;
 
 typedef enum { CS_DISCHARGING,
                CS_CHARGING,
+               CS_UNKNOWN,
                CS_FULL } charging_status_t;
 
 /*
@@ -207,7 +208,7 @@ const char *first_eth_interface(const net_type_t type);
 
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *format_time, time_t t);
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr(const char *interface);
