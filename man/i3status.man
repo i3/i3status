@@ -381,11 +381,24 @@ specified thermal zone is getting too hot. Defaults to 75 degrees C.
 
 === CPU Usage
 
-Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+ (FreeBSD/OpenBSD).
+Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+
+(FreeBSD/OpenBSD).
+
+It is possible to define a max_threshold that will color the load
+value red in case the CPU average over the last interval is getting
+higher than the configured threshold. Defaults to 200 (i.e. off).
+
+It is possible to define a degraded_threshold that will color the load
+value yellow in case the CPU average over the last interval is getting
+higher than the configured threshold.  Defaults to 150 (i.e. off).
 
 *Example order*: +cpu_usage+
 
 *Example format*: +%usage+
+
+*Example max_threshold*: +"200,0"+
+
+*Example degraded_threshold*: +"150,0"+
 
 === Load
 
