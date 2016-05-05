@@ -20,6 +20,7 @@ static pa_threaded_mainloop *main_loop = NULL;
 static pa_context *context = NULL;
 static pa_mainloop_api *api = NULL;
 static bool context_ready = false;
+static bool mainloop_thread_running = false;
 static uint32_t default_sink_idx = DEFAULT_SINK_INDEX;
 TAILQ_HEAD(tailhead, indexed_volume_s) cached_volume =
     TAILQ_HEAD_INITIALIZER(cached_volume);
@@ -152,6 +153,7 @@ static void context_state_callback(pa_context *c, void *userdata) {
         case PA_CONTEXT_SETTING_NAME:
         case PA_CONTEXT_TERMINATED:
         default:
+            context_ready = false;
             break;
 
         case PA_CONTEXT_READY: {
@@ -169,7 +171,10 @@ static void context_state_callback(pa_context *c, void *userdata) {
         } break;
 
         case PA_CONTEXT_FAILED:
-            pulseaudio_error_log(c);
+            /* server disconnected us, attempt to reconnect */
+            context_ready = false;
+            pa_context_unref(context);
+            context = NULL;
             break;
     }
 }
@@ -235,12 +240,14 @@ bool pulse_initialize(void) {
             pulseaudio_error_log(context);
             return false;
         }
-        if (pa_threaded_mainloop_start(main_loop) < 0) {
+        if (!mainloop_thread_running &&
+            pa_threaded_mainloop_start(main_loop) < 0) {
             pulseaudio_error_log(context);
             pa_threaded_mainloop_free(main_loop);
             main_loop = NULL;
             return false;
         }
+        mainloop_thread_running = true;
     }
     return true;
 }
