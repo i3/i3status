@@ -15,6 +15,10 @@
 #define IW_ESSID_MAX_SIZE 32
 #endif
 
+#ifdef __APPLE__
+#define IW_ESSID_MAX_SIZE 32
+#endif
+
 #ifdef __FreeBSD__
 #include <sys/param.h>
 #include <sys/ioctl.h>
