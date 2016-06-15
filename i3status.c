@@ -229,12 +229,7 @@ static char *resolve_tilde(const char *path) {
 static char *get_config_path(void) {
     char *xdg_config_home, *xdg_config_dirs, *config_path;
 
-    /* 1: check the traditional path under the home directory */
-    config_path = resolve_tilde("~/.i3status.conf");
-    if (path_exists(config_path))
-        return config_path;
-
-    /* 2: check for $XDG_CONFIG_HOME/i3status/config */
+    /* 1: check for $XDG_CONFIG_HOME/i3status/config */
     if ((xdg_config_home = getenv("XDG_CONFIG_HOME")) == NULL)
         xdg_config_home = "~/.config";
 
@@ -247,15 +242,14 @@ static char *get_config_path(void) {
         return config_path;
     free(config_path);
 
-    /* 3: check the traditional path under /etc */
-    config_path = SYSCONFDIR "/i3status.conf";
-    if (path_exists(config_path))
-        return sstrdup(config_path);
-
-    /* 4: check for $XDG_CONFIG_DIRS/i3status/config */
+    /* 2: check for $XDG_CONFIG_DIRS/i3status/config */
     if ((xdg_config_dirs = getenv("XDG_CONFIG_DIRS")) == NULL)
         xdg_config_dirs = "/etc/xdg";
 
+    /* 3: check the traditional path under the home directory */
+    config_path = resolve_tilde("~/.i3status.conf");
+    if (path_exists(config_path))
+        return config_path;
     char *buf = strdup(xdg_config_dirs);
     char *tok = strtok(buf, ":");
     while (tok != NULL) {
@@ -271,6 +265,11 @@ static char *get_config_path(void) {
         tok = strtok(NULL, ":");
     }
     free(buf);
+
+    /* 4: check the traditional path under /etc */
+    config_path = SYSCONFDIR "/i3status.conf";
+    if (path_exists(config_path))
+        return sstrdup(config_path);
 
     die("Unable to find the configuration file (looked at "
         "~/.i3status.conf, $XDG_CONFIG_HOME/i3status/config, "

@@ -17,10 +17,10 @@ i3status [-c configfile] [-h] [-v]
 Specifies an alternate configuration file path. By default, i3status looks for
 configuration files in the following order:
 
-1. ~/.i3status.conf
-2. ~/.config/i3status/config (or $XDG_CONFIG_HOME/i3status/config if set)
-3. /etc/i3status.conf
-4. /etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
+1. ~/.config/i3status/config (or $XDG_CONFIG_HOME/i3status/config if set)
+2. /etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
+3. ~/.i3status.conf
+4. /etc/i3status.conf
 
 == DESCRIPTION
 
