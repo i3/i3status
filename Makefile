@@ -1,3 +1,5 @@
+TOPDIR=$(shell pwd)
+
 ifndef PREFIX
   PREFIX=/usr
 endif
@@ -17,7 +19,7 @@ CFLAGS+=-g
 CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
 CPPFLAGS+=-DSYSCONFDIR=\"$(SYSCONFDIR)\"
-CPPFLAGS+=-DVERSION=\"${GIT_VERSION}\"
+CPPFLAGS+=-DVERSION=\"${I3STATUS_VERSION}\"
 CFLAGS+=-Iinclude
 LIBS+=-lconfuse
 LIBS+=-lyajl
@@ -25,8 +27,14 @@ LIBS+=-lpulse
 LIBS+=-lm
 LIBS+=-lpthread
 
-VERSION:=$(shell git describe --tags --abbrev=0)
-GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
+ifeq ($(wildcard .git),)
+  # not in git repository
+  VERSION := '$(shell [ -f $(TOPDIR)/VERSION ] && cat $(TOPDIR)/VERSION)'
+  I3STATUS_VERSION := '$(shell [ -f $(TOPDIR)/I3STATUS_VERSION ] && cat $(TOPDIR)/I3STATUS_VERSION)'
+else
+  VERSION:=$(shell git describe --tags --abbrev=0)
+  I3STATUS_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
+endif
 OS:=$(shell uname)
 
 ifeq ($(OS),Linux)
@@ -120,6 +128,6 @@ release:
 	cp -r include i3status-${VERSION}
 	cp -r yajl-fallback i3status-${VERSION}
 	cp -r contrib i3status-${VERSION}
-	sed -e 's/^GIT_VERSION:=\(.*\)/GIT_VERSION=${GIT_VERSION}/g;s/^VERSION:=\(.*\)/VERSION=${VERSION}/g' Makefile > i3status-${VERSION}/Makefile
+	sed -e 's/^I3STATUS_VERSION:=\(.*\)/I3STATUS_VERSION=${I3STATUS_VERSION}/g;s/^VERSION:=\(.*\)/VERSION=${VERSION}/g' Makefile > i3status-${VERSION}/Makefile
 	tar cjf i3status-${VERSION}.tar.bz2 i3status-${VERSION}
 	rm -rf i3status-${VERSION}
