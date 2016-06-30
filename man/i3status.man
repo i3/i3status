@@ -433,9 +433,10 @@ If you would like to use markup in this section, there is a separate
 
 *Example configuration (markup)*:
 -------------------------------------------------------------
-tztime time {
+tztime berlin {
 	format = "<span foreground='#ffffff'>time:</span> %time"
 	format_time = "%H:%M %Z"
+	timezone = "Europe/Berlin"
 }
 -------------------------------------------------------------
 
