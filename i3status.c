@@ -413,8 +413,8 @@ int main(int argc, char *argv[]) {
 
     cfg_opt_t usage_opts[] = {
         CFG_STR("format", "%usage", CFGF_NONE),
-        CFG_FLOAT("max_threshold", 200, CFGF_NONE),
-        CFG_FLOAT("degraded_threshold", 200, CFGF_NONE),
+        CFG_FLOAT("max_threshold", 95, CFGF_NONE),
+        CFG_FLOAT("degraded_threshold", 90, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
