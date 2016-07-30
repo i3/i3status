@@ -41,11 +41,12 @@ static int prev_idle = 0;
  * percentage.
  *
  */
-void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
+void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold, const float degraded_threshold) {
     const char *walk;
     char *outwalk = buffer;
     int curr_user = 0, curr_nice = 0, curr_system = 0, curr_idle = 0, curr_total;
     int diff_idle, diff_total, diff_usage;
+    bool colorful_output = false;
 
 #if defined(LINUX)
     static char statpath[512];
@@ -101,10 +102,21 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format) {
             continue;
         }
 
+        if (diff_usage >= max_threshold) {
+            START_COLOR("color_bad");
+            colorful_output = true;
+        } else if (diff_usage >= degraded_threshold) {
+            START_COLOR("color_degraded");
+            colorful_output = true;
+        }
+
         if (BEGINS_WITH(walk + 1, "usage")) {
             outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
             walk += strlen("usage");
         }
+
+        if (colorful_output)
+            END_COLOR;
     }
 
     OUTPUT_FULL_TEXT(buffer);
