@@ -219,6 +219,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
     int sysctl_rslt;
+    int percentage_remaining;
     size_t sysctl_size = sizeof(sysctl_rslt);
 
     if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
@@ -226,22 +227,26 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         return;
     }
 
-    present_rate = sysctl_rslt;
-    if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
+    percentage_remaining = sysctl_rslt;
+    if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) == 0) {
+        remaining = sysctl_rslt;
+    }
+
+    if (sysctlbyname(BATT_RATE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
         return;
     }
 
-    remaining = sysctl_rslt;
+    present_rate = sysctl_rslt;
     if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
         return;
     }
 
     state = sysctl_rslt;
-    if (state == 0 && present_rate == 100)
+    if (state == 0 && percentage_remaining == 100)
         status = CS_FULL;
-    else if ((state & ACPI_BATT_STAT_CHARGING) && present_rate < 100)
+    else if ((state & ACPI_BATT_STAT_CHARGING) && percentage_remaining < 100)
         status = CS_CHARGING;
     else
         status = CS_DISCHARGING;
@@ -251,7 +256,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
     (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
-                   present_rate, pct_mark);
+                   percentage_remaining, pct_mark);
 
     if (state == ACPI_BATT_STAT_DISCHARG) {
         int hours, minutes;
@@ -267,6 +272,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             START_COLOR("color_bad");
             colorful_output = true;
         }
+        (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
+                       ((float)present_rate / 1000.0));
     }
 #elif defined(__OpenBSD__)
     /*
