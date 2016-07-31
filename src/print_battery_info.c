@@ -38,7 +38,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     time_t empty_time;
     struct tm *empty_tm;
     char buf[1024];
-    char percentagebuf[16];
     char remainingbuf[256];
     char emptytimebuf[256];
     char consumptionbuf[256];
@@ -50,9 +49,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         remaining = -1,
         present_rate = -1,
         voltage = -1;
+    float percentage_remaining = -1;
     charging_status_t status = CS_DISCHARGING;
 
-    memset(percentagebuf, '\0', sizeof(percentagebuf));
     memset(remainingbuf, '\0', sizeof(remainingbuf));
     memset(emptytimebuf, '\0', sizeof(emptytimebuf));
     memset(consumptionbuf, '\0', sizeof(consumptionbuf));
@@ -134,7 +133,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         return;
     }
 
-    float percentage_remaining = (((float)remaining / (float)full_design) * 100);
+    percentage_remaining = (((float)remaining / (float)full_design) * 100);
     /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
      * charged, even though that’s plainly wrong. For people who chose to see
      * the percentage calculated based on the last full capacity, we clamp the
@@ -142,11 +141,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
      * See http://bugs.debian.org/785398 */
     if (last_full_capacity && percentage_remaining > 100) {
         percentage_remaining = 100;
-    }
-    if (integer_battery_capacity) {
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00f%s", percentage_remaining, pct_mark);
-    } else {
-        (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.02f%s", percentage_remaining, pct_mark);
     }
 
     if (present_rate > 0 && status != CS_FULL) {
@@ -219,7 +213,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         return;
     }
 
-    present_rate = sysctl_rslt;
+    integer_battery_capacity = true;
+    percentage_remaining = sysctl_rslt;
     if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
         return;
@@ -232,17 +227,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     }
 
     state = sysctl_rslt;
-    if (state == 0 && present_rate == 100)
+    if (state == 0 && percentage_remaining == 100)
         status = CS_FULL;
-    else if ((state & ACPI_BATT_STAT_CHARGING) && present_rate < 100)
+    else if ((state & ACPI_BATT_STAT_CHARGING) && percentage_remaining < 100)
         status = CS_CHARGING;
     else
         status = CS_DISCHARGING;
 
     full_design = sysctl_rslt;
-
-    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
-                   present_rate, pct_mark);
 
     if (state == ACPI_BATT_STAT_DISCHARG) {
         int hours, minutes;
@@ -251,7 +243,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         minutes -= (hours * 60);
         (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
                        max(hours, 0), max(minutes, 0));
-        if (strcasecmp(threshold_type, "percentage") == 0 && present_rate < low_threshold) {
+        if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
         } else if (strcasecmp(threshold_type, "time") == 0 && remaining < (u_int)low_threshold) {
@@ -298,8 +290,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             break;
     }
 
-    /* integer_battery_capacity is implied as battery_life is already in whole numbers. */
-    (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%s", apm_info.battery_life, pct_mark);
+    integer_battery_capacity = true;
+    percentage_remaining = apm_info.battery_life;
 
     if (status == CS_DISCHARGING && low_threshold > 0) {
         if (strcasecmp(threshold_type, "percentage") == 0 && apm_info.battery_life < low_threshold) {
@@ -483,19 +475,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
     }
 
-    float percentage_remaining =
+    percentage_remaining =
         (((float)remaining / (float)full_design) * 100);
-
-    if (integer_battery_capacity)
-        (void)snprintf(percentagebuf,
-                       sizeof(percentagebuf),
-                       "%d%s",
-                       (int)percentage_remaining, pct_mark);
-    else
-        (void)snprintf(percentagebuf,
-                       sizeof(percentagebuf),
-                       "%.02f%s",
-                       percentage_remaining, pct_mark);
 
     /*
      * Handle percentage low_threshold here, and time low_threshold when
@@ -608,7 +589,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             outwalk += sprintf(outwalk, "%s", statusstr);
             walk += strlen("status");
         } else if (BEGINS_WITH(walk + 1, "percentage")) {
-            outwalk += sprintf(outwalk, "%s", percentagebuf);
+            if (integer_battery_capacity) {
+                outwalk += sprintf(outwalk, "%.00f%s", percentage_remaining, pct_mark);
+            } else {
+                outwalk += sprintf(outwalk, "%.02f%s", percentage_remaining, pct_mark);
+            }
             walk += strlen("percentage");
         } else if (BEGINS_WITH(walk + 1, "remaining")) {
             outwalk += sprintf(outwalk, "%s", remainingbuf);
