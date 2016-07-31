@@ -38,7 +38,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     time_t empty_time;
     struct tm *empty_tm;
     char buf[1024];
-    char remainingbuf[256];
     char emptytimebuf[256];
     char consumptionbuf[256];
     const char *walk, *last;
@@ -48,11 +47,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     int full_design = -1,
         remaining = -1,
         present_rate = -1,
-        voltage = -1;
+        voltage = -1,
+        seconds_remaining = -1;
     float percentage_remaining = -1;
     charging_status_t status = CS_DISCHARGING;
 
-    memset(remainingbuf, '\0', sizeof(remainingbuf));
     memset(emptytimebuf, '\0', sizeof(emptytimebuf));
     memset(consumptionbuf, '\0', sizeof(consumptionbuf));
 
@@ -145,7 +144,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     if (present_rate > 0 && status != CS_FULL) {
         float remaining_time;
-        int seconds, hours, minutes, seconds_remaining;
         if (status == CS_CHARGING)
             remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
         else if (status == CS_DISCHARGING)
@@ -154,11 +152,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             remaining_time = 0;
 
         seconds_remaining = (int)(remaining_time * 3600.0);
-
-        hours = seconds_remaining / 3600;
-        seconds = seconds_remaining - (hours * 3600);
-        minutes = seconds / 60;
-        seconds -= (minutes * 60);
 
         if (status == CS_DISCHARGING && low_threshold > 0) {
             if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
@@ -171,13 +164,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 colorful_output = false;
             }
         }
-
-        if (hide_seconds)
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
-                           max(hours, 0), max(minutes, 0));
-        else
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
-                           max(hours, 0), max(minutes, 0), max(seconds, 0));
 
         empty_time = time(NULL);
         empty_time += seconds_remaining;
@@ -220,7 +206,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         return;
     }
 
-    remaining = sysctl_rslt;
+    hide_seconds = true;
+    seconds_remaining = sysctl_rslt * 60;
     if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
         return;
@@ -237,16 +224,10 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     full_design = sysctl_rslt;
 
     if (state == ACPI_BATT_STAT_DISCHARG) {
-        int hours, minutes;
-        minutes = remaining;
-        hours = minutes / 60;
-        minutes -= (hours * 60);
-        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
-                       max(hours, 0), max(minutes, 0));
         if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
-        } else if (strcasecmp(threshold_type, "time") == 0 && remaining < (u_int)low_threshold) {
+        } else if (strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
         }
@@ -305,9 +286,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     /* Can't give a meaningful value for remaining minutes if we're charging. */
     if (status != CS_CHARGING) {
-        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d", apm_info.minutes_left / 60, apm_info.minutes_left % 60);
-    } else {
-        (void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
+        seconds_remaining = apm_info.minutes_left * 60;
     }
 
     if (colorful_output)
@@ -497,7 +476,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
      * remaining' figure, so we must deduce it.
      */
     float remaining_time;
-    int seconds, hours, minutes, seconds_remaining;
 
     if (status == CS_CHARGING)
         remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
@@ -508,32 +486,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     seconds_remaining = (int)(remaining_time * 3600.0);
 
-    hours = seconds_remaining / 3600;
-    seconds = seconds_remaining - (hours * 3600);
-    minutes = seconds / 60;
-    seconds -= (minutes * 60);
-
     if (status != CS_CHARGING) {
-        if (hide_seconds)
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d",
-                           max(hours, 0), max(minutes, 0));
-        else
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02d:%02d:%02d",
-                           max(hours, 0), max(minutes, 0), max(seconds, 0));
-
         if (low_threshold > 0) {
             if (strcasecmp(threshold_type, "time") == 0 && ((float)seconds_remaining / 60.0) < (u_int)low_threshold) {
                 START_COLOR("color_bad");
                 colorful_output = true;
             }
         }
-    } else {
-        if (hide_seconds)
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "(%02d:%02d until full)",
-                           max(hours, 0), max(minutes, 0));
-        else
-            (void)snprintf(remainingbuf, sizeof(remainingbuf), "(%02d:%02d:%02d until full)",
-                           max(hours, 0), max(minutes, 0), max(seconds, 0));
     }
 
     empty_time = time(NULL);
@@ -554,9 +513,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                    ((float)present_rate / 1000.0 / 1000.0));
 #endif
 
-#define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf)              \
+#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()              \
     do {                                                  \
-        if (strlen(_buf) == 0) {                          \
+        if (outwalk == prevoutwalk) {                     \
             if (outwalk > buffer && isspace(outwalk[-1])) \
                 outwalk--;                                \
             else if (isspace(*(walk + 1)))                \
@@ -565,6 +524,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     } while (0)
 
     for (walk = format; *walk != '\0'; walk++) {
+        char *prevoutwalk = outwalk;
+
         if (*walk != '%') {
             *(outwalk++) = *walk;
             continue;
@@ -596,17 +557,31 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             }
             walk += strlen("percentage");
         } else if (BEGINS_WITH(walk + 1, "remaining")) {
-            outwalk += sprintf(outwalk, "%s", remainingbuf);
+            if (seconds_remaining >= 0) {
+                int seconds, hours, minutes;
+
+                hours = seconds_remaining / 3600;
+                seconds = seconds_remaining - (hours * 3600);
+                minutes = seconds / 60;
+                seconds -= (minutes * 60);
+
+                if (hide_seconds)
+                    outwalk += sprintf(outwalk, "%02d:%02d",
+                                       max(hours, 0), max(minutes, 0));
+                else
+                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
+                                       max(hours, 0), max(minutes, 0), max(seconds, 0));
+            }
             walk += strlen("remaining");
-            EAT_SPACE_FROM_OUTPUT_IF_EMPTY(remainingbuf);
+            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         } else if (BEGINS_WITH(walk + 1, "emptytime")) {
             outwalk += sprintf(outwalk, "%s", emptytimebuf);
             walk += strlen("emptytime");
-            EAT_SPACE_FROM_OUTPUT_IF_EMPTY(emptytimebuf);
+            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         } else if (BEGINS_WITH(walk + 1, "consumption")) {
             outwalk += sprintf(outwalk, "%s", consumptionbuf);
             walk += strlen("consumption");
-            EAT_SPACE_FROM_OUTPUT_IF_EMPTY(consumptionbuf);
+            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         }
     }
 
