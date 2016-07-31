@@ -38,7 +38,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     time_t empty_time;
     struct tm *empty_tm;
     char buf[1024];
-    char statusbuf[16];
     char percentagebuf[16];
     char remainingbuf[256];
     char emptytimebuf[256];
@@ -53,7 +52,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         voltage = -1;
     charging_status_t status = CS_DISCHARGING;
 
-    memset(statusbuf, '\0', sizeof(statusbuf));
     memset(percentagebuf, '\0', sizeof(percentagebuf));
     memset(remainingbuf, '\0', sizeof(remainingbuf));
     memset(emptytimebuf, '\0', sizeof(emptytimebuf));
@@ -62,9 +60,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     static char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
-
-#define BATT_STATUS_NAME(status) \
-    (status == CS_CHARGING ? status_chr : (status == CS_DISCHARGING ? status_bat : (status == CS_UNKNOWN ? status_unk : status_full)))
 
 #if defined(LINUX)
     if (!slurp(batpath, buf, sizeof(buf))) {
@@ -138,8 +133,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         OUTPUT_FULL_TEXT(format_down);
         return;
     }
-
-    (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
 
     float percentage_remaining = (((float)remaining / (float)full_design) * 100);
     /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
@@ -248,8 +241,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     full_design = sysctl_rslt;
 
-    (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
-
     (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%s",
                    present_rate, pct_mark);
 
@@ -307,7 +298,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             break;
     }
 
-    (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
     /* integer_battery_capacity is implied as battery_life is already in whole numbers. */
     (void)snprintf(percentagebuf, sizeof(percentagebuf), "%.00d%s", apm_info.battery_life, pct_mark);
 
@@ -519,9 +509,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     }
 
     if (is_full)
-        (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(CS_FULL));
-    else
-        (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
+        status = CS_FULL;
 
     /*
      * The envsys(4) ACPI routines do not appear to provide a 'time
@@ -602,7 +590,22 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
 
         if (BEGINS_WITH(walk + 1, "status")) {
-            outwalk += sprintf(outwalk, "%s", statusbuf);
+            const char *statusstr;
+            switch (status) {
+                case CS_CHARGING:
+                    statusstr = status_chr;
+                    break;
+                case CS_DISCHARGING:
+                    statusstr = status_bat;
+                    break;
+                case CS_FULL:
+                    statusstr = status_full;
+                    break;
+                default:
+                    statusstr = status_unk;
+            }
+
+            outwalk += sprintf(outwalk, "%s", statusstr);
             walk += strlen("status");
         } else if (BEGINS_WITH(walk + 1, "percentage")) {
             outwalk += sprintf(outwalk, "%s", percentagebuf);
