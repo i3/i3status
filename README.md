@@ -29,7 +29,7 @@ apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc lib
 
 i3status is developed at https://github.com/i3/i3status
 
-## Complilation 
+## Compilation 
 
 Compiling is done with the usual make-line
 ```bash
