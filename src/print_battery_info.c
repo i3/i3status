@@ -49,13 +49,7 @@ static int seconds_remaining_from_rate(charging_status_t status, float full_desi
         return 0;
 }
 
-/*
- * Get battery information from /sys. Note that it uses the design capacity to
- * calculate the percentage, not the last full capacity, so you can see how
- * worn off your battery is.
- *
- */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
+static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down, bool last_full_capacity) {
     char buf[1024];
     const char *walk, *last;
     char *outwalk = buffer;
@@ -63,21 +57,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     int full_design = -1,
         remaining = -1,
         voltage = -1;
-    struct battery_info batt_info = {
-        .present_rate = -1,
-        .seconds_remaining = -1,
-        .percentage_remaining = -1,
-        .status = CS_DISCHARGING,
-    };
 
-    static char batpath[512];
+#if defined(LINUX)
+    char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
 
-#if defined(LINUX)
     if (!slurp(batpath, buf, sizeof(buf))) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
     for (walk = buf, last = buf; (walk - buf) < 1024; walk++) {
@@ -96,7 +84,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             watt_as_unit = false;
             remaining = atoi(walk + 1);
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
-            batt_info.present_rate = abs(atoi(walk + 1));
+            batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
             voltage = abs(atoi(walk + 1));
         /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
@@ -104,15 +92,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
          * unit instead of μAh. We will calculate it as we need it
          * later. */
         else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
-            batt_info.present_rate = abs(atoi(walk + 1));
+            batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
-            batt_info.status = CS_CHARGING;
+            batt_info->status = CS_CHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
-            batt_info.status = CS_FULL;
+            batt_info->status = CS_FULL;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging"))
-            batt_info.status = CS_DISCHARGING;
+            batt_info->status = CS_DISCHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
-            batt_info.status = CS_UNKNOWN;
+            batt_info->status = CS_UNKNOWN;
         else {
             /* The only thing left is the full capacity */
             if (last_full_capacity) {
@@ -134,7 +122,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
      * given in mWh, the charge in mAh. So calculate every value given in
      * ampere to watt */
     if (!watt_as_unit) {
-        batt_info.present_rate = (((float)voltage / 1000.0) * ((float)batt_info.present_rate / 1000.0));
+        batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
 
         if (voltage != -1) {
             remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
@@ -144,21 +132,21 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     if ((full_design == -1) || (remaining == -1)) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
-    batt_info.percentage_remaining = (((float)remaining / (float)full_design) * 100);
+    batt_info->percentage_remaining = (((float)remaining / (float)full_design) * 100);
     /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
      * charged, even though that’s plainly wrong. For people who chose to see
      * the percentage calculated based on the last full capacity, we clamp the
      * value to 100%, as that makes more sense.
      * See http://bugs.debian.org/785398 */
-    if (last_full_capacity && batt_info.percentage_remaining > 100) {
-        batt_info.percentage_remaining = 100;
+    if (last_full_capacity && batt_info->percentage_remaining > 100) {
+        batt_info->percentage_remaining = 100;
     }
 
-    if (batt_info.present_rate > 0 && batt_info.status != CS_FULL) {
-        batt_info.seconds_remaining = seconds_remaining_from_rate(batt_info.status, full_design, remaining, batt_info.present_rate);
+    if (batt_info->present_rate > 0 && batt_info->status != CS_FULL) {
+        batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full_design, remaining, batt_info->present_rate);
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -167,30 +155,28 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     if (sysctlbyname(BATT_LIFE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
-    integer_battery_capacity = true;
-    batt_info.percentage_remaining = sysctl_rslt;
+    batt_info->percentage_remaining = sysctl_rslt;
     if (sysctlbyname(BATT_TIME, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
-    hide_seconds = true;
-    batt_info.seconds_remaining = sysctl_rslt * 60;
+    batt_info->seconds_remaining = sysctl_rslt * 60;
     if (sysctlbyname(BATT_STATE, &sysctl_rslt, &sysctl_size, NULL, 0) != 0) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
     state = sysctl_rslt;
-    if (state == 0 && batt_info.percentage_remaining == 100)
-        batt_info.status = CS_FULL;
-    else if ((state & ACPI_BATT_STAT_CHARGING) && batt_info.percentage_remaining < 100)
-        batt_info.status = CS_CHARGING;
+    if (state == 0 && batt_info->percentage_remaining == 100)
+        batt_info->status = CS_FULL;
+    else if ((state & ACPI_BATT_STAT_CHARGING) && batt_info->percentage_remaining < 100)
+        batt_info->status = CS_CHARGING;
     else
-        batt_info.status = CS_DISCHARGING;
+        batt_info->status = CS_DISCHARGING;
 
     full_design = sysctl_rslt;
 #elif defined(__OpenBSD__)
@@ -205,7 +191,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     apm_fd = open("/dev/apm", O_RDONLY);
     if (apm_fd < 0) {
         OUTPUT_FULL_TEXT("can't open /dev/apm");
-        return;
+        return false;
     }
     if (ioctl(apm_fd, APM_IOC_GETPOWER, &apm_info) < 0)
         OUTPUT_FULL_TEXT("can't read power info");
@@ -216,28 +202,27 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     if ((apm_info.battery_state == APM_BATTERY_ABSENT) ||
         (apm_info.battery_state == APM_BATT_UNKNOWN)) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
     switch (apm_info.ac_state) {
         case APM_AC_OFF:
-            batt_info.status = CS_DISCHARGING;
+            batt_info->status = CS_DISCHARGING;
             break;
         case APM_AC_ON:
-            batt_info.status = CS_CHARGING;
+            batt_info->status = CS_CHARGING;
             break;
         default:
             /* If we don't know what's going on, just assume we're discharging. */
-            batt_info.status = CS_DISCHARGING;
+            batt_info->status = CS_DISCHARGING;
             break;
     }
 
-    integer_battery_capacity = true;
-    batt_info.percentage_remaining = apm_info.battery_life;
+    batt_info->percentage_remaining = apm_info.battery_life;
 
     /* Can't give a meaningful value for remaining minutes if we're charging. */
-    if (batt_info.status != CS_CHARGING) {
-        batt_info.seconds_remaining = apm_info.minutes_left * 60;
+    if (batt_info->status != CS_CHARGING) {
+        batt_info->seconds_remaining = apm_info.minutes_left * 60;
     }
 #elif defined(__NetBSD__)
     /*
@@ -259,19 +244,19 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     fd = open("/dev/sysmon", O_RDONLY);
     if (fd < 0) {
         OUTPUT_FULL_TEXT("can't open /dev/sysmon");
-        return;
+        return false;
     }
 
     rval = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
     if (rval == -1) {
         close(fd);
-        return;
+        return false;
     }
 
     if (prop_dictionary_count(dict) == 0) {
         prop_object_release(dict);
         close(fd);
-        return;
+        return false;
     }
 
     iter = prop_dictionary_iterator(dict);
@@ -296,7 +281,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             prop_object_iterator_release(iter);
             prop_object_release(dict);
             close(fd);
-            return;
+            return false;
         }
 
         iter2 = prop_array_iterator(array);
@@ -304,7 +289,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             prop_object_iterator_release(iter);
             prop_object_release(dict);
             close(fd);
-            return;
+            return false;
         }
 
         /* iterate over array of dicts specific to target battery */
@@ -319,9 +304,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 obj3 = prop_dictionary_get(obj2, "cur-value");
 
                 if (prop_number_integer_value(obj3))
-                    batt_info.status = CS_CHARGING;
+                    batt_info->status = CS_CHARGING;
                 else
-                    batt_info.status = CS_DISCHARGING;
+                    batt_info->status = CS_DISCHARGING;
 
                 continue;
             }
@@ -357,7 +342,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         prop_string_cstring_nocopy(obj3),
                         14) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
-                batt_info.present_rate = prop_number_integer_value(obj3);
+                batt_info->present_rate = prop_number_integer_value(obj3);
                 continue;
             }
 
@@ -390,32 +375,56 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     if (!is_found) {
         OUTPUT_FULL_TEXT(format_down);
-        return;
+        return false;
     }
 
     if (last_full_capacity)
         full_design = last_full_cap;
 
     if (!watt_as_unit) {
-        batt_info.present_rate = (((float)voltage / 1000.0) * ((float)batt_info.present_rate / 1000.0));
+        batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
         remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
         full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
     }
 
-    batt_info.percentage_remaining =
+    batt_info->percentage_remaining =
         (((float)remaining / (float)full_design) * 100);
 
     if (is_full)
-        batt_info.status = CS_FULL;
+        batt_info->status = CS_FULL;
 
     /*
      * The envsys(4) ACPI routines do not appear to provide a 'time
      * remaining' figure, so we must deduce it.
      */
-    batt_info.seconds_remaining = seconds_remaining_from_rate(batt_info.status, full_design, remaining, batt_info.present_rate);
+    batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full_design, remaining, batt_info->present_rate);
 #endif
 
+    return true;
+}
+
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
+    const char *walk;
+    char *outwalk = buffer;
+    struct battery_info batt_info = {
+        .present_rate = -1,
+        .seconds_remaining = -1,
+        .percentage_remaining = -1,
+        .status = CS_DISCHARGING,
+    };
     bool colorful_output = false;
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
+    /* These OSes report battery stats in whole percent. */
+    integer_battery_capacity = true;
+#endif
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+    /* These OSes report battery time in minutes. */
+    hide_seconds = true;
+#endif
+
+    if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down, last_full_capacity))
+        return;
 
     if (batt_info.status == CS_DISCHARGING && low_threshold > 0) {
         if (batt_info.percentage_remaining >= 0 && strcasecmp(threshold_type, "percentage") == 0 && batt_info.percentage_remaining < low_threshold) {
