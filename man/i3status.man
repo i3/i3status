@@ -336,6 +336,10 @@ colored red. The low_threshold type can be of threshold_type "time" or
 "percentage". So, if you configure low_threshold to 10 and threshold_type to
 "time", and your battery lasts another 9 minutes, it will be colored red.
 
+To show an aggregate of all batteries in the system, use "all" as the number. In
+this case (for Linux), the /sys path must contain the "%d" sequence. Otherwise,
+the number indicates the battery index as reported in /sys.
+
 Optionally custom strings including any UTF-8 symbols can be used for different
 battery states. This makes it possible to display individual symbols
 for each state (charging, discharging, unknown, full)
@@ -343,7 +347,9 @@ Of course it will also work with special iconic fonts, such as FontAwesome.
 If any of these special status strings are omitted, the default (CHR, BAT, UNK,
 FULL) is used.
 
-*Example order*: +battery 0+
+*Example order (for the first battery)*: +battery 0+
+
+*Example order (aggregate of all batteries)*: +battery all+
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
 
@@ -361,7 +367,9 @@ FULL) is used.
 
 *Example threshold_type*: +time+
 
-*Example path*: +/sys/class/power_supply/CMB1/uevent+
+*Example path (%d replaced by title number)*: +/sys/class/power_supply/CMB%d/uevent+
+
+*Example path (ignoring the number)*: +/sys/class/power_supply/CMB1/uevent+
 
 === CPU-Temperature
 

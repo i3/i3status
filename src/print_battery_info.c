@@ -9,6 +9,12 @@
 
 #include "i3status.h"
 
+#if defined(LINUX)
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -28,16 +34,80 @@
 #include <sys/envsys.h>
 #endif
 
-struct battery_info {
-    int full_design;
-    int full_last;
-    int remaining;
+typedef enum {
+    CS_UNKNOWN,
+    CS_DISCHARGING,
+    CS_CHARGING,
+    CS_FULL,
+} charging_status_t;
 
-    int present_rate;
+/* A description of the state of one or more batteries. */
+struct battery_info {
+    /* measured properties */
+    int full_design;  /* in uAh */
+    int full_last;    /* in uAh */
+    int remaining;    /* in uAh */
+    int present_rate; /* in uA, always non-negative */
+
+    /* derived properties */
     int seconds_remaining;
     float percentage_remaining;
     charging_status_t status;
 };
+
+#if defined(LINUX) || defined(__NetBSD__)
+/*
+ * Add batt_info data to acc.
+ */
+static void add_battery_info(struct battery_info *acc, const struct battery_info *batt_info) {
+    if (acc->remaining < 0) {
+        /* initialize accumulator so we can add to it */
+        acc->full_design = 0;
+        acc->full_last = 0;
+        acc->remaining = 0;
+        acc->present_rate = 0;
+    }
+
+    acc->full_design += batt_info->full_design;
+    acc->full_last += batt_info->full_last;
+    acc->remaining += batt_info->remaining;
+
+    /* make present_rate negative for discharging and positive for charging */
+    int present_rate = (acc->status == CS_DISCHARGING ? -1 : 1) * acc->present_rate;
+    present_rate += (batt_info->status == CS_DISCHARGING ? -1 : 1) * batt_info->present_rate;
+
+    /* merge status */
+    switch (acc->status) {
+        case CS_UNKNOWN:
+            acc->status = batt_info->status;
+            break;
+
+        case CS_DISCHARGING:
+            if (present_rate > 0)
+                acc->status = CS_CHARGING;
+            /* else if batt_info is DISCHARGING: no conflict
+             * else if batt_info is CHARGING: present_rate should indicate that
+             * else if batt_info is FULL: but something else is discharging */
+            break;
+
+        case CS_CHARGING:
+            if (present_rate < 0)
+                acc->status = CS_DISCHARGING;
+            /* else if batt_info is DISCHARGING: present_rate should indicate that
+             * else if batt_info is CHARGING: no conflict
+             * else if batt_info is FULL: but something else is charging */
+            break;
+
+        case CS_FULL:
+            if (batt_info->status != CS_UNKNOWN)
+                acc->status = batt_info->status;
+            /* else: retain FULL, since it is more specific than UNKNOWN */
+            break;
+    }
+
+    acc->present_rate = abs(present_rate);
+}
+#endif
 
 static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
@@ -185,12 +255,9 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /*
      * Using envsys(4) via sysmon(4).
      */
-    bool watt_as_unit = false;
-    int voltage = -1;
     int fd, rval;
     bool is_found = false;
-    char *sensor_desc;
-    bool is_full = false;
+    char sensor_desc[16];
 
     prop_dictionary_t dict;
     prop_array_t array;
@@ -198,7 +265,8 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     prop_object_iterator_t iter2;
     prop_object_t obj, obj2, obj3, obj4, obj5;
 
-    asprintf(&sensor_desc, "acpibat%d", number);
+    if (number >= 0)
+        (void)snprintf(sensor_desc, sizeof(sensor_desc), "acpibat%d", number);
 
     fd = open("/dev/sysmon", O_RDONLY);
     if (fd < 0) {
@@ -227,9 +295,17 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /* iterate over the dictionary returned by the kernel */
     while ((obj = prop_object_iterator_next(iter)) != NULL) {
         /* skip this dict if it's not what we're looking for */
-        if (strcmp(sensor_desc,
-                   prop_dictionary_keysym_cstring_nocopy(obj)) != 0)
-            continue;
+        if (number < 0) {
+            /* we want all batteries */
+            if (!BEGINS_WITH(prop_dictionary_keysym_cstring_nocopy(obj),
+                             "acpibat"))
+                continue;
+        } else {
+            /* we want a specific battery */
+            if (strcmp(sensor_desc,
+                       prop_dictionary_keysym_cstring_nocopy(obj)) != 0)
+                continue;
+        }
 
         is_found = true;
 
@@ -249,6 +325,16 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             return false;
         }
 
+        struct battery_info batt_buf = {
+            .full_design = 0,
+            .full_last = 0,
+            .remaining = 0,
+            .present_rate = 0,
+            .status = CS_UNKNOWN,
+        };
+        int voltage = -1;
+        bool watt_as_unit = false;
+
         /* iterate over array of dicts specific to target battery */
         while ((obj2 = prop_object_iterator_next(iter2)) != NULL) {
             obj3 = prop_dictionary_get(obj2, "description");
@@ -260,19 +346,16 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
                 obj3 = prop_dictionary_get(obj2, "cur-value");
 
                 if (prop_number_integer_value(obj3))
-                    batt_info->status = CS_CHARGING;
+                    batt_buf.status = CS_CHARGING;
                 else
-                    batt_info->status = CS_DISCHARGING;
+                    batt_buf.status = CS_DISCHARGING;
             } else if (strcmp("charge", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 obj4 = prop_dictionary_get(obj2, "max-value");
                 obj5 = prop_dictionary_get(obj2, "type");
 
-                batt_info->remaining = prop_number_integer_value(obj3);
-                batt_info->full_design = prop_number_integer_value(obj4);
-
-                if (batt_info->remaining == batt_info->full_design)
-                    is_full = true;
+                batt_buf.remaining = prop_number_integer_value(obj3);
+                batt_buf.full_design = prop_number_integer_value(obj4);
 
                 if (strcmp("Ampere hour", prop_string_cstring_nocopy(obj5)) == 0)
                     watt_as_unit = false;
@@ -280,19 +363,31 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
                     watt_as_unit = true;
             } else if (strcmp("discharge rate", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
-                batt_info->present_rate = prop_number_integer_value(obj3);
+                batt_buf.present_rate = prop_number_integer_value(obj3);
             } else if (strcmp("charge rate", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 batt_info->present_rate = prop_number_integer_value(obj3);
             } else if (strcmp("last full cap", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
-                batt_info->full_last = prop_number_integer_value(obj3);
+                batt_buf.full_last = prop_number_integer_value(obj3);
             } else if (strcmp("voltage", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 voltage = prop_number_integer_value(obj3);
             }
         }
         prop_object_iterator_release(iter2);
+
+        if (!watt_as_unit && voltage != -1) {
+            batt_buf.present_rate = (((float)voltage / 1000.0) * ((float)batt_buf.present_rate / 1000.0));
+            batt_buf.remaining = (((float)voltage / 1000.0) * ((float)batt_buf.remaining / 1000.0));
+            batt_buf.full_design = (((float)voltage / 1000.0) * ((float)batt_buf.full_design / 1000.0));
+            batt_buf.full_last = (((float)voltage / 1000.0) * ((float)batt_buf.full_last / 1000.0));
+        }
+
+        if (batt_buf.remaining == batt_buf.full_design)
+            batt_buf.status = CS_FULL;
+
+        add_battery_info(batt_info, &batt_buf);
     }
 
     prop_object_iterator_release(iter);
@@ -304,15 +399,67 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         return false;
     }
 
-    if (!watt_as_unit && voltage != -1) {
-        batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
-        batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
-        batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
-        batt_info->full_last = (((float)voltage / 1000.0) * ((float)batt_info->full_last / 1000.0));
+    batt_info->present_rate = abs(batt_info->present_rate);
+#endif
+
+    return true;
+}
+
+/*
+ * Populate batt_info with aggregate information about all batteries.
+ * Returns false on error, and an error message will have been written.
+ */
+static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
+#if defined(LINUX)
+    char *outwalk = buffer;
+    bool is_found = false;
+
+    /* 1,000 batteries should be enough for anyone */
+    for (int i = 0; i < 1000; i++) {
+        char batpath[1024];
+        (void)snprintf(batpath, sizeof(batpath), path, i);
+
+        if (!strcmp(batpath, path)) {
+            OUTPUT_FULL_TEXT("no '%d' in battery path");
+            return false;
+        }
+
+        /* Probe to see if there is such a battery. */
+        struct stat sb;
+        if (stat(batpath, &sb) != 0) {
+            /* No such file, then we are done, assuming sysfs files have sequential numbers. */
+            if (errno == ENOENT)
+                break;
+
+            OUTPUT_FULL_TEXT(format_down);
+            return false;
+        }
+
+        struct battery_info batt_buf = {
+            .full_design = 0,
+            .full_last = 0,
+            .remaining = 0,
+            .present_rate = 0,
+            .status = CS_UNKNOWN,
+        };
+        if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, path, format_down))
+            return false;
+
+        is_found = true;
+        add_battery_info(batt_info, &batt_buf);
     }
 
-    if (is_full)
-        batt_info->status = CS_FULL;
+    if (!is_found) {
+        OUTPUT_FULL_TEXT(format_down);
+        return false;
+    }
+
+    batt_info->present_rate = abs(batt_info->present_rate);
+#else
+    /* FreeBSD and OpenBSD only report aggregates. NetBSD always
+     * iterates through all batteries, so it's more efficient to
+     * aggregate in slurp_battery_info. */
+    return slurp_battery_info(batt_info, json_gen, buffer, -1, path, format_down);
 #endif
 
     return true;
@@ -324,10 +471,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     struct battery_info batt_info = {
         .full_design = -1,
         .full_last = -1,
+        .remaining = -1,
         .present_rate = -1,
         .seconds_remaining = -1,
         .percentage_remaining = -1,
-        .status = CS_DISCHARGING,
+        .status = CS_UNKNOWN,
     };
     bool colorful_output = false;
 
@@ -340,8 +488,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     hide_seconds = true;
 #endif
 
-    if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down))
-        return;
+    if (number < 0) {
+        if (!slurp_all_batteries(&batt_info, json_gen, buffer, path, format_down))
+            return;
+    } else {
+        if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down))
+            return;
+    }
 
     int full = (last_full_capacity ? batt_info.full_last : batt_info.full_design);
     if (full < 0 && batt_info.percentage_remaining < 0) {
