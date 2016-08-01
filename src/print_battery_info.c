@@ -36,7 +36,6 @@
  */
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
     char buf[1024];
-    char consumptionbuf[256];
     const char *walk, *last;
     char *outwalk = buffer;
     bool watt_as_unit = false;
@@ -48,8 +47,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         seconds_remaining = -1;
     float percentage_remaining = -1;
     charging_status_t status = CS_DISCHARGING;
-
-    memset(consumptionbuf, '\0', sizeof(consumptionbuf));
 
     static char batpath[512];
     sprintf(batpath, path, number);
@@ -160,9 +157,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 colorful_output = false;
             }
         }
-
-        (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
-                       ((float)present_rate / 1000.0 / 1000.0));
     } else {
         /* On some systems, present_rate may not exist. Still, make sure
          * we colorize the output if threshold_type is set to percentage
@@ -479,9 +473,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             }
         }
     }
-
-    (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
-                   ((float)present_rate / 1000.0 / 1000.0));
 #endif
 
 #define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()              \
@@ -560,7 +551,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             walk += strlen("emptytime");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         } else if (BEGINS_WITH(walk + 1, "consumption")) {
-            outwalk += sprintf(outwalk, "%s", consumptionbuf);
+            if (present_rate >= 0)
+                outwalk += sprintf(outwalk, "%1.2fW", present_rate / 1e6);
+
             walk += strlen("consumption");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         }
