@@ -39,7 +39,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     const char *walk, *last;
     char *outwalk = buffer;
     bool watt_as_unit = false;
-    bool colorful_output = false;
     int full_design = -1,
         remaining = -1,
         present_rate = -1,
@@ -145,28 +144,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             remaining_time = 0;
 
         seconds_remaining = (int)(remaining_time * 3600.0);
-
-        if (status == CS_DISCHARGING && low_threshold > 0) {
-            if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
-                START_COLOR("color_bad");
-                colorful_output = true;
-            } else if (strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
-                START_COLOR("color_bad");
-                colorful_output = true;
-            } else {
-                colorful_output = false;
-            }
-        }
-    } else {
-        /* On some systems, present_rate may not exist. Still, make sure
-         * we colorize the output if threshold_type is set to percentage
-         * (since we don't have any information on remaining time). */
-        if (status == CS_DISCHARGING && low_threshold > 0) {
-            if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
-                START_COLOR("color_bad");
-                colorful_output = true;
-            }
-        }
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -201,16 +178,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         status = CS_DISCHARGING;
 
     full_design = sysctl_rslt;
-
-    if (state == ACPI_BATT_STAT_DISCHARG) {
-        if (strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        } else if (strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        }
-    }
 #elif defined(__OpenBSD__)
     /*
 	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
@@ -252,16 +219,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     integer_battery_capacity = true;
     percentage_remaining = apm_info.battery_life;
-
-    if (status == CS_DISCHARGING && low_threshold > 0) {
-        if (strcasecmp(threshold_type, "percentage") == 0 && apm_info.battery_life < low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        } else if (strcasecmp(threshold_type, "time") == 0 && apm_info.minutes_left < (u_int)low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        }
-    }
 
     /* Can't give a meaningful value for remaining minutes if we're charging. */
     if (status != CS_CHARGING) {
@@ -436,17 +393,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     percentage_remaining =
         (((float)remaining / (float)full_design) * 100);
 
-    /*
-     * Handle percentage low_threshold here, and time low_threshold when
-     * we have it.
-     */
-    if (status == CS_DISCHARGING && low_threshold > 0) {
-        if (strcasecmp(threshold_type, "percentage") == 0 && (((float)remaining / (float)full_design) * 100) < low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        }
-    }
-
     if (is_full)
         status = CS_FULL;
 
@@ -464,16 +410,19 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         remaining_time = 0;
 
     seconds_remaining = (int)(remaining_time * 3600.0);
+#endif
 
-    if (status != CS_CHARGING) {
-        if (low_threshold > 0) {
-            if (strcasecmp(threshold_type, "time") == 0 && ((float)seconds_remaining / 60.0) < (u_int)low_threshold) {
-                START_COLOR("color_bad");
-                colorful_output = true;
-            }
+    bool colorful_output = false;
+
+    if (status == CS_DISCHARGING && low_threshold > 0) {
+        if (percentage_remaining >= 0 && strcasecmp(threshold_type, "percentage") == 0 && percentage_remaining < low_threshold) {
+            START_COLOR("color_bad");
+            colorful_output = true;
+        } else if (seconds_remaining >= 0 && strcasecmp(threshold_type, "time") == 0 && seconds_remaining < 60 * low_threshold) {
+            START_COLOR("color_bad");
+            colorful_output = true;
         }
     }
-#endif
 
 #define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()              \
     do {                                                  \
