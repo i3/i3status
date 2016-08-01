@@ -54,6 +54,7 @@
 #include <netinet/if_ether.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
 #endif
 
 #include "i3status.h"
@@ -423,7 +424,7 @@ error1:
         else
             len = IEEE80211_NWID_LEN + 1;
 
-        strncpy(&info->essid[0], nwid.i_nwid, len);
+        strncpy(&info->essid[0], (char *)nwid.i_nwid, len);
         info->essid[IW_ESSID_MAX_SIZE] = '\0';
         info->flags |= WIRELESS_INFO_FLAG_HAS_ESSID;
     }
