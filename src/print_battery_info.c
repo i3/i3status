@@ -29,6 +29,20 @@
 #endif
 
 /*
+ * Estimate the number of seconds remaining in state 'status'.
+ *
+ * Assumes a constant (dis)charge rate.
+ */
+static int seconds_remaining_from_rate(charging_status_t status, float full_design, float remaining, float present_rate) {
+    if (status == CS_CHARGING)
+        return 3600.0 * (full_design - remaining) / present_rate;
+    else if (status == CS_DISCHARGING)
+        return 3600.0 * remaining / present_rate;
+    else
+        return 0;
+}
+
+/*
  * Get battery information from /sys. Note that it uses the design capacity to
  * calculate the percentage, not the last full capacity, so you can see how
  * worn off your battery is.
@@ -135,15 +149,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     }
 
     if (present_rate > 0 && status != CS_FULL) {
-        float remaining_time;
-        if (status == CS_CHARGING)
-            remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
-        else if (status == CS_DISCHARGING)
-            remaining_time = ((float)remaining / (float)present_rate);
-        else
-            remaining_time = 0;
-
-        seconds_remaining = (int)(remaining_time * 3600.0);
+        seconds_remaining = seconds_remaining_from_rate(status, full_design, remaining, present_rate);
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -397,16 +403,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
      * The envsys(4) ACPI routines do not appear to provide a 'time
      * remaining' figure, so we must deduce it.
      */
-    float remaining_time;
-
-    if (status == CS_CHARGING)
-        remaining_time = ((float)full_design - (float)remaining) / (float)present_rate;
-    else if (status == CS_DISCHARGING)
-        remaining_time = ((float)remaining / (float)present_rate);
-    else
-        remaining_time = 0;
-
-    seconds_remaining = (int)(remaining_time * 3600.0);
+    seconds_remaining = seconds_remaining_from_rate(status, full_design, remaining, present_rate);
 #endif
 
     bool colorful_output = false;
