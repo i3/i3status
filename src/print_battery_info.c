@@ -326,6 +326,9 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             } else if (strcmp("discharge rate", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 batt_info->present_rate = prop_number_integer_value(obj3);
+            } else if (strcmp("charge rate", prop_string_cstring_nocopy(obj3)) == 0) {
+                obj3 = prop_dictionary_get(obj2, "cur-value");
+                batt_info->present_rate = prop_number_integer_value(obj3);
             } else if (strcmp("last full cap", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 last_full_cap = prop_number_integer_value(obj3);
