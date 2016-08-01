@@ -57,6 +57,12 @@
 #define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
 #endif
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <net80211/ieee80211.h>
+#define IW_ESSID_MAX_SIZE IEEE80211_NWID_LEN
+#endif
+
 #include "i3status.h"
 
 #define WIRELESS_INFO_FLAG_HAS_ESSID (1 << 0)

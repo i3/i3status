@@ -79,7 +79,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
     ethspeed = (desc->ifmt_string != NULL ? desc->ifmt_string : "?");
     return sprintf(outwalk, "%s", ethspeed);
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-    char *ethspeed;
+    const char *ethspeed;
     struct ifmediareq ifmr;
 
     (void)memset(&ifmr, 0, sizeof(ifmr));

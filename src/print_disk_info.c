@@ -10,6 +10,7 @@
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || (__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
 #include <sys/param.h>
 #include <sys/mount.h>
+#elif defined(__NetBSD__)
 #else
 #include <mntent.h>
 #endif
@@ -120,6 +121,11 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     struct statfs buf;
 
     if (statfs(path, &buf) == -1)
+        return;
+#elif defined(__NetBSD__)
+    struct statvfs buf;
+
+    if (statvfs(path, &buf) == -1)
         return;
 #else
     struct statvfs buf;
