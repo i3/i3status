@@ -35,10 +35,7 @@
  *
  */
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
-    time_t empty_time;
-    struct tm *empty_tm;
     char buf[1024];
-    char emptytimebuf[256];
     char consumptionbuf[256];
     const char *walk, *last;
     char *outwalk = buffer;
@@ -52,7 +49,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     float percentage_remaining = -1;
     charging_status_t status = CS_DISCHARGING;
 
-    memset(emptytimebuf, '\0', sizeof(emptytimebuf));
     memset(consumptionbuf, '\0', sizeof(consumptionbuf));
 
     static char batpath[512];
@@ -164,17 +160,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 colorful_output = false;
             }
         }
-
-        empty_time = time(NULL);
-        empty_time += seconds_remaining;
-        empty_tm = localtime(&empty_time);
-
-        if (hide_seconds)
-            (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d",
-                           max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
-        else
-            (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
-                           max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
 
         (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
                        ((float)present_rate / 1000.0 / 1000.0));
@@ -495,20 +480,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
     }
 
-    empty_time = time(NULL);
-    empty_time += seconds_remaining;
-    empty_tm = localtime(&empty_time);
-
-    /* No need to show empty time if battery is charging */
-    if (status != CS_CHARGING) {
-        if (hide_seconds)
-            (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d",
-                           max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
-        else
-            (void)snprintf(emptytimebuf, sizeof(emptytimebuf), "%02d:%02d:%02d",
-                           max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
-    }
-
     (void)snprintf(consumptionbuf, sizeof(consumptionbuf), "%1.2fW",
                    ((float)present_rate / 1000.0 / 1000.0));
 #endif
@@ -575,7 +546,17 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             walk += strlen("remaining");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         } else if (BEGINS_WITH(walk + 1, "emptytime")) {
-            outwalk += sprintf(outwalk, "%s", emptytimebuf);
+            if (seconds_remaining >= 0) {
+                time_t empty_time = time(NULL) + seconds_remaining;
+                struct tm *empty_tm = localtime(&empty_time);
+
+                if (hide_seconds)
+                    outwalk += sprintf(outwalk, "%02d:%02d",
+                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+                else
+                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
+                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+            }
             walk += strlen("emptytime");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
         } else if (BEGINS_WITH(walk + 1, "consumption")) {
