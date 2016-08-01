@@ -224,9 +224,6 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     if (status != CS_CHARGING) {
         seconds_remaining = apm_info.minutes_left * 60;
     }
-
-    if (colorful_output)
-        END_COLOR;
 #elif defined(__NetBSD__)
     /*
      * Using envsys(4) via sysmon(4).
