@@ -40,6 +40,7 @@ struct battery_info {
  *
  * Assumes a constant (dis)charge rate.
  */
+#if defined(LINUX) || defined(__NetBSD__)
 static int seconds_remaining_from_rate(charging_status_t status, float full_design, float remaining, float present_rate) {
     if (status == CS_CHARGING)
         return 3600.0 * (full_design - remaining) / present_rate;
@@ -48,17 +49,18 @@ static int seconds_remaining_from_rate(charging_status_t status, float full_desi
     else
         return 0;
 }
+#endif
 
 static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down, bool last_full_capacity) {
+    char *outwalk = buffer;
+
+#if defined(LINUX)
     char buf[1024];
     const char *walk, *last;
-    char *outwalk = buffer;
     bool watt_as_unit = false;
     int full_design = -1,
         remaining = -1,
         voltage = -1;
-
-#if defined(LINUX)
     char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
@@ -177,8 +179,6 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->status = CS_CHARGING;
     else
         batt_info->status = CS_DISCHARGING;
-
-    full_design = sysctl_rslt;
 #elif defined(__OpenBSD__)
     /*
 	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
@@ -228,6 +228,10 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /*
      * Using envsys(4) via sysmon(4).
      */
+    bool watt_as_unit = false;
+    int full_design = -1,
+        remaining = -1,
+        voltage = -1;
     int fd, rval, last_full_cap;
     bool is_found = false;
     char *sensor_desc;
