@@ -249,9 +249,7 @@ is assumed to be "percentage_avail" and low_threshold to be set to 0, which
 implies no coloring at all.
 
 You can define a different format with the option "format_not_mounted"
-which is used if the path does not exist or is not a mount point. So you can just empty
-the output for the given path with adding +format_not_mounted=""+
-to the config section.
+which is used if the path does not exist or is not a mount point. Defaults to "".
 
 *Example order*: +disk /mnt/usbstick+
 
