@@ -29,8 +29,8 @@ LIBS+=-lpthread
 
 ifeq ($(wildcard .git),)
   # not in git repository
-  VERSION := '$(shell [ -f $(TOPDIR)/VERSION ] && cat $(TOPDIR)/VERSION)'
-  I3STATUS_VERSION := '$(shell [ -f $(TOPDIR)/I3STATUS_VERSION ] && cat $(TOPDIR)/I3STATUS_VERSION)'
+  VERSION := $(shell [ -f $(TOPDIR)/I3STATUS_VERSION ] && cat $(TOPDIR)/I3STATUS_VERSION | cut -d '-' -f 1)
+  I3STATUS_VERSION := $(shell [ -f $(TOPDIR)/I3STATUS_VERSION ] && cat $(TOPDIR)/I3STATUS_VERSION)
 else
   VERSION:=$(shell git describe --tags --abbrev=0)
   I3STATUS_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
