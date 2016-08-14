@@ -404,14 +404,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
     }
 
-#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()              \
-    do {                                                  \
-        if (outwalk == prevoutwalk) {                     \
-            if (outwalk > buffer && isspace(outwalk[-1])) \
-                outwalk--;                                \
-            else if (isspace(*(walk + 1)))                \
-                walk++;                                   \
-        }                                                 \
+#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()                   \
+    do {                                                       \
+        if (outwalk == prevoutwalk) {                          \
+            if (outwalk > buffer && isspace((int)outwalk[-1])) \
+                outwalk--;                                     \
+            else if (isspace((int)*(walk + 1)))                \
+                walk++;                                        \
+        }                                                      \
     } while (0)
 
     for (walk = format; *walk != '\0'; walk++) {
