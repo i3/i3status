@@ -29,6 +29,10 @@
 #endif
 
 struct battery_info {
+    int full_design;
+    int full_last;
+    int remaining;
+
     int present_rate;
     int seconds_remaining;
     float percentage_remaining;
@@ -58,9 +62,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     char buf[1024];
     const char *walk, *last;
     bool watt_as_unit = false;
-    int full_design = -1,
-        remaining = -1,
-        voltage = -1;
+    int voltage = -1;
     char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
@@ -81,10 +83,10 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
 
         if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW")) {
             watt_as_unit = true;
-            remaining = atoi(walk + 1);
+            batt_info->remaining = atoi(walk + 1);
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW")) {
             watt_as_unit = false;
-            remaining = atoi(walk + 1);
+            batt_info->remaining = atoi(walk + 1);
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
@@ -103,41 +105,32 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             batt_info->status = CS_DISCHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
             batt_info->status = CS_UNKNOWN;
-        else {
-            /* The only thing left is the full capacity */
-            if (last_full_capacity) {
-                if (!BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") &&
-                    !BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
-                    continue;
-            } else {
-                if (!BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") &&
-                    !BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
-                    continue;
-            }
-
-            full_design = atoi(walk + 1);
-        }
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
+            batt_info->full_design = atoi(walk + 1);
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
+            batt_info->full_last = atoi(walk + 1);
     }
 
     /* the difference between POWER_SUPPLY_ENERGY_NOW and
      * POWER_SUPPLY_CHARGE_NOW is the unit of measurement. The energy is
      * given in mWh, the charge in mAh. So calculate every value given in
      * ampere to watt */
-    if (!watt_as_unit) {
+    if (!watt_as_unit && voltage != -1) {
         batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
-
-        if (voltage != -1) {
-            remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
-            full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
-        }
+        batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
+        batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
     }
 
-    if ((full_design == -1) || (remaining == -1)) {
+    int full = (last_full_capacity ? batt_info->full_last : batt_info->full_design);
+
+    if ((full == -1) || (batt_info->remaining == -1)) {
         OUTPUT_FULL_TEXT(format_down);
         return false;
     }
 
-    batt_info->percentage_remaining = (((float)remaining / (float)full_design) * 100);
+    batt_info->percentage_remaining = (((float)batt_info->remaining / (float)full) * 100);
     /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
      * charged, even though that’s plainly wrong. For people who chose to see
      * the percentage calculated based on the last full capacity, we clamp the
@@ -148,7 +141,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     }
 
     if (batt_info->present_rate > 0 && batt_info->status != CS_FULL) {
-        batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full_design, remaining, batt_info->present_rate);
+        batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full, batt_info->remaining, batt_info->present_rate);
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -229,10 +222,8 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
      * Using envsys(4) via sysmon(4).
      */
     bool watt_as_unit = false;
-    int full_design = -1,
-        remaining = -1,
-        voltage = -1;
-    int fd, rval, last_full_cap;
+    int voltage = -1;
+    int fd, rval;
     bool is_found = false;
     char *sensor_desc;
     bool is_full = false;
@@ -313,10 +304,10 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
                 obj4 = prop_dictionary_get(obj2, "max-value");
                 obj5 = prop_dictionary_get(obj2, "type");
 
-                remaining = prop_number_integer_value(obj3);
-                full_design = prop_number_integer_value(obj4);
+                batt_info->remaining = prop_number_integer_value(obj3);
+                batt_info->full_design = prop_number_integer_value(obj4);
 
-                if (remaining == full_design)
+                if (batt_info->remaining == batt_info->full_design)
                     is_full = true;
 
                 if (strcmp("Ampere hour", prop_string_cstring_nocopy(obj5)) == 0)
@@ -326,9 +317,12 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             } else if (strcmp("discharge rate", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 batt_info->present_rate = prop_number_integer_value(obj3);
+            } else if (strcmp("charge rate", prop_string_cstring_nocopy(obj3)) == 0) {
+                obj3 = prop_dictionary_get(obj2, "cur-value");
+                batt_info->present_rate = prop_number_integer_value(obj3);
             } else if (strcmp("last full cap", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
-                last_full_cap = prop_number_integer_value(obj3);
+                batt_info->full_last = prop_number_integer_value(obj3);
             } else if (strcmp("voltage", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 voltage = prop_number_integer_value(obj3);
@@ -346,17 +340,16 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         return false;
     }
 
-    if (last_full_capacity)
-        full_design = last_full_cap;
-
-    if (!watt_as_unit) {
+    if (!watt_as_unit && voltage != -1) {
         batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
-        remaining = (((float)voltage / 1000.0) * ((float)remaining / 1000.0));
-        full_design = (((float)voltage / 1000.0) * ((float)full_design / 1000.0));
+        batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
+        batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
     }
 
+    int full = (last_full_capacity ? batt_info->full_last : batt_info->full_design);
+
     batt_info->percentage_remaining =
-        (((float)remaining / (float)full_design) * 100);
+        (((float)batt_info->remaining / (float)full) * 100);
 
     if (is_full)
         batt_info->status = CS_FULL;
@@ -365,7 +358,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
      * The envsys(4) ACPI routines do not appear to provide a 'time
      * remaining' figure, so we must deduce it.
      */
-    batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full_design, remaining, batt_info->present_rate);
+    batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full, batt_info->remaining, batt_info->present_rate);
 #endif
 
     return true;
