@@ -40,6 +40,7 @@ struct battery_info {
  *
  * Assumes a constant (dis)charge rate.
  */
+#if defined(LINUX) || defined(__NetBSD__)
 static int seconds_remaining_from_rate(charging_status_t status, float full_design, float remaining, float present_rate) {
     if (status == CS_CHARGING)
         return 3600.0 * (full_design - remaining) / present_rate;
@@ -48,17 +49,18 @@ static int seconds_remaining_from_rate(charging_status_t status, float full_desi
     else
         return 0;
 }
+#endif
 
 static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down, bool last_full_capacity) {
+    char *outwalk = buffer;
+
+#if defined(LINUX)
     char buf[1024];
     const char *walk, *last;
-    char *outwalk = buffer;
     bool watt_as_unit = false;
     int full_design = -1,
         remaining = -1,
         voltage = -1;
-
-#if defined(LINUX)
     char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
@@ -177,8 +179,6 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->status = CS_CHARGING;
     else
         batt_info->status = CS_DISCHARGING;
-
-    full_design = sysctl_rslt;
 #elif defined(__OpenBSD__)
     /*
 	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
@@ -228,6 +228,10 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /*
      * Using envsys(4) via sysmon(4).
      */
+    bool watt_as_unit = false;
+    int full_design = -1,
+        remaining = -1,
+        voltage = -1;
     int fd, rval, last_full_cap;
     bool is_found = false;
     char *sensor_desc;
@@ -268,10 +272,8 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /* iterate over the dictionary returned by the kernel */
     while ((obj = prop_object_iterator_next(iter)) != NULL) {
         /* skip this dict if it's not what we're looking for */
-        if ((strlen(prop_dictionary_keysym_cstring_nocopy(obj)) == strlen(sensor_desc)) &&
-            (strncmp(sensor_desc,
-                     prop_dictionary_keysym_cstring_nocopy(obj),
-                     strlen(sensor_desc)) != 0))
+        if (strcmp(sensor_desc,
+                   prop_dictionary_keysym_cstring_nocopy(obj)) != 0)
             continue;
 
         is_found = true;
@@ -296,26 +298,17 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         while ((obj2 = prop_object_iterator_next(iter2)) != NULL) {
             obj3 = prop_dictionary_get(obj2, "description");
 
-            if (obj3 &&
-                strlen(prop_string_cstring_nocopy(obj3)) == 8 &&
-                strncmp("charging",
-                        prop_string_cstring_nocopy(obj3),
-                        8) == 0) {
+            if (obj3 == NULL)
+                continue;
+
+            if (strcmp("charging", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
 
                 if (prop_number_integer_value(obj3))
                     batt_info->status = CS_CHARGING;
                 else
                     batt_info->status = CS_DISCHARGING;
-
-                continue;
-            }
-
-            if (obj3 &&
-                strlen(prop_string_cstring_nocopy(obj3)) == 6 &&
-                strncmp("charge",
-                        prop_string_cstring_nocopy(obj3),
-                        6) == 0) {
+            } else if (strcmp("charge", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 obj4 = prop_dictionary_get(obj2, "max-value");
                 obj5 = prop_dictionary_get(obj2, "type");
@@ -326,44 +319,19 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
                 if (remaining == full_design)
                     is_full = true;
 
-                if (strncmp("Ampere hour",
-                            prop_string_cstring_nocopy(obj5),
-                            11) == 0)
+                if (strcmp("Ampere hour", prop_string_cstring_nocopy(obj5)) == 0)
                     watt_as_unit = false;
                 else
                     watt_as_unit = true;
-
-                continue;
-            }
-
-            if (obj3 &&
-                strlen(prop_string_cstring_nocopy(obj3)) == 14 &&
-                strncmp("discharge rate",
-                        prop_string_cstring_nocopy(obj3),
-                        14) == 0) {
+            } else if (strcmp("discharge rate", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 batt_info->present_rate = prop_number_integer_value(obj3);
-                continue;
-            }
-
-            if (obj3 &&
-                strlen(prop_string_cstring_nocopy(obj3)) == 13 &&
-                strncmp("last full cap",
-                        prop_string_cstring_nocopy(obj3),
-                        13) == 0) {
+            } else if (strcmp("last full cap", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 last_full_cap = prop_number_integer_value(obj3);
-                continue;
-            }
-
-            if (obj3 &&
-                strlen(prop_string_cstring_nocopy(obj3)) == 7 &&
-                strncmp("voltage",
-                        prop_string_cstring_nocopy(obj3),
-                        7) == 0) {
+            } else if (strcmp("voltage", prop_string_cstring_nocopy(obj3)) == 0) {
                 obj3 = prop_dictionary_get(obj2, "cur-value");
                 voltage = prop_number_integer_value(obj3);
-                continue;
             }
         }
         prop_object_iterator_release(iter2);
@@ -436,14 +404,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
     }
 
-#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()              \
-    do {                                                  \
-        if (outwalk == prevoutwalk) {                     \
-            if (outwalk > buffer && isspace(outwalk[-1])) \
-                outwalk--;                                \
-            else if (isspace(*(walk + 1)))                \
-                walk++;                                   \
-        }                                                 \
+#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()                   \
+    do {                                                       \
+        if (outwalk == prevoutwalk) {                          \
+            if (outwalk > buffer && isspace((int)outwalk[-1])) \
+                outwalk--;                                     \
+            else if (isspace((int)*(walk + 1)))                \
+                walk++;                                        \
+        }                                                      \
     } while (0)
 
     for (walk = format; *walk != '\0'; walk++) {
