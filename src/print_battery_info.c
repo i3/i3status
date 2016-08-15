@@ -39,23 +39,7 @@ struct battery_info {
     charging_status_t status;
 };
 
-/*
- * Estimate the number of seconds remaining in state 'status'.
- *
- * Assumes a constant (dis)charge rate.
- */
-#if defined(LINUX) || defined(__NetBSD__)
-static int seconds_remaining_from_rate(charging_status_t status, float full_design, float remaining, float present_rate) {
-    if (status == CS_CHARGING)
-        return 3600.0 * (full_design - remaining) / present_rate;
-    else if (status == CS_DISCHARGING)
-        return 3600.0 * remaining / present_rate;
-    else
-        return 0;
-}
-#endif
-
-static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down, bool last_full_capacity) {
+static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
 
 #if defined(LINUX)
@@ -121,27 +105,6 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
         batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
         batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
-    }
-
-    int full = (last_full_capacity ? batt_info->full_last : batt_info->full_design);
-
-    if ((full == -1) || (batt_info->remaining == -1)) {
-        OUTPUT_FULL_TEXT(format_down);
-        return false;
-    }
-
-    batt_info->percentage_remaining = (((float)batt_info->remaining / (float)full) * 100);
-    /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
-     * charged, even though that’s plainly wrong. For people who chose to see
-     * the percentage calculated based on the last full capacity, we clamp the
-     * value to 100%, as that makes more sense.
-     * See http://bugs.debian.org/785398 */
-    if (last_full_capacity && batt_info->percentage_remaining > 100) {
-        batt_info->percentage_remaining = 100;
-    }
-
-    if (batt_info->present_rate > 0 && batt_info->status != CS_FULL) {
-        batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full, batt_info->remaining, batt_info->present_rate);
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -346,19 +309,8 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
     }
 
-    int full = (last_full_capacity ? batt_info->full_last : batt_info->full_design);
-
-    batt_info->percentage_remaining =
-        (((float)batt_info->remaining / (float)full) * 100);
-
     if (is_full)
         batt_info->status = CS_FULL;
-
-    /*
-     * The envsys(4) ACPI routines do not appear to provide a 'time
-     * remaining' figure, so we must deduce it.
-     */
-    batt_info->seconds_remaining = seconds_remaining_from_rate(batt_info->status, full, batt_info->remaining, batt_info->present_rate);
 #endif
 
     return true;
@@ -368,6 +320,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     const char *walk;
     char *outwalk = buffer;
     struct battery_info batt_info = {
+        .full_design = -1,
+        .full_last = -1,
         .present_rate = -1,
         .seconds_remaining = -1,
         .percentage_remaining = -1,
@@ -384,8 +338,37 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     hide_seconds = true;
 #endif
 
-    if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down, last_full_capacity))
+    if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down))
         return;
+
+    int full = (last_full_capacity ? batt_info.full_last : batt_info.full_design);
+    if (full < 0 && batt_info.percentage_remaining < 0) {
+        /* We have no physical measurements and no estimates. Nothing
+         * much we can report, then. */
+        OUTPUT_FULL_TEXT(format_down);
+        return;
+    }
+
+    if (batt_info.percentage_remaining < 0) {
+        batt_info.percentage_remaining = (((float)batt_info.remaining / (float)full) * 100);
+        /* Some batteries report POWER_SUPPLY_CHARGE_NOW=<full_design> when fully
+         * charged, even though that’s plainly wrong. For people who chose to see
+         * the percentage calculated based on the last full capacity, we clamp the
+         * value to 100%, as that makes more sense.
+         * See http://bugs.debian.org/785398 */
+        if (last_full_capacity && batt_info.percentage_remaining > 100) {
+            batt_info.percentage_remaining = 100;
+        }
+    }
+
+    if (batt_info.seconds_remaining < 0 && batt_info.present_rate > 0 && batt_info.status != CS_FULL) {
+        if (batt_info.status == CS_CHARGING)
+            batt_info.seconds_remaining = 3600.0 * (full - batt_info.remaining) / batt_info.present_rate;
+        else if (batt_info.status == CS_DISCHARGING)
+            batt_info.seconds_remaining = 3600.0 * batt_info.remaining / batt_info.present_rate;
+        else
+            batt_info.seconds_remaining = 0;
+    }
 
     if (batt_info.status == CS_DISCHARGING && low_threshold > 0) {
         if (batt_info.percentage_remaining >= 0 && strcasecmp(threshold_type, "percentage") == 0 && batt_info.percentage_remaining < low_threshold) {
