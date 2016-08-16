@@ -65,21 +65,21 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         if (*walk != '=')
             continue;
 
-        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW")) {
+        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=")) {
             watt_as_unit = true;
             batt_info->remaining = atoi(walk + 1);
-        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW")) {
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW=")) {
             watt_as_unit = false;
             batt_info->remaining = atoi(walk + 1);
-        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW"))
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW="))
             batt_info->present_rate = abs(atoi(walk + 1));
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW="))
             voltage = abs(atoi(walk + 1));
         /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
          * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
          * unit instead of μAh. We will calculate it as we need it
          * later. */
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW="))
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
             batt_info->status = CS_CHARGING;
@@ -89,11 +89,11 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             batt_info->status = CS_DISCHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
             batt_info->status = CS_UNKNOWN;
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN") ||
-                 BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN=") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL_DESIGN="))
             batt_info->full_design = atoi(walk + 1);
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL") ||
-                 BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_FULL=") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL="))
             batt_info->full_last = atoi(walk + 1);
     }
 
