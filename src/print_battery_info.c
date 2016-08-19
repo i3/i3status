@@ -105,6 +105,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
         batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
         batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
+        batt_info->full_last = (((float)voltage / 1000.0) * ((float)batt_info->full_last / 1000.0));
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
     int state;
@@ -307,6 +308,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         batt_info->present_rate = (((float)voltage / 1000.0) * ((float)batt_info->present_rate / 1000.0));
         batt_info->remaining = (((float)voltage / 1000.0) * ((float)batt_info->remaining / 1000.0));
         batt_info->full_design = (((float)voltage / 1000.0) * ((float)batt_info->full_design / 1000.0));
+        batt_info->full_last = (((float)voltage / 1000.0) * ((float)batt_info->full_last / 1000.0));
     }
 
     if (is_full)
