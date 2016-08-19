@@ -204,7 +204,7 @@ typedef enum {
     NET_TYPE_WIRELESS = 0,
     NET_TYPE_ETHERNET = 1
 } net_type_t;
-const char *first_eth_interface(const net_type_t type);
+const char *first_eth_interface(const net_type_t type, const char *title);
 
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
