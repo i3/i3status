@@ -202,7 +202,8 @@ void set_timezone(const char *tz);
 /* src/first_network_device.c */
 typedef enum {
     NET_TYPE_WIRELESS = 0,
-    NET_TYPE_ETHERNET = 1
+    NET_TYPE_ETHERNET = 1,
+    NET_TYPE_OTHER = 2
 } net_type_t;
 const char *first_eth_interface(const net_type_t type);
 
