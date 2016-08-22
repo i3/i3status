@@ -642,9 +642,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("wireless") {
                 SEC_OPEN_MAP("wireless");
-                const char *interface = NULL;
-                if (strcasecmp(title, "_first_") == 0)
-                    interface = first_eth_interface(NET_TYPE_WIRELESS);
+                const char *interface = first_eth_interface(NET_TYPE_WIRELESS, title);
                 if (interface == NULL)
                     interface = title;
                 print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
@@ -653,9 +651,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("ethernet") {
                 SEC_OPEN_MAP("ethernet");
-                const char *interface = NULL;
-                if (strcasecmp(title, "_first_") == 0)
-                    interface = first_eth_interface(NET_TYPE_ETHERNET);
+                const char *interface = first_eth_interface(NET_TYPE_ETHERNET, title);
                 if (interface == NULL)
                     interface = title;
                 print_eth_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
