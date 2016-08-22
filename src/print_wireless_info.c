@@ -75,7 +75,9 @@
 
 typedef struct {
     int flags;
+#ifdef IW_ESSID_MAX_SIZE
     char essid[IW_ESSID_MAX_SIZE + 1];
+#endif
 #ifdef LINUX
     uint8_t bssid[ETH_ALEN];
 #endif
@@ -529,9 +531,11 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
 
         if (BEGINS_WITH(walk + 1, "essid")) {
+#ifdef IW_ESSID_MAX_SIZE
             if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
                 maybe_escape_markup(info.essid, &outwalk);
             else
+#endif
                 *(outwalk++) = '?';
             walk += strlen("essid");
         }
