@@ -168,11 +168,6 @@ char *pct_mark;
         }                                                                                      \
     } while (0)
 
-typedef enum { CS_DISCHARGING,
-               CS_CHARGING,
-               CS_UNKNOWN,
-               CS_FULL } charging_status_t;
-
 /*
  * The "min_width" module option may either be defined as a string or a number.
  */
