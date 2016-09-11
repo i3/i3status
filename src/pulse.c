@@ -11,6 +11,7 @@
 #define APP_ID "org.i3wm"
 
 typedef struct indexed_volume_s {
+    char *name;
     uint32_t idx;
     int volume;
     TAILQ_ENTRY(indexed_volume_s) entries;
@@ -45,22 +46,35 @@ static bool pulseaudio_free_operation(pa_context *c, pa_operation *o) {
  * save the volume for the specified sink index
  * returning true if the value was changed
  */
-static bool save_volume(uint32_t sink_idx, int new_volume) {
+static bool save_volume(uint32_t sink_idx, int new_volume, const char *name) {
     pthread_mutex_lock(&pulse_mutex);
     indexed_volume_t *entry;
     TAILQ_FOREACH(entry, &cached_volume, entries) {
-        if (entry->idx == sink_idx) {
-            const bool changed = (new_volume != entry->volume);
-            entry->volume = new_volume;
-            pthread_mutex_unlock(&pulse_mutex);
-            return changed;
+        if (name) {
+            if (!entry->name || strcmp(entry->name, name)) {
+                continue;
+            }
+        } else {
+            if (entry->idx != sink_idx) {
+                continue;
+            }
         }
+        const bool changed = (new_volume != entry->volume);
+        entry->volume = new_volume;
+        pthread_mutex_unlock(&pulse_mutex);
+        return changed;
     }
     /* index not found, store it */
     entry = malloc(sizeof(*entry));
     TAILQ_INSERT_HEAD(&cached_volume, entry, entries);
     entry->idx = sink_idx;
     entry->volume = new_volume;
+    if (name) {
+        entry->name = malloc(strlen(name) + 1);
+        strcpy(entry->name, name);
+    } else {
+        entry->name = NULL;
+    }
     pthread_mutex_unlock(&pulse_mutex);
     return true;
 }
@@ -88,20 +102,26 @@ static void store_volume_from_sink_cb(pa_context *c,
      * DEFAULT_SINK_INDEX as the index, and another with its proper value
      * (using bitwise OR to avoid early-out logic) */
     if ((info->index == default_sink_idx &&
-         save_volume(DEFAULT_SINK_INDEX, composed_volume)) |
-        save_volume(info->index, composed_volume)) {
+         save_volume(DEFAULT_SINK_INDEX, composed_volume, NULL)) |
+        save_volume(info->index, composed_volume, info->name)) {
         /* if the volume or mute flag changed, wake the main thread */
         pthread_kill(main_thread, SIGUSR1);
     }
 }
 
-static void get_sink_info(pa_context *c, uint32_t idx) {
-    pa_operation *o =
-        idx == DEFAULT_SINK_INDEX ? pa_context_get_sink_info_by_name(
-                                        c, "@DEFAULT_SINK@", store_volume_from_sink_cb, NULL)
-                                  : pa_context_get_sink_info_by_index(
-                                        c, idx, store_volume_from_sink_cb, NULL);
-    pulseaudio_free_operation(c, o);
+static void get_sink_info(pa_context *c, uint32_t idx, const char *name) {
+    pa_operation *o;
+
+    if (name || idx == DEFAULT_SINK_INDEX) {
+        o = pa_context_get_sink_info_by_name(
+            c, name ? name : "@DEFAULT_SINK@", store_volume_from_sink_cb, NULL);
+    } else {
+        o = pa_context_get_sink_info_by_index(
+            c, idx, store_volume_from_sink_cb, NULL);
+    }
+    if (o) {
+        pulseaudio_free_operation(c, o);
+    }
 }
 
 static void store_default_sink_cb(pa_context *c,
@@ -138,7 +158,7 @@ static void subscribe_cb(pa_context *c, pa_subscription_event_type_t t,
             update_default_sink(c);
             break;
         case PA_SUBSCRIPTION_EVENT_SINK:
-            get_sink_info(c, idx);
+            get_sink_info(c, idx, NULL);
             break;
         default:
             break;
@@ -183,25 +203,32 @@ static void context_state_callback(pa_context *c, void *userdata) {
  * returns the current volume in percent, which, as per PulseAudio,
  * may be > 100%
  */
-int volume_pulseaudio(uint32_t sink_idx) {
+int volume_pulseaudio(uint32_t sink_idx, const char *sink_name) {
     if (!context_ready || default_sink_idx == DEFAULT_SINK_INDEX)
         return -1;
 
     pthread_mutex_lock(&pulse_mutex);
     const indexed_volume_t *entry;
     TAILQ_FOREACH(entry, &cached_volume, entries) {
-        if (entry->idx == sink_idx) {
-            int vol = entry->volume;
-            pthread_mutex_unlock(&pulse_mutex);
-            return vol;
+        if (sink_name) {
+            if (!entry->name || strcmp(entry->name, sink_name)) {
+                continue;
+            }
+        } else {
+            if (entry->idx != sink_idx) {
+                continue;
+            }
         }
+        int vol = entry->volume;
+        pthread_mutex_unlock(&pulse_mutex);
+        return vol;
     }
     pthread_mutex_unlock(&pulse_mutex);
     /* first time requires a prime callback call because we only get
      * updates when the volume actually changes, but we need it to
      * be correct even if it never changes */
     pa_threaded_mainloop_lock(main_loop);
-    get_sink_info(context, sink_idx);
+    get_sink_info(context, sink_idx, sink_name);
     pa_threaded_mainloop_unlock(main_loop);
     /* show 0 while we don't have this information */
     return 0;

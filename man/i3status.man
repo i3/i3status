@@ -487,10 +487,16 @@ or
 
  device = "pulse:N"
 
-where N is the index of the PulseAudio sink. If no sink is specified the
-default is used. If the device string is missing or is set to "default",
-PulseAudio will be tried if detected and will fallback to ALSA (Linux)
-or OSS (FreeBSD/OpenBSD).
+where N is the index or name of the PulseAudio sink. You can obtain the name of
+the sink with the following command:
+
+ $ pacmd list-sinks | grep name:
+            name: <alsa_output.pci-0000_00_14.2.analog-stereo>
+
+The name is what's inside the angle brackets, not including them. If no sink is
+specified the default sink is used. If the device string is missing or is set
+to "default", PulseAudio will be tried if detected and will fallback to ALSA
+(Linux) or OSS (FreeBSD/OpenBSD).
 
 *Example order*: +volume master+
 
@@ -514,6 +520,13 @@ volume master {
 	format = "♪: %volume"
 	format_muted = "♪: muted (%volume)"
 	device = "pulse:1"
+}
+-------------------------------------------------------------
+-------------------------------------------------------------
+volume master {
+	format = "♪: %volume"
+	format_muted = "♪: muted (%volume)"
+	device = "pulse:alsa_output.pci-0000_00_14.2.analog-stereo"
 }
 -------------------------------------------------------------
 

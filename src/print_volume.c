@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
+#include <ctype.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
@@ -67,9 +68,12 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
     if (!strncasecmp(device, "pulse", strlen("pulse"))) {
-        uint32_t sink_idx = device[5] == ':' ? (uint32_t)atoi(device + 6)
-                                             : DEFAULT_SINK_INDEX;
-        int cvolume = pulse_initialize() ? volume_pulseaudio(sink_idx) : 0;
+        uint32_t sink_idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
+        const char *sink_name = device[strlen("pulse")] == ':' &&
+                                        !isdigit(device[strlen("pulse:")])
+                                    ? device + strlen("pulse:")
+                                    : NULL;
+        int cvolume = pulse_initialize() ? volume_pulseaudio(sink_idx, sink_name) : 0;
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (muted) {
@@ -85,7 +89,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
-        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX);
+        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0) {
