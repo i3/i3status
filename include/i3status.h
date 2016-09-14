@@ -217,7 +217,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
-int volume_pulseaudio(uint32_t sink_idx);
+int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool pulse_initialize(void);
 
 /* socket file descriptor for general purposes */
