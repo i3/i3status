@@ -497,7 +497,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (BEGINS_WITH(walk + 1, "quality")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
                 if (info.quality_max)
-                    outwalk += sprintf(outwalk, "%03d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d", info.quality);
             } else {
@@ -509,7 +509,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (BEGINS_WITH(walk + 1, "signal")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
                 if (info.signal_level_max)
-                    outwalk += sprintf(outwalk, "%03d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
             } else {
@@ -521,7 +521,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (BEGINS_WITH(walk + 1, "noise")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
                 if (info.noise_level_max)
-                    outwalk += sprintf(outwalk, "%03d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
             } else {
