@@ -176,6 +176,8 @@ struct min_width {
     const char *str;
 };
 
+char *sstrdup(const char *str);
+
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 void die(const char *fmt, ...);

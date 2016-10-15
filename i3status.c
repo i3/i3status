@@ -104,7 +104,7 @@ static void *scalloc(size_t size) {
     return result;
 }
 
-static char *sstrdup(const char *str) {
+char *sstrdup(const char *str) {
     char *result = strdup(str);
     exit_if_null(result, "Error: out of memory (strdup())\n");
     return result;
