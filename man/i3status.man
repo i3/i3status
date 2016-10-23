@@ -439,12 +439,15 @@ The system's timezone database is usually installed in +/usr/share/zoneinfo+.
 Files below that path make for valid timezone strings, e.g. for
 +/usr/share/zoneinfo/Europe/Berlin+ you can set timezone to +Europe/Berlin+
 in the +tztime+ module.
+To override the locale settings of your environment, set the +locale+ option.
 
 *Example order*: +tztime berlin+
 
 *Example format*: +%Y-%m-%d %H:%M:%S %Z+
 
 *Example timezone*: +Europe/Berlin+
+
+*Example locale*: +de_DE.UTF-8+
 
 If you would like to use markup in this section, there is a separate
 +format_time+ option that is automatically escaped. Its output then replaces
