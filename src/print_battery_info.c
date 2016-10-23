@@ -11,7 +11,7 @@
 
 #if defined(LINUX)
 #include <errno.h>
-#include <sys/stat.h>
+#include <glob.h>
 #include <sys/types.h>
 #endif
 
@@ -414,40 +414,39 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
     char *outwalk = buffer;
     bool is_found = false;
 
-    /* 1,000 batteries should be enough for anyone */
-    for (int i = 0; i < 1000; i++) {
-        char batpath[1024];
-        (void)snprintf(batpath, sizeof(batpath), path, i);
-
-        if (!strcmp(batpath, path)) {
-            OUTPUT_FULL_TEXT("no '%d' in battery path");
-            return false;
-        }
-
-        /* Probe to see if there is such a battery. */
-        struct stat sb;
-        if (stat(batpath, &sb) != 0) {
-            /* No such file, then we are done, assuming sysfs files have sequential numbers. */
-            if (errno == ENOENT)
-                break;
-
-            OUTPUT_FULL_TEXT(format_down);
-            return false;
-        }
-
-        struct battery_info batt_buf = {
-            .full_design = 0,
-            .full_last = 0,
-            .remaining = 0,
-            .present_rate = 0,
-            .status = CS_UNKNOWN,
-        };
-        if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, path, format_down))
-            return false;
-
-        is_found = true;
-        add_battery_info(batt_info, &batt_buf);
+    char *placeholder;
+    char *globpath = sstrdup(path);
+    if ((placeholder = strstr(path, "%d")) != NULL) {
+        char *globplaceholder = globpath + (placeholder - path);
+        *globplaceholder = '*';
+        strcpy(globplaceholder + 1, placeholder + 2);
     }
+
+    if (!strcmp(globpath, path)) {
+        OUTPUT_FULL_TEXT("no '%d' in battery path");
+        return false;
+    }
+
+    glob_t globbuf;
+    if (glob(globpath, 0, NULL, &globbuf) == 0) {
+        for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+            /* Probe to see if there is such a battery. */
+            struct battery_info batt_buf = {
+                .full_design = 0,
+                .full_last = 0,
+                .remaining = 0,
+                .present_rate = 0,
+                .status = CS_UNKNOWN,
+            };
+            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down))
+                return false;
+
+            is_found = true;
+            add_battery_info(batt_info, &batt_buf);
+        }
+    }
+    globfree(&globbuf);
+    free(globpath);
 
     if (!is_found) {
         OUTPUT_FULL_TEXT(format_down);
