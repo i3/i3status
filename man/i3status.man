@@ -290,7 +290,8 @@ There also is an option "format_down". You can hide the output with
 
 Gets the link quality, frequency and ESSID of the given wireless network
 interface. You can specify different format strings for the network being
-connected or not connected.
+connected or not connected. The quality is padded with leading zeroes by
+default; to pad with another leading character use +quality_leading_character=" "+.
 
 The special interface name `_first_` will be replaced by the first wireless
 network interface found on the system (excluding devices starting with "lo").
