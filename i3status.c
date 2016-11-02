@@ -459,7 +459,7 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
-    cfg_opt_t keyboard_opts[] ={
+    cfg_opt_t keyboard_opts[] = {
         CFG_STR("format", "⌨: %map", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
