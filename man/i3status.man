@@ -56,6 +56,7 @@ order += "wireless wlan0"
 order += "ethernet eth0"
 order += "battery 0"
 order += "cpu_temperature 0"
+order += "keyboard"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
@@ -105,6 +106,10 @@ tztime berlin {
         timezone = "Europe/Berlin"
 }
 
+keyboard {
+	format = "⌨: %map"
+}
+
 load {
 	format = "%5min"
 }
@@ -117,6 +122,7 @@ cpu_temperature 0 {
 disk "/" {
 	format = "%free"
 }
+
 -------------------------------------------------------------
 
 === General
@@ -418,6 +424,15 @@ getting higher than the configured threshold. Defaults to 5.
 *Example format*: +%1min %5min %15min+
 
 *Example max_threshold*: +"0,1"+
+
+=== Keyboard
+
+Gets the current active keyboard layout for the X server. It will also get the
+variant.
+
+*Example order*: +keyboard+
+
+*Example format*: +⌨: %map+
 
 === Time
 

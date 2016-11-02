@@ -459,6 +459,15 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t keyboard_opts[] = {
+        CFG_STR("format", "⌨: %map", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -476,6 +485,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("keyboard", keyboard_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -730,6 +740,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("cpu_usage") {
                 SEC_OPEN_MAP("cpu_usage");
                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("keyboard") {
+                SEC_OPEN_MAP("keyboard");
+                print_keyboard(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
         }
