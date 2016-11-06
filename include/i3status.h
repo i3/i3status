@@ -1,17 +1,23 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
-enum { O_DZEN2,
-       O_XMOBAR,
-       O_I3BAR,
-       O_LEMONBAR,
-       O_TERM,
-       O_NONE } output_format;
+typedef enum {
+    O_DZEN2,
+    O_XMOBAR,
+    O_I3BAR,
+    O_LEMONBAR,
+    O_TERM,
+    O_NONE
+} output_format_t;
+extern output_format_t output_format;
 
-enum { M_PANGO,
-       M_NONE } markup_format;
+typedef enum {
+    M_PANGO,
+    M_NONE
+} markup_format_t;
+extern markup_format_t markup_format;
 
-char *pct_mark;
+extern char *pct_mark;
 
 #include <stdbool.h>
 #include <confuse.h>

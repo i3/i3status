@@ -71,6 +71,11 @@ void **cur_instance;
 
 pthread_t main_thread;
 
+markup_format_t markup_format;
+output_format_t output_format;
+
+char *pct_mark;
+
 /*
  * Set the exit_upon_signal flag, because one cannot do anything in a safe
  * manner in a signal handler (e.g. fprintf, which we really want to do for
