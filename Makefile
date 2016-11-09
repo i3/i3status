@@ -79,9 +79,10 @@ CFLAGS += -idirafter yajl-fallback
 OBJS:=$(wildcard src/*.c *.c)
 OBJS:=$(OBJS:.c=.o)
 
-ifeq ($(OS),OpenBSD)
+ifdef NO_PULSEAUDIO
 OBJS:=$(filter-out src/pulse.o, $(OBJS))
 LIBS:=$(filter-out -lpulse, $(LIBS))
+CPPFLAGS+=-DNO_PULSEAUDIO=1
 endif
 
 src/%.o: src/%.c include/i3status.h
