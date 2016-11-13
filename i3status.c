@@ -63,6 +63,7 @@
 int general_socket;
 
 static bool exit_upon_signal = false;
+static bool run_once = false;
 
 cfg_t *cfg, *cfg_general, *cfg_section;
 
@@ -479,11 +480,12 @@ int main(int argc, char *argv[]) {
         CFG_END()};
 
     char *configfile = NULL;
-    int o, option_index = 0;
+    int opt, option_index = 0;
     struct option long_options[] = {
         {"config", required_argument, 0, 'c'},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
+        {"run-once", no_argument, 0, 0},
         {0, 0, 0, 0}};
 
     struct sigaction action;
@@ -506,18 +508,28 @@ int main(int argc, char *argv[]) {
     if (setlocale(LC_ALL, "") == NULL)
         die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.");
 
-    while ((o = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1)
-        if ((char)o == 'c')
-            configfile = optarg;
-        else if ((char)o == 'h') {
-            printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
-                   "Syntax: %s [-c <configfile>] [-h] [-v]\n",
-                   argv[0]);
-            return 0;
-        } else if ((char)o == 'v') {
-            printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n");
-            return 0;
+    while ((opt = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'c':
+                configfile = optarg;
+                break;
+            case 'h':
+                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
+                       "Syntax: %s [-c <configfile>] [-h] [-v]\n",
+                       argv[0]);
+                return 0;
+                break;
+            case 'v':
+                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n");
+                return 0;
+                break;
+            case 0:
+                if (strcmp(long_options[option_index].name, "run-once") == 0) {
+                    run_once = true;
+                }
+                break;
         }
+    }
 
     if (configfile == NULL)
         configfile = get_config_path();
@@ -748,6 +760,10 @@ int main(int argc, char *argv[]) {
 
         printf("\n");
         fflush(stdout);
+
+        if (run_once) {
+            break;
+        }
 
         /* To provide updates on every full second (as good as possible)
          * we don’t use sleep(interval) but we sleep until the next
