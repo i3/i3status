@@ -110,10 +110,12 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
+    const char *selected_format = format;
     const char *walk;
     char *outwalk = buffer;
     bool colorful_output = false;
+    bool mounted = false;
 
     INSTANCE(path);
 
@@ -122,47 +124,48 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 
     if (statfs(path, &buf) == -1)
         return;
+
+    mounted = true;
 #elif defined(__NetBSD__)
     struct statvfs buf;
 
     if (statvfs(path, &buf) == -1)
         return;
+
+    mounted = true;
 #else
     struct statvfs buf;
 
-    if (format_not_mounted == NULL) {
-        format_not_mounted = "";
-    }
-
     if (statvfs(path, &buf) == -1) {
         /* If statvfs errors, e.g., due to the path not existing,
-         * we use the format for a not mounted device. */
-        format = format_not_mounted;
+         * we consider the device not mounted. */
+        mounted = false;
     } else {
         FILE *mntentfile = setmntent("/etc/mtab", "r");
         struct mntent *m;
-        bool found = false;
 
         while ((m = getmntent(mntentfile)) != NULL) {
             if (strcmp(m->mnt_dir, path) == 0) {
-                found = true;
+                mounted = true;
                 break;
             }
         }
         endmntent(mntentfile);
-
-        if (!found) {
-            format = format_not_mounted;
-        }
     }
 #endif
 
-    if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
+    if (!mounted) {
+        if (format_not_mounted == NULL)
+            format_not_mounted = "";
+        selected_format = format_not_mounted;
+    } else if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
         START_COLOR("color_bad");
         colorful_output = true;
+        if (format_below_threshold != NULL)
+            selected_format = format_below_threshold;
     }
 
-    for (walk = format; *walk != '\0'; walk++) {
+    for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
             continue;
