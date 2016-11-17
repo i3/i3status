@@ -465,7 +465,18 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
-    cfg_opt_t opts[] = {
+    cfg_opt_t brightness_opts[] = {
+        CFG_STR("format", "◐: %brightness", CFGF_NONE),
+        CFG_STR("actual_brightness_path", NULL, CFGF_NONE),
+        CFG_STR("max_brightness_path", NULL, CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
+   cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
         CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
@@ -476,6 +487,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("cpu_temperature", temp_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("disk", disk_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("brightness", brightness_opts, CFGF_NONE),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
@@ -735,6 +747,14 @@ int main(int argc, char *argv[]) {
                              cfg_getstr(sec, "device"),
                              cfg_getstr(sec, "mixer"),
                              cfg_getint(sec, "mixer_idx"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("brightness") {
+                SEC_OPEN_MAP("brightness");
+                print_brightness(json_gen, buffer, cfg_getstr(sec, "format"),
+                             cfg_getstr(sec, "actual_brightness_path"),
+                             cfg_getstr(sec, "max_brightness_path"));
                 SEC_CLOSE_MAP;
             }
 
