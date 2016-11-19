@@ -246,7 +246,8 @@ prefix_type. So, if you configure low_threshold to 2, threshold_type to
 "gbytes_avail", and prefix_type to "binary", and the remaining available disk
 space is below 2 GiB, it will be colored bad. If not specified, threshold_type
 is assumed to be "percentage_avail" and low_threshold to be set to 0, which
-implies no coloring at all.
+implies no coloring at all. You can customize the output format when below
+low_threshold with format_below_threshold.
 
 You can define a different format with the option "format_not_mounted"
 which is used if the path does not exist or is not a mount point. Defaults to "".
@@ -260,6 +261,8 @@ which is used if the path does not exist or is not a mount point. Defaults to ""
 *Example prefix_type*: +custom+
 
 *Example low_threshold*: +5+
+
+*Example format_below_threshold*: +Warning: %percentage_avail+
 
 *Example threshold_type*: +percentage_free+
 
@@ -375,13 +378,17 @@ FULL) is used.
 
 Gets the temperature of the given thermal zone. It is possible to
 define a max_threshold that will color the temperature red in case the
-specified thermal zone is getting too hot. Defaults to 75 degrees C.
+specified thermal zone is getting too hot. Defaults to 75 degrees C. The
+output format when above max_threshold can be customized with
+format_above_threshold.
 
 *Example order*: +cpu_temperature 0+
 
 *Example format*: +T: %degrees °C+
 
 *Example max_threshold*: +42+
+
+*Example format_above_threshold*: +Warning T above threshold: %degrees °C+
 
 *Example path*: +/sys/devices/platform/coretemp.0/temp1_input+
 
@@ -392,11 +399,15 @@ Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+
 
 It is possible to define a max_threshold that will color the load
 value red in case the CPU average over the last interval is getting
-higher than the configured threshold. Defaults to 95.
+higher than the configured threshold. Defaults to 95. The output
+format when above max_threshold can be customized with
+format_above_threshold.
 
 It is possible to define a degraded_threshold that will color the load
 value yellow in case the CPU average over the last interval is getting
-higher than the configured threshold.  Defaults to 90.
+higher than the configured threshold.  Defaults to 90. The ouput format
+when above degraded threshold can be customized with
+format_above_degraded_threshold.
 
 *Example order*: +cpu_usage+
 
@@ -404,20 +415,28 @@ higher than the configured threshold.  Defaults to 90.
 
 *Example max_threshold*: +75+
 
+*Example format_above_threshold*: +Warning above threshold: %usage+
+
 *Example degraded_threshold*: +25+
+
+*Example format_above_degraded_threshold*: +Warning above degraded threshold: %usage+
 
 === Load
 
 Gets the system load (number of processes waiting for CPU time in the last
 1, 5 and 15 minutes). It is possible to define a max_threshold that will
 color the load value red in case the load average of the last minute is
-getting higher than the configured threshold. Defaults to 5.
+getting higher than the configured threshold. Defaults to 5. The output 
+format when above max_threshold can be customized with
+format_above_threshold.
 
 *Example order*: +load+
 
 *Example format*: +%1min %5min %15min+
 
 *Example max_threshold*: +"0,1"+
+
+*Example format_above_threshold*: +Warning: %1min %5min %15min+
 
 === Time
 
