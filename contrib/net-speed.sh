@@ -51,7 +51,12 @@ update_rate() {
   done
 
   local interval=$(( $time - $last_time ))
-  rate="$(readable $(( (rx - last_rx) / interval )))↓ $(readable $(( (tx - last_tx) / interval )))↑"
+  if [ $interval -gt 0 ]; then
+    rate="$(readable $(( (rx - last_rx) / interval )))↓ $(readable $(( (tx - last_tx) / interval )))↑"
+  else
+    rate=""
+  fi
+
   last_time=$time
   last_rx=$rx
   last_tx=$tx
