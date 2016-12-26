@@ -15,6 +15,13 @@
 # bar {
 #   status_command exec /usr/share/doc/i3status/contrib/net-speed.sh
 # }
+#
+# Single interface:
+# ifaces="eth0"
+#
+# Multiple interfaces:
+# ifaces="eth0 wlan0"
+#
 
 # Auto detect interfaces
 ifaces=$(ls /sys/class/net | grep -E '^(eth|wlan|enp|wlp)')
