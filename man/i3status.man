@@ -331,7 +331,7 @@ If you want the battery percentage to be shown without decimals, add
 
 If your battery is represented in a non-standard path in /sys, be sure to
 modify the "path" property accordingly, i.e. pointing to the uevent file on
-your system. The first occurence of %d gets replaced with the battery number,
+your system. The first occurrence of %d gets replaced with the battery number,
 but you can just hard-code a path as well.
 
 It is possible to define a low_threshold that causes the battery text to be
@@ -405,7 +405,7 @@ format_above_threshold.
 
 It is possible to define a degraded_threshold that will color the load
 value yellow in case the CPU average over the last interval is getting
-higher than the configured threshold.  Defaults to 90. The ouput format
+higher than the configured threshold.  Defaults to 90. The output format
 when above degraded threshold can be customized with
 format_above_degraded_threshold.
 
