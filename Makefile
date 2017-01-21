@@ -76,7 +76,7 @@ CFLAGS+=$(EXTRA_CFLAGS)
 # YAJL_MAJOR from that file to decide which code path should be used.
 CFLAGS += -idirafter yajl-fallback
 
-OBJS:=$(wildcard src/*.c *.c)
+OBJS:=$(sort $(wildcard src/*.c *.c))
 OBJS:=$(OBJS:.c=.o)
 
 ifeq ($(OS),OpenBSD)
