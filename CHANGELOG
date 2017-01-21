@@ -1,3 +1,32 @@
+2017-01-21 i3status 2.11
+
+ • re-add forgotten wakeup call from SIGUSR1 handler
+ • disk_info: bugfix: check format_not_mounted is not NULL before using it
+ • revert back to using nanosleep
+ • man: give more descriptive symbols to battery format
+ • battery: removes the 'remaining' time when the battery is full
+ • add separator and separator_block_width as universal module options
+ • man: fix link to contrib
+ • cpu_temperature: add glob check
+ • battery: add status_unk
+ • reconnect to PluseAudio when connection is lost
+ • wireless: add ifdef to compile on macOS
+ • order default configuration paths the same as in i3
+ • add version files for release tarball
+ • man: make tztime example config match the context
+ • cpu_usage: add color thresholds
+ • battery: support multiple batteries
+ • disk: use empty string for not mounted disks
+ • default config: remove DHCP, VPN
+ • wireless: fix FTBFS on hurd and kFreeBSD
+ • parse uevent file to detect network device type
+ • allow pulse device to be specified by name
+ • battery: find batteries using glob
+ • tztime: support locales
+ • wireless: use blank padding for quality
+ • add unit tests
+ • fix compilation with -fno-common
+
 2016-01-01 i3status 2.10
 
  • man: fix typo in battery example
