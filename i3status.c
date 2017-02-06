@@ -422,6 +422,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "%usage", CFGF_NONE),
         CFG_STR("format_above_threshold", NULL, CFGF_NONE),
         CFG_STR("format_above_degraded_threshold", NULL, CFGF_NONE),
+        CFG_STR("path", "/proc/stat", CFGF_NONE),
         CFG_FLOAT("max_threshold", 95, CFGF_NONE),
         CFG_FLOAT("degraded_threshold", 90, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
@@ -751,7 +752,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("cpu_usage") {
                 SEC_OPEN_MAP("cpu_usage");
-                print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
+                print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getstr(sec, "path"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
                 SEC_CLOSE_MAP;
             }
         }

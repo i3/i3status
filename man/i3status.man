@@ -405,13 +405,16 @@ format_above_threshold.
 
 It is possible to define a degraded_threshold that will color the load
 value yellow in case the CPU average over the last interval is getting
-higher than the configured threshold.  Defaults to 90. The output format
+higher than the configured threshold. Defaults to 90. The output format
 when above degraded threshold can be customized with
 format_above_degraded_threshold.
 
+For displaying the Nth CPU usage, you can use the %cpu<N> format string,
+starting from %cpu0. This feature is currently not supported in FreeBSD.
+
 *Example order*: +cpu_usage+
 
-*Example format*: +%usage+
+*Example format*: +all: %usage CPU_0: %cpu0 CPU_1: %cpu1+
 
 *Example max_threshold*: +75+
 
