@@ -482,7 +482,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     /* These OSes report battery stats in whole percent. */
     integer_battery_capacity = true;
 #endif
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery time in minutes. */
     hide_seconds = true;
 #endif
