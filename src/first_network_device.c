@@ -94,18 +94,21 @@ static net_type_t iface_type(const char *ifname) {
     strlcpy(bssid.i_name, ifname, sizeof(bssid.i_name));
     ibssid = ioctl(s, SIOCG80211BSSID, &bssid);
 
-    if (ibssid == 0 || inwid == 0)
+    if (ibssid == 0 || inwid == 0) {
+        close(s);
         return NET_TYPE_WIRELESS;
+    }
 
     (void)memset(&ifmr, 0, sizeof(ifmr));
     (void)strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
-    if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+    if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+        close(s);
         return NET_TYPE_OTHER;
-    else
+    } else {
+        close(s);
         return NET_TYPE_ETHERNET;
-
-    close(s);
+    }
 #else
 #error Missing implementation to determine interface type.
 #endif
