@@ -552,6 +552,16 @@ volume master {
 }
 -------------------------------------------------------------
 
+=== File
+
+Includes the contents of a given path.  This is very useful to include the
+output from other programs into your i3status.  This can be used to, for
+example, have a cronjob that outputs the current weather into a file.
+
+*Example order*: +file weather+
+
+*Example path*: +/home/user/.weather+
+
 == Universal module options
 
 When using the i3bar output format, there are a few additional options that
