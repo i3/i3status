@@ -17,9 +17,9 @@
  * interface is up and running but hasn't got an IP address yet
  *
  */
-const char *get_ip_addr(const char *interface) {
+const char *get_ip_addr(const char *interface, unsigned family) {
     static char part[512];
-    socklen_t len = sizeof(struct sockaddr_in);
+    socklen_t len = sizeof(struct sockaddr_in6);
     memset(part, 0, sizeof(part));
 
     struct ifaddrs *ifaddr, *addrp;
@@ -36,7 +36,7 @@ const char *get_ip_addr(const char *interface) {
          (addrp != NULL &&
           (strcmp(addrp->ifa_name, interface) != 0 ||
            addrp->ifa_addr == NULL ||
-           addrp->ifa_addr->sa_family != AF_INET));
+           addrp->ifa_addr->sa_family != family));
 
          addrp = addrp->ifa_next) {
         /* Check if the interface is down */
@@ -60,6 +60,12 @@ const char *get_ip_addr(const char *interface) {
         freeifaddrs(ifaddr);
         return "no IP";
     }
+
+    // Remove the trailing interface name that getnameinfo might have returned
+    // on IPv6 addresses
+    char *ip_end = strchr(part, '%');
+    if (ip_end)
+        *ip_end = '\0';
 
     freeifaddrs(ifaddr);
     return part;

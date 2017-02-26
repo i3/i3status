@@ -121,18 +121,18 @@ static int print_eth_speed(char *outwalk, const char *interface) {
  */
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *walk;
-    const char *ip_address = get_ip_addr(interface);
+    const char *ip_address = get_ip_addr(interface, AF_INET);
     char *outwalk = buffer;
 
     INSTANCE(interface);
 
-    if (ip_address == NULL) {
+    if (ip_address == NULL) {  // Interface was down or not found
         START_COLOR("color_bad");
         outwalk += sprintf(outwalk, "%s", format_down);
         goto out;
     }
 
-    if (BEGINS_WITH(ip_address, "no IP"))
+    if (BEGINS_WITH(ip_address, "no IP"))  // Interface is up but has no assigned IPv4
         START_COLOR("color_degraded");
     else
         START_COLOR("color_good");
@@ -143,8 +143,13 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
             continue;
         }
 
-        if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", ip_address);
+        if (BEGINS_WITH(walk + 1, "ip6")) {
+            const char *ip6_address = get_ip_addr(interface, AF_INET6);
+            outwalk += sprintf(outwalk, "%s", ip6_address);
+            walk += strlen("ip");
+        } else if (BEGINS_WITH(walk + 1, "ip")) {
+            const char *ip4_address = get_ip_addr(interface, AF_INET);
+            outwalk += sprintf(outwalk, "%s", ip4_address);
             walk += strlen("ip");
         } else if (BEGINS_WITH(walk + 1, "speed")) {
             outwalk += print_eth_speed(outwalk, interface);
