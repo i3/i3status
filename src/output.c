@@ -111,12 +111,11 @@ void maybe_escape_markup(char *text, char **buffer) {
             default:
                 if ((0x1 <= *text && *text <= 0x8) ||
                     (0xb <= *text && *text <= 0xc) ||
-                    (0xe <= *text && *text <= 0x1f) ||
-                    (0x7f <= *text && *text <= 0x84) ||
-                    (0x86 <= *text && *text <= 0x9f))
+                    (0xe <= *text && *text <= 0x1f)) {
                     *buffer += sprintf(*buffer, "&#x%x;", *text);
-                else
+                } else {
                     *(*buffer)++ = *text;
+                }
                 break;
         }
     }
