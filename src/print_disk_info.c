@@ -142,7 +142,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         mounted = false;
     } else {
         char *sanitized = sstrdup(path);
-        if (sanitized[strlen(sanitized) - 1] == '/')
+        if (strlen(sanitized) > 1 && sanitized[strlen(sanitized) - 1] == '/')
             sanitized[strlen(sanitized) - 1] = '\0';
         FILE *mntentfile = setmntent("/etc/mtab", "r");
         struct mntent *m;
