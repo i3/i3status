@@ -29,6 +29,7 @@ const char *get_ip_addr(const char *interface, int family) {
 
     struct ifaddrs *ifaddr, *addrp;
     bool found = false;
+    int interface_len = strlen(interface);
 
     getifaddrs(&ifaddr);
 
@@ -39,13 +40,13 @@ const char *get_ip_addr(const char *interface, int family) {
     for (addrp = ifaddr;
 
          (addrp != NULL &&
-          (strcmp(addrp->ifa_name, interface) != 0 ||
+          (strncmp(addrp->ifa_name, interface, interface_len) != 0 ||
            addrp->ifa_addr == NULL ||
            addrp->ifa_addr->sa_family != family));
 
          addrp = addrp->ifa_next) {
         /* Check if the interface is down */
-        if (strcmp(addrp->ifa_name, interface) != 0)
+        if (strncmp(addrp->ifa_name, interface, interface_len) != 0)
             continue;
         found = true;
         if ((addrp->ifa_flags & IFF_RUNNING) == 0) {
