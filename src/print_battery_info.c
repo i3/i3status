@@ -138,9 +138,13 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=")) {
             watt_as_unit = true;
             batt_info->remaining = atoi(walk + 1);
+            batt_info->percentage_remaining = -1;
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW=")) {
             watt_as_unit = false;
             batt_info->remaining = atoi(walk + 1);
+            batt_info->percentage_remaining = -1;
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CAPACITY=") && batt_info->remaining == -1) {
+            batt_info->percentage_remaining = atoi(walk + 1);
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW="))
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW="))
