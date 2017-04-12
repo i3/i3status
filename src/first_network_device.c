@@ -53,16 +53,16 @@ static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
 static bool is_virtual(const char *ifname) {
     char path[1024];
     char *target = NULL;
-    const char virtual_template[] = "/sys/devices/virtual/";
+    bool is_virtual = false;
 
     snprintf(path, sizeof(path), "/sys/class/net/%s", ifname);
     if ((target = realpath(path, NULL))) {
-        if (strncmp(virtual_template, target, strlen(virtual_template)) == 0)
-            return true;
+        if (BEGINS_WITH(target, "/sys/devices/virtual/"))
+            is_virtual = true;
     }
-    free(target);
 
-    return false;
+    free(target);
+    return is_virtual;
 }
 
 static net_type_t iface_type(const char *ifname) {
