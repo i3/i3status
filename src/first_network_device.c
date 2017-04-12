@@ -50,6 +50,21 @@ static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
     return true;
 }
 
+static bool is_virtual(const char *ifname) {
+    char path[1024];
+    char *target = NULL;
+    const char virtual_template[] = "/sys/devices/virtual/";
+
+    snprintf(path, sizeof(path), "/sys/class/net/%s", ifname);
+    if ((target = realpath(path, NULL))) {
+        if (strncmp(virtual_template, target, strlen(virtual_template)) == 0)
+            return true;
+    }
+    free(target);
+
+    return false;
+}
+
 static net_type_t iface_type(const char *ifname) {
 #ifdef __linux__
     char devtype[32];
@@ -57,6 +72,7 @@ static net_type_t iface_type(const char *ifname) {
     if (!sysfs_devtype(devtype, sizeof(devtype), ifname))
         return NET_TYPE_OTHER;
 
+    /* Default to Ethernet when no devtype is available */
     if (!devtype[0])
         return NET_TYPE_ETHERNET;
 
@@ -146,6 +162,8 @@ const char *first_eth_interface(const net_type_t type) {
         // Skip this interface if it is a wireless interface.
         iftype = iface_type(addrp->ifa_name);
         if (iftype != type)
+            continue;
+        if (is_virtual(addrp->ifa_name))
             continue;
         interface = strdup(addrp->ifa_name);
         break;
