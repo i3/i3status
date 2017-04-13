@@ -57,8 +57,9 @@ static bool is_virtual(const char *ifname) {
 
     snprintf(path, sizeof(path), "/sys/class/net/%s", ifname);
     if ((target = realpath(path, NULL))) {
-        if (BEGINS_WITH(target, "/sys/devices/virtual/"))
+        if (BEGINS_WITH(target, "/sys/devices/virtual/")) {
             is_virtual = true;
+        }
     }
 
     free(target);
