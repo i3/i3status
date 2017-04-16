@@ -523,6 +523,8 @@ specified the default sink is used. If the device string is missing or is set
 to "default", PulseAudio will be tried if detected and will fallback to ALSA
 (Linux) or OSS (FreeBSD/OpenBSD).
 
+To force PulseAudio using ALSA emulation, use "alsa" as the device name.
+
 *Example order*: +volume master+
 
 *Example format*: +♪: %volume+

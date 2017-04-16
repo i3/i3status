@@ -122,7 +122,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Attach this mixer handle to the given device */
-    if ((err = snd_mixer_attach(m, device)) < 0) {
+    if (!strcasecmp(device, "alsa") ? (err = snd_mixer_attach(m, "pulse")) < 0 : (err = snd_mixer_attach(m, device)) < 0) {
         fprintf(stderr, "i3status: ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
         snd_mixer_close(m);
         goto out;
