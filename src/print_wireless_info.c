@@ -471,8 +471,8 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     INSTANCE(interface);
 
-    const char *ip_address = get_ip_addr(interface);
-    if (ip_address == NULL) {
+    const char *ip_address = get_ip_addr(interface, AF_INET);
+    if (ip_address == NULL) {  // Interface was down or not found
         START_COLOR("color_bad");
         outwalk += sprintf(outwalk, "%s", format_down);
         goto out;
@@ -549,8 +549,15 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
             walk += strlen("frequency");
         }
 
+        if (BEGINS_WITH(walk + 1, "ip6")) {
+            const char *ip6_address = get_ip_addr(interface, AF_INET6);
+            outwalk += sprintf(outwalk, "%s", ip6_address);
+            walk += strlen("ip");
+        }
+
         if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", ip_address);
+            const char *ip4_address = get_ip_addr(interface, AF_INET);
+            outwalk += sprintf(outwalk, "%s", ip4_address);
             walk += strlen("ip");
         }
 
