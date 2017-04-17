@@ -471,6 +471,12 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t cmd_opts[] = {
+        CFG_STR("cmd", "echo 'hello world'", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -484,6 +490,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
+        CFG_SEC("cmd", cmd_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
@@ -753,6 +760,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("cpu_usage") {
                 SEC_OPEN_MAP("cpu_usage");
                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getstr(sec, "path"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("cmd") {
+                SEC_OPEN_MAP("cmd");
+                print_cmd(json_gen, buffer, cfg_getstr(sec, "cmd"));
                 SEC_CLOSE_MAP;
             }
         }
