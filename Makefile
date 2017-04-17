@@ -43,6 +43,7 @@ CPPFLAGS+=-D_GNU_SOURCE
 CFLAGS += $(shell pkg-config --cflags libnl-genl-3.0)
 LIBS += $(shell pkg-config --libs libnl-genl-3.0)
 LIBS+=-lasound
+LIBS+=-lpthread
 endif
 
 ifeq ($(OS),GNU/kFreeBSD)

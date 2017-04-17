@@ -471,6 +471,13 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t custom_opts[] = {
+        CFG_STR("exec", "printf \"\"", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -488,6 +495,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("custom", custom_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()};
 
     char *configfile = NULL;
@@ -639,6 +647,40 @@ int main(int argc, char *argv[]) {
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
 
+    /* TODO:  Make this cross system compatible, including -lpthread in the Makefile*/
+
+    //Create the per-thread parameters for the number of custom sections there are
+    // and start the respective threads
+    int nCustoms = 0;
+    for (j = 0; j < cfg_size(cfg, "order"); j++)
+        if (BEGINS_WITH(cfg_getnstr(cfg, "order", j), "custom"))
+            nCustoms++;
+
+    //Create the thread parameters and custom thread arg containers for each custom section
+    pthread_t custom_threads[nCustoms];
+    custom_args_t custom_args[nCustoms];
+
+    //Start the threads for the custom sections giving the each thread its own buffer to write to
+    int custom_i = 0;
+    for (j = 0; j < cfg_size(cfg, "order"); j++) {
+        const char *current = cfg_getnstr(cfg, "order", j);
+        CASE_SEC_TITLE("custom") {
+            //The pointer address copy is a safe way to transfer the string of exec as this string has already
+            // been allocated properly inside of `sec` and the cfg_getstr function simply returns its pointer
+            (custom_args + custom_i)->cmd = cfg_getstr(sec, "exec");
+
+            //Initialize the pthread sleep cond_wait variables to their default values
+            pthread_cond_init(&(custom_args + custom_i)->sleep_cond, NULL);
+            pthread_mutex_init(&(custom_args + custom_i)->sleep_mutex, NULL);
+
+            //For safety, cut the buffer short just in case it is printed before it is filled with legitimate data
+            *(custom_args + custom_i)->buffer = 0;
+
+            pthread_create(custom_threads + custom_i, NULL, custom_thread_fn, custom_args + custom_i);
+            custom_i++;
+        }
+    }
+
     while (1) {
         if (exit_upon_signal) {
             fprintf(stderr, "Exiting due to signal.\n");
@@ -651,7 +693,10 @@ int main(int argc, char *argv[]) {
         else if (output_format == O_TERM)
             /* Restore the cursor-position, clear line */
             printf("\033[u\033[K");
-        for (j = 0; j < cfg_size(cfg, "order"); j++) {
+
+        //The variable `custom_i` will keep track of the offset in the custom sections own container array
+        // as the custom sections use different buffers than `buffer`
+        for (j = 0, custom_i = 0; j < cfg_size(cfg, "order"); j++) {
             cur_instance = per_instance + j;
             if (j > 0)
                 print_separator(separator);
@@ -755,7 +800,25 @@ int main(int argc, char *argv[]) {
                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getstr(sec, "path"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
                 SEC_CLOSE_MAP;
             }
+
+            CASE_SEC_TITLE("custom") {
+                SEC_OPEN_MAP("custom");
+                print_custom(json_gen, title, custom_args + custom_i);
+
+                //After printing custom, re-wake the said custom thread to perform another calculation
+                // In this case, the mutex lock and unlock functions are not required as the code will
+                // work as intended as a missed wake up broadcast from the cond_breadcast is not fatal.
+                // However, for good practice, they are included regardless
+                pthread_mutex_lock(&(custom_args + custom_i)->sleep_mutex);
+                pthread_cond_broadcast(&(custom_args + custom_i)->sleep_cond);
+                pthread_mutex_unlock(&(custom_args + custom_i)->sleep_mutex);
+
+                //Update the index for the custom section
+                custom_i++;
+                SEC_CLOSE_MAP;
+            }
         }
+
         if (output_format == O_I3BAR) {
             yajl_gen_array_close(json_gen);
             const unsigned char *buf;
