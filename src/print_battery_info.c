@@ -135,8 +135,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         if (*walk != '=')
             continue;
 
-        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=")
-         || BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_AVG=")) {
+        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=") || BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_AVG=")) {
             watt_as_unit = true;
             batt_info->remaining = atoi(walk + 1);
             batt_info->percentage_remaining = -1;
