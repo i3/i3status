@@ -519,27 +519,39 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
 
         if (BEGINS_WITH(walk + 1, "signal")) {
+            advance = strlen("signal");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
-                if (info.signal_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
-                else
+                if (info.signal_level_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("signal");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "noise")) {
+            advance = strlen("noise");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
-                if (info.noise_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
-                else
+                if (info.noise_level_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("noise");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "essid")) {
