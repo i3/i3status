@@ -464,10 +464,15 @@ error1:
     return 0;
 }
 
+static const char *format_3d_s = "%3d%s";
+static const char *format_03d_s = "%03d%s";
+
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *walk;
     char *outwalk = buffer;
     wireless_info_t info;
+    unsigned int advance;
+    const char *format;
 
     INSTANCE(interface);
 
@@ -496,15 +501,21 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
 
         if (BEGINS_WITH(walk + 1, "quality")) {
+            advance = strlen("quality");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
-                if (info.quality_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
-                else
+                if (info.quality_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d", info.quality);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("quality");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "signal")) {
