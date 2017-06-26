@@ -94,8 +94,11 @@ typedef struct {
 } wireless_info_t;
 
 #ifdef LINUX
+static const char *format_bitrate = "%3.0f %cb/s";
+static const char *format_bitrate0 = "%03.0f %cb/s";
+
 // Like iw_print_bitrate, but without the dependency on libiw.
-static void print_bitrate(char *buffer, int buflen, int bitrate) {
+static void print_bitrate_impl(char *buffer, int buflen, int bitrate, const char *format) {
     const int kilo = 1e3;
     const int mega = 1e6;
     const int giga = 1e9;
@@ -114,7 +117,15 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
         scale = 'k';
         divisor = kilo;
     }
-    snprintf(buffer, buflen, "%g %cb/s", rate / divisor, scale);
+    snprintf(buffer, buflen, format, rate / divisor, scale);
+}
+
+static void print_bitrate(char *buffer, int buflen, int bitrate) {
+    print_bitrate_impl(buffer, buflen, bitrate, format_bitrate);
+}
+
+static void print_bitrate0(char *buffer, int buflen, int bitrate) {
+    print_bitrate_impl(buffer, buflen, bitrate, format_bitrate0);
 }
 
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
@@ -580,11 +591,17 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 #ifdef LINUX
         if (BEGINS_WITH(walk + 1, "bitrate")) {
             char br_buffer[128];
+            advance = strlen("bitrate");
 
-            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            if (BEGINS_WITH(walk + advance + 1, "0")) {
+                advance += strlen("0");
+                print_bitrate0(br_buffer, sizeof(br_buffer), info.bitrate);
+            } else {
+                print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            }
 
             outwalk += sprintf(outwalk, "%s", br_buffer);
-            walk += strlen("bitrate");
+            walk += advance;
         }
 #endif
     }
