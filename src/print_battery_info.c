@@ -602,6 +602,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         } else if (BEGINS_WITH(walk + 1, "emptytime")) {
             if (batt_info.seconds_remaining >= 0) {
                 time_t empty_time = time(NULL) + batt_info.seconds_remaining;
+                set_timezone(NULL); /* Use local time. */
                 struct tm *empty_tm = localtime(&empty_time);
 
                 if (hide_seconds)
