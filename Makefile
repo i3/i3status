@@ -14,6 +14,7 @@ ifndef SYSCONFDIR
   endif
 endif
 
+PKG_CONFIG ?= pkg-config
 CFLAGS+=-Wall -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
 CFLAGS+=-g
 CFLAGS+=-std=gnu99
@@ -40,8 +41,8 @@ OS:=$(shell uname)
 ifeq ($(OS),Linux)
 CPPFLAGS+=-DLINUX
 CPPFLAGS+=-D_GNU_SOURCE
-CFLAGS += $(shell pkg-config --cflags libnl-genl-3.0)
-LIBS += $(shell pkg-config --libs libnl-genl-3.0)
+CFLAGS += $(shell $(PKG_CONFIG) --cflags libnl-genl-3.0)
+LIBS += $(shell $(PKG_CONFIG) --libs libnl-genl-3.0)
 LIBS+=-lasound
 endif
 
