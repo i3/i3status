@@ -135,7 +135,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         if (*walk != '=')
             continue;
 
-        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=")) {
+        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=") || BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_AVG=")) {
             watt_as_unit = true;
             batt_info->remaining = atoi(walk + 1);
             batt_info->percentage_remaining = -1;
@@ -499,7 +499,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             return;
     }
 
-    int full = (last_full_capacity ? batt_info.full_last : batt_info.full_design);
+    /* Some notebook batteries (eg. iBook G4) do not specify the design capacity,
+     * in which case, the last full capacity should be used instead */
+    int full = (last_full_capacity || batt_info.full_design < 0) ? batt_info.full_last : batt_info.full_design;
     if (full < 0 && batt_info.percentage_remaining < 0) {
         /* We have no physical measurements and no estimates. Nothing
          * much we can report, then. */
