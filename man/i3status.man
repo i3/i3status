@@ -305,8 +305,9 @@ network interface found on the system (excluding devices starting with "lo").
 === Ethernet
 
 Gets the IP address and (if possible) the link speed of the given ethernet
-interface. Getting the link speed requires the cap_net_admin capability. Set
-it using +setcap cap_net_admin=ep $(which i3status)+.
+interface. If no IPv4 address is available and an IPv6 address is, it will be
+displayed. Getting the link speed requires the cap_net_admin capability.
+Set it using +setcap cap_net_admin=ep $(which i3status)+.
 
 The special interface name `_first_` will be replaced by the first non-wireless
 network interface found on the system (excluding devices starting with "lo").

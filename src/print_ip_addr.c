@@ -17,9 +17,14 @@
  * interface is up and running but hasn't got an IP address yet
  *
  */
-const char *get_ip_addr(const char *interface) {
+const char *get_ip_addr(const char *interface, int family) {
     static char part[512];
-    socklen_t len = sizeof(struct sockaddr_in);
+    socklen_t len = 0;
+    if (family == AF_INET)
+        len = sizeof(struct sockaddr_in);
+    else if (family == AF_INET6)
+        len = sizeof(struct sockaddr_in6);
+
     memset(part, 0, sizeof(part));
 
     struct ifaddrs *ifaddr, *addrp;
@@ -30,13 +35,13 @@ const char *get_ip_addr(const char *interface) {
     if (ifaddr == NULL)
         return NULL;
 
-    /* Skip until we are at the AF_INET address of interface */
+    /* Skip until we are at the input family address of interface */
     for (addrp = ifaddr;
 
          (addrp != NULL &&
           (strcmp(addrp->ifa_name, interface) != 0 ||
            addrp->ifa_addr == NULL ||
-           addrp->ifa_addr->sa_family != AF_INET));
+           addrp->ifa_addr->sa_family != family));
 
          addrp = addrp->ifa_next) {
         /* Check if the interface is down */
