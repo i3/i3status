@@ -94,8 +94,11 @@ typedef struct {
 } wireless_info_t;
 
 #ifdef LINUX
+static const char *format_bitrate = "%3.0f %cb/s";
+static const char *format_bitrate0 = "%03.0f %cb/s";
+
 // Like iw_print_bitrate, but without the dependency on libiw.
-static void print_bitrate(char *buffer, int buflen, int bitrate) {
+static void print_bitrate_impl(char *buffer, int buflen, int bitrate, const char *format) {
     const int kilo = 1e3;
     const int mega = 1e6;
     const int giga = 1e9;
@@ -114,7 +117,15 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
         scale = 'k';
         divisor = kilo;
     }
-    snprintf(buffer, buflen, "%g %cb/s", rate / divisor, scale);
+    snprintf(buffer, buflen, format, rate / divisor, scale);
+}
+
+static void print_bitrate(char *buffer, int buflen, int bitrate) {
+    print_bitrate_impl(buffer, buflen, bitrate, format_bitrate);
+}
+
+static void print_bitrate0(char *buffer, int buflen, int bitrate) {
+    print_bitrate_impl(buffer, buflen, bitrate, format_bitrate0);
 }
 
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
@@ -464,10 +475,15 @@ error1:
     return 0;
 }
 
+static const char *format_3d_s = "%3d%s";
+static const char *format_03d_s = "%03d%s";
+
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *walk;
     char *outwalk = buffer;
     wireless_info_t info;
+    unsigned int advance;
+    const char *format;
 
     INSTANCE(interface);
 
@@ -496,39 +512,57 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
 
         if (BEGINS_WITH(walk + 1, "quality")) {
+            advance = strlen("quality");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
-                if (info.quality_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
-                else
+                if (info.quality_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d", info.quality);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("quality");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "signal")) {
+            advance = strlen("signal");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
-                if (info.signal_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
-                else
+                if (info.signal_level_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("signal");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "noise")) {
+            advance = strlen("noise");
             if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
-                if (info.noise_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
-                else
+                if (info.noise_level_max) {
+                    format = format_3d_s;
+                    if (BEGINS_WITH(walk + advance + 1, "0")) {
+                        advance += strlen("0");
+                        format = format_03d_s;
+                    }
+                    outwalk += sprintf(outwalk, format, PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+                } else
                     outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
             } else {
                 *(outwalk++) = '?';
             }
-            walk += strlen("noise");
+            walk += advance;
         }
 
         if (BEGINS_WITH(walk + 1, "essid")) {
@@ -557,11 +591,17 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 #ifdef LINUX
         if (BEGINS_WITH(walk + 1, "bitrate")) {
             char br_buffer[128];
+            advance = strlen("bitrate");
 
-            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            if (BEGINS_WITH(walk + advance + 1, "0")) {
+                advance += strlen("0");
+                print_bitrate0(br_buffer, sizeof(br_buffer), info.bitrate);
+            } else {
+                print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            }
 
             outwalk += sprintf(outwalk, "%s", br_buffer);
-            walk += strlen("bitrate");
+            walk += advance;
         }
 #endif
     }
