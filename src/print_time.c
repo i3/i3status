@@ -29,9 +29,9 @@ void set_timezone(const char *tz) {
         } else {
             unsetenv("TZ");
         }
-        tzset();
         current_timezone = tz;
     }
+    tzset();
 }
 
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, time_t t) {
