@@ -142,7 +142,7 @@ no effect when +output_format+ is set to +i3bar+ or +none+.
 The +interval+ directive specifies the time in seconds for which i3status will
 sleep before printing the next status line.
 
-Using +output_format+ you can chose which format strings i3status should
+Using +output_format+ you can choose which format strings i3status should
 use in its output. Currently available are:
 
 i3bar::
@@ -178,14 +178,14 @@ section just for this module.
 
 If you don't fancy the vertical separators between modules i3status/i3bar
 uses by default, you can employ the +separator+ directive to configure how
-modules are separated. You can either disable the default separator altogether
+modules are separated. You can also disable the default separator altogether by
 setting it to the empty string. You might then define separation as part of a
 module's format string. This is your only option when using the i3bar output
 format as the separator is drawn by i3bar directly otherwise. For the other
 output formats, the provided non-empty string will be automatically enclosed
 with the necessary coloring bits if color support is enabled.
 
-i3bar supports Pango markup, allowing your format strings to specify font
+i3bar supports Pango markup, allowing your format strings to specify font,
 color, size, etc. by setting the +markup+ directive to "pango". Note that the
 ampersand ("&"), less-than ("<"), greater-than (">"), single-quote ("'"), and
 double-quote (""") characters need to be replaced with "`&amp;`", "`&lt;`",
