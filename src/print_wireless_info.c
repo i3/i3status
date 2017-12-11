@@ -464,6 +464,21 @@ error1:
     return 0;
 }
 
+/* Table summarizing what is the decision to prefer IPv4 or IPv6
+ * based their values.
+ *
+ * | ipv4_address | ipv6_address | Chosen IP | Color             |
+ * |--------------|--------------|-----------|-------------------|
+ * | NULL         | NULL         | None      | bad (red)         |
+ * | NULL         | no IP        | IPv6      | degraded (orange) |
+ * | NULL         | ::1/128      | IPv6      | ok (green)        |
+ * | no IP        | NULL         | IPv4      | degraded          |
+ * | no IP        | no IP        | IPv4      | degraded          |
+ * | no IP        | ::1/128      | IPv6      | ok                |
+ * | 127.0.0.1    | NULL         | IPv4      | ok                |
+ * | 127.0.0.1    | no IP        | IPv4      | ok                |
+ * | 127.0.0.1    | ::1/128      | IPv4      | ok                |
+ */
 void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *walk;
     char *outwalk = buffer;
@@ -471,22 +486,45 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     INSTANCE(interface);
 
-    const char *ip_address = get_ip_addr(interface);
-    if (ip_address == NULL) {
-        START_COLOR("color_bad");
-        outwalk += sprintf(outwalk, "%s", format_down);
-        goto out;
+    char *ipv4_address = sstrdup(get_ip_addr(interface, AF_INET));
+    char *ipv6_address = sstrdup(get_ip_addr(interface, AF_INET6));
+
+    // Removing '%' and following characters from IPv6
+    if (ipv6_address != NULL) {
+        char *prct_ptr = strstr(ipv6_address, "%");
+        if (prct_ptr != NULL) {
+            *prct_ptr = '\0';
+        }
     }
 
-    if (get_wireless_info(interface, &info)) {
+    bool prefer_ipv4 = true;
+    if (ipv4_address == NULL) {
+        if (ipv6_address == NULL) {
+            START_COLOR("color_bad");
+            outwalk += sprintf(outwalk, "%s", format_down);
+            goto out;
+        } else {
+            prefer_ipv4 = false;
+        }
+    } else if (BEGINS_WITH(ipv4_address, "no IP") && ipv6_address != NULL && !BEGINS_WITH(ipv6_address, "no IP")) {
+        prefer_ipv4 = false;
+    }
+
+    const char *ip_address = (prefer_ipv4) ? ipv4_address : ipv6_address;
+    if (!get_wireless_info(interface, &info)) {
+        walk = format_down;
+        START_COLOR("color_bad");
+    } else {
         walk = format_up;
         if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
             START_COLOR((info.quality < info.quality_average ? "color_degraded" : "color_good"));
-        else
-            START_COLOR((BEGINS_WITH(ip_address, "no IP") ? "color_degraded" : "color_good"));
-    } else {
-        walk = format_down;
-        START_COLOR("color_bad");
+        else {
+            if (BEGINS_WITH(ip_address, "no IP")) {
+                START_COLOR("color_degraded");
+            } else {
+                START_COLOR("color_good");
+            }
+        }
     }
 
     for (; *walk != '\0'; walk++) {
@@ -568,5 +606,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
 out:
     END_COLOR;
+    free(ipv4_address);
+    free(ipv6_address);
     OUTPUT_FULL_TEXT(buffer);
 }
