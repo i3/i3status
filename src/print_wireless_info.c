@@ -489,7 +489,10 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     char *ipv4_address = sstrdup(get_ip_addr(interface, AF_INET));
     char *ipv6_address = sstrdup(get_ip_addr(interface, AF_INET6));
 
-    // Removing '%' and following characters from IPv6
+    /*
+     * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
+     * as the output already includes the interface name.
+    */
     if (ipv6_address != NULL) {
         char *prct_ptr = strstr(ipv6_address, "%");
         if (prct_ptr != NULL) {
