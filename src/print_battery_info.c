@@ -513,13 +513,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     // We prefer the design capacity, but use the last capacity if we don't have it,
     // or if we are asked to (last_full_capacity == true); but similarly we use
     // the design capacity if we don't have the last capacity.
-    // If we don't have either then both full_design and full_last < 0,
-    // which implies full < 0, which bails out on the following line.
+    // If we don't have either then both full_design and full_last <= 0,
+    // which implies full <= 0, which bails out on the following line.
     int full = batt_info.full_design;
-    if (full < 0 || (last_full_capacity && batt_info.full_last >= 0)) {
+    if (full <= 0 || (last_full_capacity && batt_info.full_last > 0)) {
         full = batt_info.full_last;
     }
-    if (full < 0 && batt_info.remaining < 0 && batt_info.percentage_remaining < 0) {
+    if (full <= 0 && batt_info.remaining < 0 && batt_info.percentage_remaining < 0) {
         /* We have no physical measurements and no estimates. Nothing
          * much we can report, then. */
         OUTPUT_FULL_TEXT(format_down);
