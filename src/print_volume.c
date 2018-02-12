@@ -211,6 +211,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 #if defined(__OpenBSD__)
     int oclass_idx = -1, master_idx = -1, master_mute_idx = -1;
+    int master_next = AUDIO_MIXER_LAST;
     mixer_devinfo_t devinfo, devinfo2;
     mixer_ctrl_t vinfo;
 
@@ -228,12 +229,17 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     devinfo2.index = 0;
     while (ioctl(mixfd, AUDIO_MIXER_DEVINFO, &devinfo2) >= 0) {
-        if ((devinfo2.type == AUDIO_MIXER_VALUE) && (devinfo2.mixer_class == oclass_idx) && (strncmp(devinfo2.label.name, AudioNmaster, MAX_AUDIO_DEV_LEN) == 0))
+        if ((devinfo2.type == AUDIO_MIXER_VALUE) && (devinfo2.mixer_class == oclass_idx) && (strncmp(devinfo2.label.name, AudioNmaster, MAX_AUDIO_DEV_LEN) == 0)) {
             master_idx = devinfo2.index;
+            master_next = devinfo2.next;
+        }
 
         if ((devinfo2.type == AUDIO_MIXER_ENUM) && (devinfo2.mixer_class == oclass_idx) && (strncmp(devinfo2.label.name, AudioNmute, MAX_AUDIO_DEV_LEN) == 0))
-            master_mute_idx = devinfo2.index;
+            if (master_next == devinfo2.index)
+                master_mute_idx = devinfo2.index;
 
+        if (master_next != AUDIO_MIXER_LAST)
+            master_next = devinfo2.next;
         devinfo2.index++;
     }
 
@@ -246,6 +252,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     vinfo.dev = master_idx;
     vinfo.type = AUDIO_MIXER_VALUE;
+    vinfo.un.value.num_channels = devinfo.un.v.num_channels;
     if (ioctl(mixfd, AUDIO_MIXER_READ, &vinfo) == -1)
         goto out;
 
