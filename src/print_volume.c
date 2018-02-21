@@ -11,6 +11,7 @@
 #ifdef LINUX
 #include <alsa/asoundlib.h>
 #include <alloca.h>
+#include <math.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -111,11 +112,13 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 #endif
 
 #ifdef LINUX
+    const long MAX_LINEAR_DB_SCALE = 24;
     int err;
     snd_mixer_t *m;
     snd_mixer_selem_id_t *sid;
     snd_mixer_elem_t *elem;
     long min, max, val;
+    bool force_linear = false;
     int avg;
 
     if ((err = snd_mixer_open(&m, 0)) < 0) {
@@ -161,16 +164,34 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Get the volume range to convert the volume later */
-    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-
     snd_mixer_handle_events(m);
-    snd_mixer_selem_get_playback_volume(elem, 0, &val);
-    if (max != 100) {
-        float avgf = ((float)val / max) * 100;
+    err = snd_mixer_selem_get_playback_dB_range(elem, &min, &max) ||
+          snd_mixer_selem_get_playback_dB(elem, 0, &val);
+    if (err != 0 || min >= max) {
+        err = snd_mixer_selem_get_playback_volume_range(elem, &min, &max) ||
+              snd_mixer_selem_get_playback_volume(elem, 0, &val);
+        force_linear = true;
+    }
+
+    if (err != 0) {
+        fprintf(stderr, "i3status: ALSA: Cannot get playback volume.\n");
+        goto out;
+    }
+
+    /* Use linear mapping for raw register values or small ranges of 24 dB */
+    if (force_linear || max - min <= MAX_LINEAR_DB_SCALE * 100) {
+        float avgf = ((float)(val - min) / (max - min)) * 100;
         avg = (int)avgf;
         avg = (avgf - avg < 0.5 ? avg : (avg + 1));
-    } else
-        avg = (int)val;
+    } else {
+        /* mapped volume to be more natural for the human ear */
+        double normalized = exp10((val - max) / 6000.0);
+        if (min != SND_CTL_TLV_DB_GAIN_MUTE) {
+            double min_norm = exp10((min - max) / 6000.0);
+            normalized = (normalized - min_norm) / (1 - min_norm);
+        }
+        avg = lround(normalized * 100);
+    }
 
     /* Check for mute */
     if (snd_mixer_selem_has_playback_switch(elem)) {
