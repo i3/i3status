@@ -46,6 +46,7 @@
 
 typedef struct temperature_s {
     double raw_value;
+    double raw_kernel;
     char formatted_value[20];
 } temperature_t;
 
@@ -60,6 +61,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
         return ERROR_CODE;
 
     temp = strtol(buf, NULL, 10);
+    temperature->raw_kernel = temp;
     temperature->raw_value = temp / 1000;
 
     if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
@@ -78,6 +80,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
         return ERROR_CODE;
     }
 
+    temperature->raw_kernel = MUKTOC(th_sensor.value);
     temperature->raw_value = MUKTOC(th_sensor.value);
     sprintf(temperature->formatted_value, "%.2f", MUKTOC(th_sensor.value));
 
@@ -88,6 +91,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
     if (sysctlbyname(thermal_zone, &sysctl_rslt, &sysctl_size, NULL, 0))
         return ERROR_CODE;
 
+    temperature->raw_kernel = TZ_AVG(sysctl_rslt);
     temperature->raw_value = TZ_AVG(sysctl_rslt);
     sprintf(temperature->formatted_value, "%d.%d", TZ_KELVTOC(sysctl_rslt));
 
@@ -121,6 +125,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
                         continue;
                     }
                 }
+                temperature->raw_kernel = MUKTOC(sensor.value);
                 temperature->raw_value = MUKTOC(sensor.value);
                 sprintf(temperature->formatted_value, "%.2f", MUKTOC(sensor.value));
             }
@@ -183,6 +188,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
             obj3 = prop_dictionary_get(obj2, "cur-value");
 
             float temp = MUKTOC(prop_number_integer_value(obj3));
+            temperature->raw_kernel = temp;
             temperature->raw_value = temp;
             sprintf(temperature->formatted_value, "%.2f", temp);
 
@@ -253,6 +259,18 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         if (BEGINS_WITH(walk + 1, "degrees")) {
             outwalk += sprintf(outwalk, "%s", temperature.formatted_value);
             walk += strlen("degrees");
+        }
+        if (BEGINS_WITH(walk + 1, "kernel_int")) {
+            outwalk += sprintf(outwalk, "%.0f", temperature.raw_kernel);
+            walk += strlen("kernel_int");
+        }
+        if (BEGINS_WITH(walk + 1, "kernel")) {
+            outwalk += sprintf(outwalk, "%.2f", temperature.raw_kernel);
+            walk += strlen("kernel");
+        }
+        if (BEGINS_WITH(walk + 1, "raw")) {
+            outwalk += sprintf(outwalk, "%.2f", temperature.raw_value);
+            walk += strlen("raw");
         }
     }
 
