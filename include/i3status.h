@@ -223,6 +223,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold);
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold);
+void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *degraded_format_below_threshold, const char *degraded_threshold_type, const float degraded_low_threshold, const char *critical_format_below_threshold, const char *critical_threshold_type, const float critical_low_threshold, const bool use_available_memory);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);

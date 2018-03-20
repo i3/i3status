@@ -55,6 +55,7 @@ order += "wireless wlan0"
 order += "ethernet eth0"
 order += "battery 0"
 order += "cpu_temperature 0"
+order += "memory"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
@@ -111,6 +112,10 @@ load {
 cpu_temperature 0 {
 	format = "T: %degrees °C"
 	path = "/sys/devices/platform/coretemp.0/temp1_input"
+}
+
+memory {
+        format = "%used"
 }
 
 disk "/" {
@@ -423,6 +428,49 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 *Example degraded_threshold*: +25+
 
 *Example format_above_degraded_threshold*: +Warning above degraded threshold: %usage+
+
+=== Memory
+
+Gets the memory usage from system.
+On Linux, the information is taken from +/proc/meminfo+.
+
+These values can also be expressed in percentages with the +percentage_used+,
++percentage_free+ and +percentage_shared+ formats.
+
+If a +critical_low_threshold+ is defined, the output will be colored using
++color_bad+. The unit of this threshold is defined by the unit given in
++critical_threshold_type+, which can be one of "bytes_free", "bytes_avail",
+"percentage_free" and "percentage_avail". Additionally, the former two can be
+prefixed with one of "k", "m", "g" or "t" to change the exact unit.
+For example, setting critical_low_threshold to 2 and threshold_type to "gbytes_avail"
+causes available memory below 2 GiB to be colored with +color_bad+. The
+defaults are "percentage_avail" with a threshold of 0.
+Furthermore, the format used when the threshold is reached can be customized
+using the option +critical_format_below_threshold+.
+Same applies to +degraded_low_threshold+, +degraded_threshold_type+ and
++degraded_format_below_threshold+ using +color_degraded+.
+
+The most common one is:
+"used memory" = "total memory" - "free memory" - "buffers" - "cache"
+This is the default in i3status. Some other programs use
+"used memory" = "total memory" - "available memory"
+You can disable this behavior using +use_available_memory+.
+
+*Example order*: +memory+
+
+*Example format*: +%free %available (%used)/ %total+
+
+*Example format*: +used %percentage_used , free %percentage_free, shared %percentage_shared+
+
+*Example degraded_low_threshold*: +10+
+
+*Example degraded_threshold_type*: +percentage_free+
+
+*Example critical_low_threshold*: +5+
+
+*Example critical_format_below_threshold*: +Warning: %percentage_free+
+
+*Example use_available_memory: +false+
 
 === Load
 
