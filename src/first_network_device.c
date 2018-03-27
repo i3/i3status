@@ -14,10 +14,10 @@
 
 #include "i3status.h"
 
-#ifdef __linux__
-#define LOOPBACK_DEV "lo"
-#else
+#ifdef __OpenBSD__
 #define LOOPBACK_DEV "lo0"
+#else
+#define LOOPBACK_DEV "lo"
 #endif
 
 static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
@@ -67,22 +67,7 @@ static bool is_virtual(const char *ifname) {
 }
 
 static net_type_t iface_type(const char *ifname) {
-#ifdef __linux__
-    char devtype[32];
-
-    if (!sysfs_devtype(devtype, sizeof(devtype), ifname))
-        return NET_TYPE_OTHER;
-
-    /* Default to Ethernet when no devtype is available */
-    if (!devtype[0])
-        return NET_TYPE_ETHERNET;
-
-    if (strcmp(devtype, "wlan") == 0)
-        return NET_TYPE_WIRELESS;
-
-    if (strcmp(devtype, "wwan") == 0)
-        return NET_TYPE_OTHER;
-#elif __OpenBSD__
+#ifdef __OpenBSD__
     /*
      *First determine if the device is a wireless device by trying two ioctl(2)
      * commands against it. If either succeeds we can be sure it's a wireless
@@ -124,6 +109,23 @@ static net_type_t iface_type(const char *ifname) {
         close(s);
         return NET_TYPE_ETHERNET;
     }
+#else
+    char devtype[32];
+
+    if (!sysfs_devtype(devtype, sizeof(devtype), ifname))
+        return NET_TYPE_OTHER;
+
+    /* Default to Ethernet when no devtype is available */
+    if (!devtype[0])
+        return NET_TYPE_ETHERNET;
+
+    if (strcmp(devtype, "wlan") == 0)
+        return NET_TYPE_WIRELESS;
+
+    if (strcmp(devtype, "wwan") == 0)
+        return NET_TYPE_OTHER;
+
+    return NET_TYPE_OTHER;
 #endif
     return NET_TYPE_OTHER;
 }
