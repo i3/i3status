@@ -299,7 +299,9 @@ network interface found on the system (excluding devices starting with "lo").
 
 *Example order*: +wireless wlan0+
 
-*Example format*: +W: (%quality at %essid, %bitrate / %frequency) %ip+
+*Example format_up*: +W: (%quality at %essid, %bitrate / %frequency) %ip+
+
+*Example format_down*: +W: down+
 
 === Ethernet
 
@@ -313,7 +315,9 @@ network interface found on the system (excluding devices starting with "lo").
 
 *Example order*: +ethernet eth0+
 
-*Example format*: +E: %ip (%speed)+
+*Example format_up*: +E: %ip (%speed)+
+
+*Example format_down*: +E: down+
 
 === Battery
 
