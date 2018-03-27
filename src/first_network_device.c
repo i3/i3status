@@ -127,6 +127,7 @@ static net_type_t iface_type(const char *ifname) {
 
     return NET_TYPE_OTHER;
 #endif
+    return NET_TYPE_OTHER;
 }
 
 const char *first_eth_interface(const net_type_t type) {
