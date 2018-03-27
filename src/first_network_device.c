@@ -82,8 +82,6 @@ static net_type_t iface_type(const char *ifname) {
 
     if (strcmp(devtype, "wwan") == 0)
         return NET_TYPE_OTHER;
-
-    return NET_TYPE_OTHER;
 #elif __OpenBSD__
     /*
      *First determine if the device is a wireless device by trying two ioctl(2)
@@ -126,9 +124,8 @@ static net_type_t iface_type(const char *ifname) {
         close(s);
         return NET_TYPE_ETHERNET;
     }
-#else
-#error Missing implementation to determine interface type.
 #endif
+    return NET_TYPE_OTHER;
 }
 
 const char *first_eth_interface(const net_type_t type) {
