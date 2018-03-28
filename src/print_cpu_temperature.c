@@ -96,6 +96,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
     struct sensor sensor;
     size_t sdlen, slen;
     int dev, numt, mib[5] = {CTL_HW, HW_SENSORS, 0, 0, 0};
+    int found = 0;
 
     sdlen = sizeof(sensordev);
     slen = sizeof(sensor);
@@ -112,7 +113,7 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
         /* 'path' is the node within the full path (defaults to acpitz0). */
         if (BEGINS_WITH(sensordev.xname, thermal_zone)) {
             mib[3] = SENSOR_TEMP;
-            /* Limit to temo0, but should retrieve from a full path... */
+            /* Limit to temp0, but should retrieve from a full path... */
             for (numt = 0; numt < 1 /*sensordev.maxnumt[SENSOR_TEMP]*/; numt++) {
                 mib[4] = numt;
                 if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
@@ -123,8 +124,13 @@ static int read_temperature(char *thermal_zone, temperature_t *temperature) {
                 }
                 temperature->raw_value = MUKTOC(sensor.value);
                 sprintf(temperature->formatted_value, "%.2f", MUKTOC(sensor.value));
+                found = 1;
             }
         }
+    }
+    if (found == 0) {
+        temperature->raw_value = 0;
+        sprintf(temperature->formatted_value, "%.2f", 0.0);
     }
 #elif defined(__NetBSD__)
     int fd, rval;
