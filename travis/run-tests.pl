@@ -17,6 +17,7 @@ sub TestCase {
     my $conf = "$dir/i3status.conf";
     my $testres = `./i3status --run-once -c $conf`;
     my $refres = "";
+    my $fh;
 
     if ( -f "@_/expected_output.txt") {
         open($fh, '<:encoding(iso-8859-1)', "@_/expected_output.txt")
