@@ -19,7 +19,11 @@ sub TestCase {
     my $refres = "";
 
     if ( -f "@_/expected_output.txt") {
-        $refres = `cat "@_/expected_output.txt"`;
+        open($fh, '<:encoding(iso-8859-1)', "@_/expected_output.txt")
+          or die "Could not open file '@_/expected_output.txt' $!";
+        local $/ = undef; # <--- slurp mode
+        $refres = <$fh>;
+        close($fh);
     } elsif ( -f "@_/expected_output.pl") {
         $refres = `$EXECUTABLE_NAME @_/expected_output.pl`;
     }
