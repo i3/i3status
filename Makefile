@@ -27,6 +27,7 @@ LIBS+=-lyajl
 LIBS+=-lpulse
 LIBS+=-lm
 LIBS+=-lpthread
+LIBS+=-lX11 -lxkbfile
 
 ifeq ($(wildcard .git),)
   # not in git repository
