@@ -19,6 +19,7 @@ i3status has the following dependencies:
   * libcap2-bin (for getting network status without root permissions)
   * asciidoc (only for the documentation)
   * libpulse-dev (for getting the current volume using PulseAudio)
+  * xserver-xorg-dev (for xkb layout)
 
 On debian-based systems, the following line will install all requirements:
 ```bash

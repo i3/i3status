@@ -474,6 +474,9 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t xkb_layout_opts[] = {
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -491,6 +494,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+        CFG_SEC("xkb_layout", xkb_layout_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -749,6 +753,12 @@ int main(int argc, char *argv[]) {
                              cfg_getstr(sec, "device"),
                              cfg_getstr(sec, "mixer"),
                              cfg_getint(sec, "mixer_idx"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("xkb_layout") {
+                SEC_OPEN_MAP("xkb_layout");
+                print_xkb_layout(json_gen, buffer);
                 SEC_CLOSE_MAP;
             }
 

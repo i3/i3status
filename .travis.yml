@@ -13,6 +13,7 @@ addons:
     - libasound2-dev
     - libpulse-dev
     - libnl-genl-3-dev
+    - xserver-xorg-dev
     - asciidoc
     # xmlto pulls in a2x which we need for generating manpages from asciidoc.
     - xmlto
