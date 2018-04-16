@@ -29,49 +29,57 @@ static int print_bytes_human(char *outwalk, uint64_t bytes) {
 }
 
 /*
- * Determines whether remaining bytes are below given threshold.
+ * Convert a string to its absolute representation based on the total
+ * memory of `mem_total`.
+ *
+ * The string can contain any percentage values, which then return a
+ * the value of `size` in relation to `mem_total`.
+ * Alternatively an absolute value can be given, suffixed with an iec
+ * symbol.
  *
  */
-static bool below_threshold(const long ram_total, const long ram_used, const char *threshold_type, const long low_threshold) {
-    // empty is available or free, based on "use_available_memory"
-    long empty = ram_total - ram_used;
-    if (BEGINS_WITH(threshold_type, "percentage_")) {
-        return 100.0 * empty / ram_total < low_threshold;
-    } else if (strcasecmp(threshold_type, "bytes_free") == 0) {
-        return empty < low_threshold;
-    } else if (threshold_type[0] != '\0' && strncasecmp(threshold_type + 1, "bytes_", strlen("bytes_")) == 0) {
+static long memory_absolute(const long mem_total, const char *size) {
+    long mem_absolute = -1;
+    char *endptr = NULL;
 
-        long factor = 1;
+    mem_absolute = strtol(size, &endptr, 10);
 
-        switch (threshold_type[0]) {
+    if (endptr) {
+        while (endptr[0] != '\0' && isspace(endptr[0]))
+            endptr++;
+
+        switch (endptr[0]) {
             case 'T':
             case 't':
-                factor *= BINARY_BASE;
+                mem_absolute *= BINARY_BASE;
             case 'G':
             case 'g':
-                factor *= BINARY_BASE;
+                mem_absolute *= BINARY_BASE;
             case 'M':
             case 'm':
-                factor *= BINARY_BASE;
+                mem_absolute *= BINARY_BASE;
             case 'K':
             case 'k':
-                factor *= BINARY_BASE;
+                mem_absolute *= BINARY_BASE;
+                break;
+            case '%':
+                mem_absolute = mem_total * mem_absolute / 100;
                 break;
             default:
-                return false;
+                break;
         }
-        return empty < low_threshold * factor;
     }
-    return false;
+
+    return mem_absolute;
 }
 
-void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *degraded_format_below_threshold, const char *degraded_threshold_type, const float degraded_low_threshold, const char *critical_format_below_threshold, const char *critical_threshold_type, const float critical_low_threshold, const bool use_available_memory) {
+void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method) {
     char *outwalk = buffer;
 
 #if defined(linux)
     const char *selected_format = format;
     const char *walk;
-    bool colorful_output = false;
+    const char *output_color = NULL;
 
     long ram_total = -1;
     long ram_free = -1;
@@ -121,24 +129,32 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     ram_buffers = ram_buffers * BINARY_BASE;
     ram_cached = ram_cached * BINARY_BASE;
     ram_shared = ram_shared * BINARY_BASE;
-    if (use_available_memory) {
+
+    if (BEGINS_WITH(memory_used_method, "memavailable")) {
         ram_used = ram_total - ram_available;
-    } else {
+    } else if (BEGINS_WITH(memory_used_method, "classical")) {
         ram_used = ram_total - ram_free - ram_buffers - ram_cached;
     }
 
-    if (degraded_low_threshold > 0 && below_threshold(ram_total, ram_used, degraded_threshold_type, degraded_low_threshold)) {
-        if (critical_low_threshold > 0 && below_threshold(ram_total, ram_used, critical_threshold_type, critical_low_threshold)) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-            if (critical_format_below_threshold != NULL)
-                selected_format = critical_format_below_threshold;
-        } else {
-            START_COLOR("color_degraded");
-            colorful_output = true;
-            if (degraded_format_below_threshold != NULL)
-                selected_format = degraded_format_below_threshold;
+    if (threshold_degraded) {
+        long abs = memory_absolute(ram_total, threshold_degraded);
+        if (ram_available < abs) {
+            output_color = "color_degraded";
         }
+    }
+
+    if (threshold_critical) {
+        long abs = memory_absolute(ram_total, threshold_critical);
+        if (ram_available < abs) {
+            output_color = "color_bad";
+        }
+    }
+
+    if (output_color) {
+        START_COLOR(output_color);
+
+        if (format_degraded)
+            selected_format = format_degraded;
     }
 
     for (walk = selected_format; *walk != '\0'; walk++) {
@@ -192,7 +208,7 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
         }
     }
 
-    if (colorful_output)
+    if (output_color)
         END_COLOR;
 
     *outwalk = '\0';

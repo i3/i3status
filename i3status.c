@@ -423,13 +423,10 @@ int main(int argc, char *argv[]) {
 
     cfg_opt_t memory_opts[] = {
         CFG_STR("format", "%used %free %available", CFGF_NONE),
-        CFG_STR("degraded_format_below_threshold", NULL, CFGF_NONE),
-        CFG_STR("degraded_threshold_type", "percentage_avail", CFGF_NONE),
-        CFG_FLOAT("degraded_low_threshold", 0, CFGF_NONE),
-        CFG_STR("critical_format_below_threshold", NULL, CFGF_NONE),
-        CFG_STR("critical_threshold_type", "percentage_avail", CFGF_NONE),
-        CFG_FLOAT("critical_low_threshold", 0, CFGF_NONE),
-        CFG_BOOL("use_available_memory", true, CFGF_NONE),
+        CFG_STR("format_degraded", NULL, CFGF_NONE),
+        CFG_STR("threshold_degraded", NULL, CFGF_NONE),
+        CFG_STR("threshold_critical", NULL, CFGF_NONE),
+        CFG_STR("memory_used_method", "classical", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -743,7 +740,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("memory") {
                 SEC_OPEN_MAP("memory");
-                print_memory(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "degraded_format_below_threshold"), cfg_getstr(sec, "degraded_threshold_type"), cfg_getfloat(sec, "degraded_low_threshold"), cfg_getstr(sec, "critical_format_below_threshold"), cfg_getstr(sec, "critical_threshold_type"), cfg_getfloat(sec, "critical_low_threshold"), cfg_getbool(sec, "use_available_memory"));
+                print_memory(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_degraded"), cfg_getstr(sec, "threshold_degraded"), cfg_getstr(sec, "threshold_critical"), cfg_getstr(sec, "memory_used_method"));
                 SEC_CLOSE_MAP;
             }
 

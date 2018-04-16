@@ -116,6 +116,8 @@ cpu_temperature 0 {
 
 memory {
         format = "%used"
+        threshold_degraded = "10%"
+        format_degraded = "MEMORY: %free"
 }
 
 disk "/" {
@@ -197,6 +199,7 @@ double-quote (""") characters need to be replaced with "`&amp;`", "`&lt;`",
 for generated content (e.g. wireless ESSID, time).
 
 *Example configuration*:
+
 -------------------------------------------------------------
 general {
     output_format = "xmobar"
@@ -431,46 +434,42 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 
 === Memory
 
-Gets the memory usage from system.
-On Linux, the information is taken from +/proc/meminfo+.
+Gets the memory usage from system on a Linux system from +/proc/meminfo+. Other
+systems are currently not supported.
 
-These values can also be expressed in percentages with the +percentage_used+,
-+percentage_free+ and +percentage_shared+ formats.
+As format placeholders, +total+, +used+, +free+, +available+ and +shared+ are
+available. These will print human readable values. It's also possible to prefix
+the placeholders with +percentage_+ to get a value in percent.
 
-If a +critical_low_threshold+ is defined, the output will be colored using
-+color_bad+. The unit of this threshold is defined by the unit given in
-+critical_threshold_type+, which can be one of "bytes_free", "bytes_avail",
-"percentage_free" and "percentage_avail". Additionally, the former two can be
-prefixed with one of "k", "m", "g" or "t" to change the exact unit.
-For example, setting critical_low_threshold to 2 and threshold_type to "gbytes_avail"
-causes available memory below 2 GiB to be colored with +color_bad+. The
-defaults are "percentage_avail" with a threshold of 0.
-Furthermore, the format used when the threshold is reached can be customized
-using the option +critical_format_below_threshold+.
-Same applies to +degraded_low_threshold+, +degraded_threshold_type+ and
-+degraded_format_below_threshold+ using +color_degraded+.
+It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
+color the status bar output in yellow or red, if the available memory falls
+below the given threshold. Possible values of the threshold can be any integer,
+suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively, the integer
+can be suffixed by a percent sign, which then rets evaluated relatively to
+total memory.
 
-The most common one is:
-"used memory" = "total memory" - "free memory" - "buffers" - "cache"
-This is the default in i3status. Some other programs use
-"used memory" = "total memory" - "available memory"
-You can disable this behavior using +use_available_memory+.
+If the +format_degraded+ parameter is given and either the critical or the
+degraded threshold applies, +format_degraded+ will get used as format string.
+It acts equivalently to +format+.
+
+As Linux' meminfo doesn't expose the overall memory in use, there are multiple
+methods to distinguish the actually used memory. 
+
+*Example used_memory_method*: +memavailable+ ("total memory" - "MemAvailable", matches gnome system monitor)
+
+*Example used_memory_method*: +classical+ ("total memory" - "free" - "buffers" - "cache", matches gnome system monitor)
 
 *Example order*: +memory+
 
-*Example format*: +%free %available (%used)/ %total+
+*Example format*: +%free %available (%used) / %total+
 
-*Example format*: +used %percentage_used , free %percentage_free, shared %percentage_shared+
+*Example format*: +%percentage_used used, %percentage_free free, %percentage_shared shared+
 
-*Example degraded_low_threshold*: +10+
+*Example threshold_degraded*: +10%+
 
-*Example degraded_threshold_type*: +percentage_free+
+*Example threshold_critical*: +5%+
 
-*Example critical_low_threshold*: +5+
-
-*Example critical_format_below_threshold*: +Warning: %percentage_free+
-
-*Example use_available_memory: +false+
+*Example format_degraded*: +Memory LOW: %free+
 
 === Load
 
