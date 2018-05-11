@@ -1,7 +1,7 @@
 i3status(1)
 ===========
 Michael Stapelberg <michael@i3wm.org>
-v2.11, January 2017
+v2.12, May 2018
 
 == NAME
 

@@ -1,3 +1,30 @@
+2018-05-11 i3status 2.12
+
+ • fix NULL value on OpenBSD when there is no acpitz0
+ • show IP address when address has a label
+ • man: explicitly use format_up/format_down in ethernet, wireless conf
+ • man: remove SLOC comment
+ • treat zero battery capacity as "not available"
+ • add IPv6 address when IPv4 isn't available
+ • call tzset at each time print to pick up time zone changes
+ • doc: fixed minor typos
+ • be more cautious about handling invalid battery measurements.
+ • Makefile: make PKG_CONFIG overridable
+ • fix CPU unit tests
+ • use local timezone for battery %emptytime
+ • fix memory leak/use BEGINS_WITH macro
+ • _first_: add check for virtual ethernet devices
+ • add battery capacity parsing
+ • multiple CPU support for cpu_usage
+ • remove useless checks (we use char, not unsigned char) to fix compilation warnings
+ • disk: sanitize trailing slashes
+ • plug an fd leak in the OpenBSD-specific code for
+ • suppress printing :00 seconds of remaining battery lifetime, as apm(4)'s
+   estimate only has a granularity of minutes.
+ • fix the deciKelvin to Celsius conversion on FreeBSD
+ • make first_eth_interface() work on OpenBSD
+ • include sys/select.h on OpenBSD
+
 2017-01-21 i3status 2.11
 
  • re-add forgotten wakeup call from SIGUSR1 handler
