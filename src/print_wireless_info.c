@@ -16,6 +16,7 @@
 #endif
 
 #ifdef __APPLE__
+#include <sys/socket.h>
 #define IW_ESSID_MAX_SIZE 32
 #endif
 
