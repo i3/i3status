@@ -55,6 +55,7 @@ order += "wireless wlan0"
 order += "ethernet eth0"
 order += "battery 0"
 order += "cpu_temperature 0"
+order += "memory"
 order += "load"
 order += "tztime local"
 order += "tztime berlin"
@@ -111,6 +112,12 @@ load {
 cpu_temperature 0 {
 	format = "T: %degrees °C"
 	path = "/sys/devices/platform/coretemp.0/temp1_input"
+}
+
+memory {
+        format = "%used"
+        threshold_degraded = "10%"
+        format_degraded = "MEMORY: %free"
 }
 
 disk "/" {
@@ -192,6 +199,7 @@ double-quote (""") characters need to be replaced with "`&amp;`", "`&lt;`",
 for generated content (e.g. wireless ESSID, time).
 
 *Example configuration*:
+
 -------------------------------------------------------------
 general {
     output_format = "xmobar"
@@ -427,6 +435,45 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 *Example degraded_threshold*: +25+
 
 *Example format_above_degraded_threshold*: +Warning above degraded threshold: %usage+
+
+=== Memory
+
+Gets the memory usage from system on a Linux system from +/proc/meminfo+. Other
+systems are currently not supported.
+
+As format placeholders, +total+, +used+, +free+, +available+ and +shared+ are
+available. These will print human readable values. It's also possible to prefix
+the placeholders with +percentage_+ to get a value in percent.
+
+It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
+color the status bar output in yellow or red, if the available memory falls
+below the given threshold. Possible values of the threshold can be any integer,
+suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively, the integer
+can be suffixed by a percent sign, which then rets evaluated relatively to
+total memory.
+
+If the +format_degraded+ parameter is given and either the critical or the
+degraded threshold applies, +format_degraded+ will get used as format string.
+It acts equivalently to +format+.
+
+As Linux' meminfo doesn't expose the overall memory in use, there are multiple
+methods to distinguish the actually used memory. 
+
+*Example used_memory_method*: +memavailable+ ("total memory" - "MemAvailable", matches gnome system monitor)
+
+*Example used_memory_method*: +classical+ ("total memory" - "free" - "buffers" - "cache", matches gnome system monitor)
+
+*Example order*: +memory+
+
+*Example format*: +%free %available (%used) / %total+
+
+*Example format*: +%percentage_used used, %percentage_free free, %percentage_shared shared+
+
+*Example threshold_degraded*: +10%+
+
+*Example threshold_critical*: +5%+
+
+*Example format_degraded*: +Memory LOW: %free+
 
 === Load
 

@@ -421,6 +421,19 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t memory_opts[] = {
+        CFG_STR("format", "%used %free %available", CFGF_NONE),
+        CFG_STR("format_degraded", NULL, CFGF_NONE),
+        CFG_STR("threshold_degraded", NULL, CFGF_NONE),
+        CFG_STR("threshold_critical", NULL, CFGF_NONE),
+        CFG_STR("memory_used_method", "classical", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t usage_opts[] = {
         CFG_STR("format", "%usage", CFGF_NONE),
         CFG_STR("format_above_threshold", NULL, CFGF_NONE),
@@ -490,6 +503,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
+        CFG_SEC("memory", memory_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_END()};
 
@@ -721,6 +735,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("load") {
                 SEC_OPEN_MAP("load");
                 print_load(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getfloat(sec, "max_threshold"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("memory") {
+                SEC_OPEN_MAP("memory");
+                print_memory(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_degraded"), cfg_getstr(sec, "threshold_degraded"), cfg_getstr(sec, "threshold_critical"), cfg_getstr(sec, "memory_used_method"));
                 SEC_CLOSE_MAP;
             }
 
