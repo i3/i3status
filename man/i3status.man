@@ -459,9 +459,9 @@ It acts equivalently to +format+.
 As Linux' meminfo doesn't expose the overall memory in use, there are multiple
 methods to distinguish the actually used memory. 
 
-*Example used_memory_method*: +memavailable+ ("total memory" - "MemAvailable", matches gnome system monitor)
+*Example memory_used_method*: +memavailable+ ("total memory" - "MemAvailable", matches +free+ command)
 
-*Example used_memory_method*: +classical+ ("total memory" - "free" - "buffers" - "cache", matches gnome system monitor)
+*Example memory_used_method*: +classical+ ("total memory" - "free" - "buffers" - "cache", matches gnome system monitor)
 
 *Example order*: +memory+
 
