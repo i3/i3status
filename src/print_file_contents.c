@@ -17,6 +17,7 @@
 void print_file_contents(file_contents_ctx_t *ctx) {
     const char *walk = ctx->format;
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     char *buf = scalloc(ctx->max_chars * sizeof(char) + 1);
 
     if (ctx->path == NULL) {
@@ -38,10 +39,10 @@ void print_file_contents(file_contents_ctx_t *ctx) {
             buf[n] = '\0';
         }
         (void)close(fd);
-        START_COLOR("color_good");
+        outcolor = COLOR_GOOD;
     } else if (errno != 0) {
         walk = ctx->format_bad;
-        START_COLOR("color_bad");
+        outcolor = COLOR_BAD;
     }
 
     // remove newline chars
@@ -70,6 +71,5 @@ void print_file_contents(file_contents_ctx_t *ctx) {
     free(formatted);
     free(buf);
 
-    END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
 }

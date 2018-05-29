@@ -37,9 +37,12 @@
 #define CFG_CUSTOM_ALIGN_OPT \
     CFG_STR_CB("align", NULL, CFGF_NONE, parse_align)
 
+#define CFG_CUSTOM_DEFAULT_COLOR_OPT \
+    CFG_STR("color_default", NULL, CFGF_NONE)
+
 #define CFG_COLOR_OPTS(good, degraded, bad)             \
-    CFG_STR("color_good", good, CFGF_NONE)              \
-    ,                                                   \
+    CFG_CUSTOM_DEFAULT_COLOR_OPT,                       \
+        CFG_STR("color_good", good, CFGF_NONE),         \
         CFG_STR("color_degraded", degraded, CFGF_NONE), \
         CFG_STR("color_bad", bad, CFGF_NONE)
 
@@ -70,6 +73,8 @@ markup_format_t markup_format;
 output_format_t output_format;
 
 char *pct_mark;
+
+bool enable_colors;
 
 /*
  * Set the exit_upon_signal flag, because one cannot do anything in a safe
@@ -153,10 +158,14 @@ static int parse_min_width(cfg_t *context, cfg_opt_t *option, const char *value,
 }
 
 /*
- * Validates a color in "#RRGGBB" format
+ * Validates a color in "#RRGGBB" format, or empty string
  *
  */
 static int valid_color(const char *value) {
+    /* allow empty */
+    if (value == NULL || value[0] == '\0')
+        return 1;
+
     const int len = strlen(value);
 
     if (output_format == O_LEMONBAR) {
@@ -339,6 +348,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t time_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_DEFAULT_COLOR_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -351,6 +361,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_time", NULL, CFGF_NONE),
         CFG_BOOL("hide_if_equals_localtime", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_DEFAULT_COLOR_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -359,6 +370,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t ddate_opts[] = {
         CFG_STR("format", "%{%a, %b %d%}, %Y%N - %H", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_DEFAULT_COLOR_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -584,7 +596,13 @@ int main(int argc, char *argv[]) {
     if (strcasecmp(separator, "default") == 0)
         separator = get_default_separator();
 
-    if (!valid_color(cfg_getstr(cfg_general, "color_good")) || !valid_color(cfg_getstr(cfg_general, "color_degraded")) || !valid_color(cfg_getstr(cfg_general, "color_bad")) || !valid_color(cfg_getstr(cfg_general, "color_separator")))
+    enable_colors = cfg_getbool(cfg_general, "colors");
+
+    if (!valid_color(cfg_getstr(cfg_general, "color_default")) ||
+        !valid_color(cfg_getstr(cfg_general, "color_good")) ||
+        !valid_color(cfg_getstr(cfg_general, "color_degraded")) ||
+        !valid_color(cfg_getstr(cfg_general, "color_bad")) ||
+        !valid_color(cfg_getstr(cfg_general, "color_separator")))
         die("Bad color format");
 
     char *markup_str = cfg_getstr(cfg_general, "markup");

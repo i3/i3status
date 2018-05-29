@@ -13,6 +13,7 @@ void print_run_watch(run_watch_ctx_t *ctx) {
     bool running = process_runs(ctx->pidfile);
     const char *walk;
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
 
     if (running || ctx->format_down == NULL) {
         walk = ctx->format;
@@ -22,7 +23,7 @@ void print_run_watch(run_watch_ctx_t *ctx) {
 
     INSTANCE(ctx->pidfile);
 
-    START_COLOR((running ? "color_good" : "color_bad"));
+    outcolor = (running ? COLOR_GOOD : COLOR_BAD);
 
     char string_status[STRING_SIZE];
     snprintf(string_status, STRING_SIZE, "%s", (running ? "yes" : "no"));
@@ -34,6 +35,5 @@ void print_run_watch(run_watch_ctx_t *ctx) {
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     char *formatted = format_placeholders(walk, &placeholders[0], num);
     OUTPUT_FORMATTED;
-    END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
 }

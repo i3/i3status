@@ -88,10 +88,10 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 
 void print_memory(memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
 
 #if defined(__linux__)
     const char *selected_format = ctx->format;
-    const char *output_color = NULL;
 
     int unread_fields = 6;
     unsigned long ram_total;
@@ -151,20 +151,18 @@ void print_memory(memory_ctx_t *ctx) {
     if (ctx->threshold_degraded) {
         const unsigned long threshold = memory_absolute(ctx->threshold_degraded, ram_total);
         if (ram_available < threshold) {
-            output_color = "color_degraded";
+            outcolor = COLOR_DEGRADED;
         }
     }
 
     if (ctx->threshold_critical) {
         const unsigned long threshold = memory_absolute(ctx->threshold_critical, ram_total);
         if (ram_available < threshold) {
-            output_color = "color_bad";
+            outcolor = COLOR_BAD;
         }
     }
 
-    if (output_color) {
-        START_COLOR(output_color);
-
+    if (outcolor != COLOR_DEFAULT) {
         if (ctx->format_degraded)
             selected_format = ctx->format_degraded;
     }
@@ -204,9 +202,6 @@ void print_memory(memory_ctx_t *ctx) {
     char *formatted = format_placeholders(selected_format, &placeholders[0], num);
     OUTPUT_FORMATTED;
     free(formatted);
-
-    if (output_color)
-        END_COLOR;
 
     OUTPUT_FULL_TEXT(ctx->buf);
 

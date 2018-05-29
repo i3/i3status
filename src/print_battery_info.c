@@ -145,6 +145,7 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
 
 static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
 
 #if defined(__linux__)
     char buf[1024];
@@ -529,6 +530,7 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
 static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
 #if defined(__linux__)
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
     bool is_found = false;
 
     char *placeholder;
@@ -586,6 +588,7 @@ static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *ba
 
 void print_battery_info(battery_info_ctx_t *ctx) {
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     struct battery_info batt_info = {
         .full_design = -1,
         .full_last = -1,
@@ -595,7 +598,6 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         .percentage_remaining = -1,
         .status = CS_UNKNOWN,
     };
-    bool colorful_output = false;
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
@@ -658,11 +660,9 @@ void print_battery_info(battery_info_ctx_t *ctx) {
 
     if (batt_info.status == CS_DISCHARGING && ctx->low_threshold > 0) {
         if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
+            outcolor = COLOR_BAD;
         } else if (batt_info.seconds_remaining >= 0 && strcasecmp(ctx->threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * ctx->low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
+            outcolor = COLOR_BAD;
         }
     }
 
@@ -731,10 +731,6 @@ void print_battery_info(battery_info_ctx_t *ctx) {
     OUTPUT_FORMATTED;
     free(formatted);
     free(untrimmed);
-
-    if (colorful_output) {
-        END_COLOR;
-    }
 
     OUTPUT_FULL_TEXT(ctx->buf);
 }

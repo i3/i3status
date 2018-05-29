@@ -13,6 +13,7 @@
 void print_path_exists(path_exists_ctx_t *ctx) {
     const char *walk;
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     struct stat st;
     const bool exists = (stat(ctx->path, &st) == 0);
 
@@ -24,7 +25,7 @@ void print_path_exists(path_exists_ctx_t *ctx) {
 
     INSTANCE(ctx->path);
 
-    START_COLOR((exists ? "color_good" : "color_bad"));
+    outcolor = (exists ? COLOR_GOOD : COLOR_BAD);
 
     char string_status[STRING_SIZE];
 
@@ -39,6 +40,5 @@ void print_path_exists(path_exists_ctx_t *ctx) {
     OUTPUT_FORMATTED;
     free(formatted);
 
-    END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
 }
