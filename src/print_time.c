@@ -57,13 +57,14 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
         for (walk = format; *walk != '\0'; walk++) {
             if (*walk != '%') {
                 *(outwalk++) = *walk;
-                continue;
-            }
 
-            if (BEGINS_WITH(walk + 1, "time")) {
+            } else if (BEGINS_WITH(walk + 1, "time")) {
                 strftime(timebuf, sizeof(timebuf), format_time, &tm);
                 maybe_escape_markup(timebuf, &outwalk);
                 walk += strlen("time");
+
+            } else {
+                *(outwalk++) = '%';
             }
         }
     }

@@ -35,15 +35,17 @@ static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
     for (; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "%")) {
+
+        } else if (BEGINS_WITH(walk + 1, "%")) {
             outwalk += sprintf(outwalk, "%s", pct_mark);
             walk += strlen("%");
-        }
-        if (BEGINS_WITH(walk + 1, "volume")) {
+
+        } else if (BEGINS_WITH(walk + 1, "volume")) {
             outwalk += sprintf(outwalk, "%d%s", ivolume, pct_mark);
             walk += strlen("volume");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
     return outwalk;

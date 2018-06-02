@@ -172,47 +172,41 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
 
-        if (BEGINS_WITH(walk + 1, "free")) {
+        } else if (BEGINS_WITH(walk + 1, "free")) {
             outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, prefix_type);
             walk += strlen("free");
-        }
 
-        if (BEGINS_WITH(walk + 1, "used")) {
+        } else if (BEGINS_WITH(walk + 1, "used")) {
             outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
             walk += strlen("used");
-        }
 
-        if (BEGINS_WITH(walk + 1, "total")) {
+        } else if (BEGINS_WITH(walk + 1, "total")) {
             outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, prefix_type);
             walk += strlen("total");
-        }
 
-        if (BEGINS_WITH(walk + 1, "avail")) {
+        } else if (BEGINS_WITH(walk + 1, "avail")) {
             outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, prefix_type);
             walk += strlen("avail");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_free")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_free")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
             walk += strlen("percentage_free");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_used_of_avail")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_used_of_avail")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
             walk += strlen("percentage_used_of_avail");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_used")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_used")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
             walk += strlen("percentage_used");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_avail")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_avail")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
             walk += strlen("percentage_avail");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 
