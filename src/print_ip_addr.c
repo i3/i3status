@@ -13,6 +13,31 @@
 #include "i3status.h"
 
 /*
+ * Return a copy of the .ifa_name field passed as argument where the optional
+ * IP label, if present, is removed.
+ *
+ * example:
+ * - strip_optional_label("eth0") => "eth0"
+ * - strip_optional_label("eth0:label") => "eth0"
+ *
+ * The memory for the returned string is obtained with malloc(3), and can be
+ * freed with free(3).
+ *
+ *
+ */
+static char *strip_optional_label(const char *ifa_name) {
+    char *copy = sstrdup(ifa_name);
+
+    char *ptr = strchr(copy, ':');
+
+    if (ptr) {
+        *ptr = '\0';
+    }
+
+    return copy;
+}
+
+/*
  * Return the IP address for the given interface or "no IP" if the
  * interface is up and running but hasn't got an IP address yet
  *
@@ -29,7 +54,6 @@ const char *get_ip_addr(const char *interface, int family) {
 
     struct ifaddrs *ifaddr, *addrp;
     bool found = false;
-    int interface_len = strlen(interface);
 
     getifaddrs(&ifaddr);
 
@@ -38,7 +62,12 @@ const char *get_ip_addr(const char *interface, int family) {
 
     /* Skip until we are at the input family address of interface */
     for (addrp = ifaddr; addrp != NULL; addrp = addrp->ifa_next) {
-        if (strncmp(addrp->ifa_name, interface, interface_len) != 0) {
+        /* Strip the label if present in the .ifa_name field. */
+        char *stripped_ifa_name = strip_optional_label(addrp->ifa_name);
+
+        bool name_matches = strcmp(stripped_ifa_name, interface) != 0;
+        free(stripped_ifa_name);
+        if (name_matches) {
             /* The interface does not have the right name, skip it. */
             continue;
         }
