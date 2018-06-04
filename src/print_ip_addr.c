@@ -37,22 +37,25 @@ const char *get_ip_addr(const char *interface, int family) {
         return NULL;
 
     /* Skip until we are at the input family address of interface */
-    for (addrp = ifaddr;
-
-         (addrp != NULL &&
-          (strncmp(addrp->ifa_name, interface, interface_len) != 0 ||
-           addrp->ifa_addr == NULL ||
-           addrp->ifa_addr->sa_family != family));
-
-         addrp = addrp->ifa_next) {
-        /* Check if the interface is down */
-        if (strncmp(addrp->ifa_name, interface, interface_len) != 0)
+    for (addrp = ifaddr; addrp != NULL; addrp = addrp->ifa_next) {
+        if (strncmp(addrp->ifa_name, interface, interface_len) != 0) {
+            /* The interface does not have the right name, skip it. */
             continue;
-        found = true;
+        }
+
+        if (addrp->ifa_addr != NULL && addrp->ifa_addr->sa_family == family) {
+            /* We found the right interface with the right address. */
+            break;
+        }
+
+        /* Check if the interface is down. If it is, no need to look any
+         * further. */
         if ((addrp->ifa_flags & IFF_RUNNING) == 0) {
             freeifaddrs(ifaddr);
             return NULL;
         }
+
+        found = true;
     }
 
     if (addrp == NULL) {
