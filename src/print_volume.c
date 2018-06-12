@@ -151,7 +151,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     snd_mixer_selem_id_set_index(sid, mixer_idx);
     snd_mixer_selem_id_set_name(sid, mixer);
     if (!(elem = snd_mixer_find_selem(m, sid))) {
-        fprintf(stderr, "i3status: ALSA: Cannot find mixer %s (index %i)\n",
+        fprintf(stderr, "i3status: ALSA: Cannot find mixer %s (index %u)\n",
                 snd_mixer_selem_id_get_name(sid), snd_mixer_selem_id_get_index(sid));
         snd_mixer_close(m);
         snd_mixer_selem_id_free(sid);
