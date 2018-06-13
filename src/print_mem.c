@@ -39,10 +39,9 @@ static int print_bytes_human(char *outwalk, uint64_t bytes) {
  *
  */
 static long memory_absolute(const long mem_total, const char *size) {
-    long mem_absolute = -1;
     char *endptr = NULL;
 
-    mem_absolute = strtol(size, &endptr, 10);
+    long mem_absolute = strtol(size, &endptr, 10);
 
     if (endptr) {
         while (endptr[0] != '\0' && isspace(endptr[0]))
