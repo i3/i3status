@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <ctype.h>
 
 #include "i3status.h"
 
@@ -120,4 +121,37 @@ void maybe_escape_markup(char *text, char **buffer) {
                 break;
         }
     }
+}
+
+/*
+ * remove leading spaces
+ */
+char *rtrim(const char *s) {
+    while (isspace(*s))
+        ++s;
+    return strdup(s);
+}
+
+/*
+ * remove trailing spaces
+ */
+char *ltrim(const char *s) {
+    char *r = strdup(s);
+    if (r != NULL) {
+        char *fr = r + strlen(s) - 1;
+        while ((isspace(*fr) || *fr == 0) && fr >= r)
+            --fr;
+        *++fr = 0;
+    }
+    return r;
+}
+
+/*
+ * remove leading & trailing spaces
+ */
+char *trim(const char *s) {
+    char *r = rtrim(s);
+    char *f = ltrim(r);
+    free(r);
+    return f;
 }

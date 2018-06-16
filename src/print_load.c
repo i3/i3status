@@ -7,6 +7,10 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
+#include "i3status.h"
+
+#define STRING_SIZE 10
+
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold) {
     char *outwalk = buffer;
 /* Get load */
@@ -14,7 +18,6 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun) || defined(__DragonFly__)
     double loadavg[3];
     const char *selected_format = format;
-    const char *walk;
     bool colorful_output = false;
 
     if (getloadavg(loadavg, 3) == -1)
@@ -27,26 +30,21 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
             selected_format = format_above_threshold;
     }
 
-    for (walk = selected_format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_loadavg_1[STRING_SIZE] = "";
+    char string_loadavg_5[STRING_SIZE] = "";
+    char string_loadavg_15[STRING_SIZE] = "";
 
-        } else if (BEGINS_WITH(walk + 1, "1min")) {
-            outwalk += sprintf(outwalk, "%1.2f", loadavg[0]);
-            walk += strlen("1min");
+    sprintf(string_loadavg_1, "%1.2f", loadavg[0]);
+    sprintf(string_loadavg_5, "%1.2f", loadavg[1]);
+    sprintf(string_loadavg_15, "%1.2f", loadavg[2]);
 
-        } else if (BEGINS_WITH(walk + 1, "5min")) {
-            outwalk += sprintf(outwalk, "%1.2f", loadavg[1]);
-            walk += strlen("5min");
+    placeholder_t placeholders[] = {
+        {.name = "%1min", .value = string_loadavg_1},
+        {.name = "%5min", .value = string_loadavg_5},
+        {.name = "%15min", .value = string_loadavg_15}};
 
-        } else if (BEGINS_WITH(walk + 1, "15min")) {
-            outwalk += sprintf(outwalk, "%1.2f", loadavg[2]);
-            walk += strlen("15min");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(selected_format, &placeholders[0], num);
 
     if (colorful_output)
         END_COLOR;

@@ -7,9 +7,11 @@
 #include <sys/stat.h>
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down) {
-    const char *walk;
     char *outwalk = buffer;
+    const char *walk;
     struct stat st;
     const bool exists = (stat(path, &st) == 0);
 
@@ -23,22 +25,18 @@ void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const
 
     START_COLOR((exists ? "color_good" : "color_bad"));
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_title[STRING_SIZE] = "";
+    char string_status[STRING_SIZE] = "";
 
-        } else if (BEGINS_WITH(walk + 1, "title")) {
-            outwalk += sprintf(outwalk, "%s", title);
-            walk += strlen("title");
+    sprintf(string_title, "%s", title);
+    sprintf(string_status, "%s", (exists ? "yes" : "no"));
 
-        } else if (BEGINS_WITH(walk + 1, "status")) {
-            outwalk += sprintf(outwalk, "%s", (exists ? "yes" : "no"));
-            walk += strlen("status");
+    placeholder_t placeholders[] = {
+        {.name = "%title", .value = string_title},
+        {.name = "%status", .value = string_status}};
 
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(walk, &placeholders[0], num);
 
     END_COLOR;
     OUTPUT_FULL_TEXT(buffer);

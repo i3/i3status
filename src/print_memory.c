@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
-#include "format_placeholders.h"
+
 #include "i3status.h"
 
-#define BINARY_BASE UINT64_C(1024)
-#define STRING_SIZE 20
+#define STRING_SIZE 10
 
+#define BINARY_BASE UINT64_C(1024)
 #define MAX_EXPONENT 4
 static const char *const iec_symbols[MAX_EXPONENT + 1] = {"", "Ki", "Mi", "Gi", "Ti"};
 
@@ -162,15 +162,15 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
             selected_format = format_degraded;
     }
 
-    char string_ram_total[STRING_SIZE];
-    char string_ram_used[STRING_SIZE];
-    char string_ram_free[STRING_SIZE];
-    char string_ram_available[STRING_SIZE];
-    char string_ram_shared[STRING_SIZE];
-    char string_percentage_free[STRING_SIZE];
-    char string_percentage_available[STRING_SIZE];
-    char string_percentage_used[STRING_SIZE];
-    char string_percentage_shared[STRING_SIZE];
+    char string_ram_total[STRING_SIZE] = "";
+    char string_ram_used[STRING_SIZE] = "";
+    char string_ram_free[STRING_SIZE] = "";
+    char string_ram_available[STRING_SIZE] = "";
+    char string_ram_shared[STRING_SIZE] = "";
+    char string_percentage_free[STRING_SIZE] = "";
+    char string_percentage_available[STRING_SIZE] = "";
+    char string_percentage_used[STRING_SIZE] = "";
+    char string_percentage_shared[STRING_SIZE] = "";
 
     print_bytes_human(string_ram_total, ram_total);
     print_bytes_human(string_ram_used, ram_used);

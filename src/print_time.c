@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 static bool local_timezone_init = false;
 static const char *local_timezone = NULL;
 static const char *current_timezone = NULL;
