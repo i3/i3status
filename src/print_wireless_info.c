@@ -67,6 +67,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 30
+
 #define WIRELESS_INFO_FLAG_HAS_ESSID (1 << 0)
 #define WIRELESS_INFO_FLAG_HAS_QUALITY (1 << 1)
 #define WIRELESS_INFO_FLAG_HAS_SIGNAL (1 << 2)
@@ -531,77 +533,71 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
     }
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_quality[STRING_SIZE] = "";
+    char string_signal[STRING_SIZE] = "";
+    char string_noise[STRING_SIZE] = "";
+    char string_essid[STRING_SIZE] = "";
+    char string_frequency[STRING_SIZE] = "";
+    char string_ip[STRING_SIZE] = "";
+    char string_bitrate[STRING_SIZE] = "";
 
-        } else if (BEGINS_WITH(walk + 1, "quality")) {
-            if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
-                if (info.quality_max)
-                    outwalk += sprintf(outwalk, format_quality, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
-                else
-                    outwalk += sprintf(outwalk, "%d", info.quality);
-            } else {
-                *(outwalk++) = '?';
-            }
-            walk += strlen("quality");
-
-        } else if (BEGINS_WITH(walk + 1, "signal")) {
-            if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
-                if (info.signal_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
-                else
-                    outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
-            } else {
-                *(outwalk++) = '?';
-            }
-            walk += strlen("signal");
-
-        } else if (BEGINS_WITH(walk + 1, "noise")) {
-            if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
-                if (info.noise_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
-                else
-                    outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
-            } else {
-                *(outwalk++) = '?';
-            }
-            walk += strlen("noise");
-
-        } else if (BEGINS_WITH(walk + 1, "essid")) {
-#ifdef IW_ESSID_MAX_SIZE
-            if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
-                maybe_escape_markup(info.essid, &outwalk);
-            else
-#endif
-                *(outwalk++) = '?';
-            walk += strlen("essid");
-
-        } else if (BEGINS_WITH(walk + 1, "frequency")) {
-            if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
-                outwalk += sprintf(outwalk, "%1.1f GHz", info.frequency / 1e9);
-            else
-                *(outwalk++) = '?';
-            walk += strlen("frequency");
-
-        } else if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", ip_address);
-            walk += strlen("ip");
-        }
-#ifdef __linux__
-        else if (BEGINS_WITH(walk + 1, "bitrate")) {
-            char br_buffer[128];
-
-            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
-
-            outwalk += sprintf(outwalk, "%s", br_buffer);
-            walk += strlen("bitrate");
-        }
-#endif
-        else {
-            *(outwalk++) = '%';
-        }
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
+        if (info.quality_max)
+            sprintf(string_quality, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+        else
+            sprintf(string_quality, "%d", info.quality);
+    } else {
+        sprintf(string_quality, "?");
     }
+
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
+        if (info.signal_level_max)
+            sprintf(string_signal, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+        else
+            sprintf(string_signal, "%d dBm", info.signal_level);
+    } else {
+        sprintf(string_signal, "?");
+    }
+
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
+        if (info.noise_level_max)
+            sprintf(string_noise, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+        else
+            sprintf(string_noise, "%d dBm", info.noise_level);
+    } else {
+        sprintf(string_noise, "?");
+    }
+
+    char *tmp = string_essid;
+#ifdef IW_ESSID_MAX_SIZE
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
+        maybe_escape_markup(info.essid, &tmp);
+    else
+#endif
+        sprintf(string_essid, "?");
+
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
+        sprintf(string_frequency, "%1.1f GHz", info.frequency / 1e9);
+    else
+        sprintf(string_frequency, "?");
+
+    sprintf(string_ip, "%s", ip_address);
+
+#ifdef __linux__
+    print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate);
+#endif
+
+    placeholder_t placeholders[] = {
+        {.name = "%quality", .value = string_quality},
+        {.name = "%signal", .value = string_signal},
+        {.name = "%noise", .value = string_noise},
+        {.name = "%essid", .value = string_essid},
+        {.name = "%frequency", .value = string_frequency},
+        {.name = "%ip", .value = string_ip},
+        {.name = "%bitrate", .value = string_bitrate}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(walk, &placeholders[0], num);
 
 out:
     END_COLOR;
