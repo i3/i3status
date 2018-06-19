@@ -39,6 +39,8 @@ sub TestCase {
         return 1;
     } else {
         say "Testing test case '", basename($dir), "'… ", BOLD, RED, "Failed!", RESET;
+        say "Expected: '$refres'";
+        say "Got: '$testres'";
         return 0;
     }
 }
