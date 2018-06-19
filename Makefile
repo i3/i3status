@@ -99,6 +99,9 @@ i3status: ${OBJS}
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	@echo " LD $@"
 
+test: i3status
+	LC_ALL=C ./travis/run-tests.pl
+
 clean:
 	rm -f *.o src/*.o
 
