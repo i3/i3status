@@ -16,6 +16,7 @@ sub TestCase {
 
     my $conf = "$dir/i3status.conf";
     my $testres = `./i3status --run-once -c $conf`;
+    my $exitcode = $?;
     my $refres = "";
 
     if ( -f "@_/expected_output.txt") {
@@ -26,6 +27,11 @@ sub TestCase {
 
     if ( -f "@_/cleanup.pl") {
         system($EXECUTABLE_NAME, "@_/cleanup.pl", ($dir));
+    }
+
+    if ( $exitcode != 0 ) {
+        say "Testing test case '", basename($dir), "'… ", BOLD, RED, "Crash!", RESET;
+        return 0;
     }
 
     if ( "$testres" eq "$refres" ) {
