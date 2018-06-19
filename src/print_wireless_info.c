@@ -533,13 +533,13 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         }
     }
 
-    char string_quality[STRING_SIZE] = "";
-    char string_signal[STRING_SIZE] = "";
-    char string_noise[STRING_SIZE] = "";
-    char string_essid[STRING_SIZE] = "";
-    char string_frequency[STRING_SIZE] = "";
-    char string_ip[STRING_SIZE] = "";
-    char string_bitrate[STRING_SIZE] = "";
+    char string_quality[STRING_SIZE];
+    char string_signal[STRING_SIZE];
+    char string_noise[STRING_SIZE];
+    char string_essid[STRING_SIZE];
+    char string_frequency[STRING_SIZE];
+    char string_ip[STRING_SIZE];
+    char string_bitrate[STRING_SIZE];
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
         if (info.quality_max)

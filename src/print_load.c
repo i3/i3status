@@ -30,9 +30,9 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
             selected_format = format_above_threshold;
     }
 
-    char string_loadavg_1[STRING_SIZE] = "";
-    char string_loadavg_5[STRING_SIZE] = "";
-    char string_loadavg_15[STRING_SIZE] = "";
+    char string_loadavg_1[STRING_SIZE];
+    char string_loadavg_5[STRING_SIZE];
+    char string_loadavg_15[STRING_SIZE];
 
     sprintf(string_loadavg_1, "%1.2f", loadavg[0]);
     sprintf(string_loadavg_5, "%1.2f", loadavg[1]);

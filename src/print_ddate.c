@@ -101,17 +101,17 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     if ((dt = get_ddate(&current_tm)) == NULL)
         return;
 
-    char string_A[STRING_SIZE] = "";
-    char string_a[STRING_SIZE] = "";
-    char string_B[STRING_SIZE] = "";
-    char string_b[STRING_SIZE] = "";
-    char string_d[STRING_SIZE] = "";
-    char string_e[STRING_SIZE] = "";
-    char string_Y[STRING_SIZE] = "";
-    char string_H[STRING_SIZE] = "";
-    char string_N[STRING_SIZE] = "";
-    char string_n[STRING_SIZE] = "";
-    char string_t[STRING_SIZE] = "";
+    char string_A[STRING_SIZE];
+    char string_a[STRING_SIZE];
+    char string_B[STRING_SIZE];
+    char string_b[STRING_SIZE];
+    char string_d[STRING_SIZE];
+    char string_e[STRING_SIZE];
+    char string_Y[STRING_SIZE];
+    char string_H[STRING_SIZE];
+    char string_N[STRING_SIZE];
+    char string_n[STRING_SIZE];
+    char string_t[STRING_SIZE];
 
     /* Weekday in long and abbreviation */
     sprintf(string_A, "%s", day_long[dt->week_day]);

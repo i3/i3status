@@ -203,7 +203,7 @@ char *trim(const char *s);
 
 //coppied from i3:include/libi3.h
 /** Helper structure for usage in format_placeholders(). */
-typedef struct placeholder_t {
+typedef struct {
     /* The placeholder to be replaced, e.g., "%title". */
     char *name;
     /* The value this placeholder should be replaced with. */

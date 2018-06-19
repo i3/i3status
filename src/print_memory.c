@@ -162,15 +162,15 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
             selected_format = format_degraded;
     }
 
-    char string_ram_total[STRING_SIZE] = "";
-    char string_ram_used[STRING_SIZE] = "";
-    char string_ram_free[STRING_SIZE] = "";
-    char string_ram_available[STRING_SIZE] = "";
-    char string_ram_shared[STRING_SIZE] = "";
-    char string_percentage_free[STRING_SIZE] = "";
-    char string_percentage_available[STRING_SIZE] = "";
-    char string_percentage_used[STRING_SIZE] = "";
-    char string_percentage_shared[STRING_SIZE] = "";
+    char string_ram_total[STRING_SIZE];
+    char string_ram_used[STRING_SIZE];
+    char string_ram_free[STRING_SIZE];
+    char string_ram_available[STRING_SIZE];
+    char string_ram_shared[STRING_SIZE];
+    char string_percentage_free[STRING_SIZE];
+    char string_percentage_available[STRING_SIZE];
+    char string_percentage_used[STRING_SIZE];
+    char string_percentage_shared[STRING_SIZE];
 
     print_bytes_human(string_ram_total, ram_total);
     print_bytes_human(string_ram_used, ram_used);

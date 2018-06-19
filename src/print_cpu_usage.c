@@ -37,6 +37,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 10
+
 struct cpu_usage {
     int user;
     int nice;
@@ -49,6 +51,7 @@ static int cpu_count = 0;
 static struct cpu_usage prev_all = {0, 0, 0, 0, 0};
 static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;
+static placeholder_t *placeholders = NULL;
 
 /*
  * Reads the CPU utilization from /proc/stat and returns the usage as a
@@ -57,7 +60,6 @@ static struct cpu_usage *curr_cpus = NULL;
  */
 void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold) {
     const char *selected_format = format;
-    const char *walk;
     char *outwalk = buffer;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
     int diff_idle, diff_total, diff_usage;
@@ -69,10 +71,14 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     int curr_cpu_count = get_nprocs_conf();
     if (curr_cpu_count != cpu_count) {
         cpu_count = curr_cpu_count;
+
         free(prev_cpus);
-        prev_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
         free(curr_cpus);
-        curr_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
+        free(placeholders);
+
+        prev_cpus = calloc(cpu_count, sizeof(struct cpu_usage));
+        curr_cpus = calloc(cpu_count, sizeof(struct cpu_usage));
+        placeholders = calloc(cpu_count + 1, sizeof(placeholder_t));
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
@@ -156,40 +162,34 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
             selected_format = format_above_degraded_threshold;
     }
 
-    for (walk = selected_format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_usage[STRING_SIZE];
 
-        } else if (BEGINS_WITH(walk + 1, "usage")) {
-            outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
-            walk += strlen("usage");
-        }
+    sprintf(string_usage, "%02d%s", diff_usage, pct_mark);
+
 #if defined(__linux__)
-        else if (BEGINS_WITH(walk + 1, "cpu")) {
-            int number = -1;
-            sscanf(walk + 1, "cpu%d", &number);
-            if (number == -1) {
-                fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
-            } else if (number >= cpu_count) {
-                fprintf(stderr, "i3status: provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
-            } else {
-                int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
-                int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
-                int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
-                outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
-            }
-            int padding = 1;
-            int step = 10;
-            while (step <= number) {
-                step *= 10;
-                padding++;
-            }
-            walk += strlen("cpu") + padding;
-        }
+    for (int number = 0; number < cpu_count; number++) {
+        int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
+        int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
+        int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
+        // replace with placeholder_t.name an placeholder_t.value
+        placeholders[number].name = malloc(sizeof(char) * STRING_SIZE);
+        placeholders[number].value = malloc(sizeof(char) * STRING_SIZE);
+        sprintf(placeholders[number].name, "cpu%d", number);
+        sprintf(placeholders[number].value, "%02d%s", cpu_diff_usage, pct_mark);
+    }
 #endif
-        else {
-            *(outwalk++) = '%';
-        }
+
+    // overall usage
+    placeholders[cpu_count].name = "%usage";
+    placeholders[cpu_count].value = string_usage;
+
+    const size_t num = cpu_count + 1;
+    buffer = format_placeholders(selected_format, &placeholders[0], num);
+
+    // free everything
+    for (size_t i = 0; i < cpu_count; i++) {
+        free(placeholders[i].name);
+        free(placeholders[i].value);
     }
 
     struct cpu_usage *temp_cpus = prev_cpus;

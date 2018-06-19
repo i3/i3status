@@ -24,8 +24,8 @@ void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const c
 
     START_COLOR((running ? "color_good" : "color_bad"));
 
-    char string_title[STRING_SIZE] = "";
-    char string_status[STRING_SIZE] = "";
+    char string_title[STRING_SIZE];
+    char string_status[STRING_SIZE];
 
     sprintf(string_title, "%s", title);
     sprintf(string_status, "%s", (running ? "yes" : "no"));

@@ -178,14 +178,14 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             selected_format = format_below_threshold;
     }
 
-    char string_free[STRING_SIZE] = "";
-    char string_used[STRING_SIZE] = "";
-    char string_total[STRING_SIZE] = "";
-    char string_avail[STRING_SIZE] = "";
-    char string_percentage_free[STRING_SIZE] = "";
-    char string_percentage_used_of_avail[STRING_SIZE] = "";
-    char string_percentage_used[STRING_SIZE] = "";
-    char string_percentage_avail[STRING_SIZE] = "";
+    char string_free[STRING_SIZE];
+    char string_used[STRING_SIZE];
+    char string_total[STRING_SIZE];
+    char string_avail[STRING_SIZE];
+    char string_percentage_free[STRING_SIZE];
+    char string_percentage_used_of_avail[STRING_SIZE];
+    char string_percentage_used[STRING_SIZE];
+    char string_percentage_avail[STRING_SIZE];
 
     print_bytes_human(string_free, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, prefix_type);
     print_bytes_human(string_used, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);

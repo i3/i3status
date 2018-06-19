@@ -50,9 +50,9 @@
         fmt = fmt_muted;                                                                 \
     }
 
-static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume, const char *devicename) {
-    char string_percent[STRING_SIZE] = "";
-    char string_volume[STRING_SIZE] = "";
+static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, const char *devicename) {
+    char string_percent[STRING_SIZE];
+    char string_volume[STRING_SIZE];
 
     sprintf(string_percent, "%s", pct_mark);
     sprintf(string_volume, "%d%s", ivolume, pct_mark);

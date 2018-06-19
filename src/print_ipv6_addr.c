@@ -133,7 +133,7 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
 
     START_COLOR("color_good");
 
-    char string_ip[STRING_SIZE] = "";
+    char string_ip[STRING_SIZE];
 
     snprintf(string_ip, STRING_SIZE - 1, "%s", addr_string);
 

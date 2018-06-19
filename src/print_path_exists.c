@@ -25,8 +25,8 @@ void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const
 
     START_COLOR((exists ? "color_good" : "color_bad"));
 
-    char string_title[STRING_SIZE] = "";
-    char string_status[STRING_SIZE] = "";
+    char string_title[STRING_SIZE];
+    char string_status[STRING_SIZE];
 
     sprintf(string_title, "%s", title);
     sprintf(string_status, "%s", (exists ? "yes" : "no"));
