@@ -44,14 +44,16 @@ sub TestCase {
 }
 
 my $testcases = 'testcases';
-my $testresults = 1;
+my $testresults = 0;
 
 opendir(my $dir, $testcases) or die "Could not open directory $testcases: $!";
 
 while (my $entry = readdir($dir)) {
     next unless (-d "$testcases/$entry");
     next if ($entry =~ m/^\./);
-    $testresults = $testresults && TestCase("$testcases/$entry");
+    if (not TestCase("$testcases/$entry") ) {
+        $testresults = 1;
+    }
 }
 closedir($dir);
-exit 0;
+exit $testresults;
