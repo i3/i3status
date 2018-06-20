@@ -174,7 +174,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
         // replace with placeholder_t.name an placeholder_t.value
         placeholders[number].name = malloc(sizeof(char) * STRING_SIZE);
         placeholders[number].value = malloc(sizeof(char) * STRING_SIZE);
-        sprintf(placeholders[number].name, "cpu%d", number);
+        sprintf(placeholders[number].name, "%%cpu%d", number);
         sprintf(placeholders[number].value, "%02d%s", cpu_diff_usage, pct_mark);
     }
 #endif
@@ -187,7 +187,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     buffer = format_placeholders(selected_format, &placeholders[0], num);
 
     // free everything
-    for (size_t i = 0; i < cpu_count; i++) {
+    for (int i = 0; i < cpu_count; i++) {
         free(placeholders[i].name);
         free(placeholders[i].value);
     }

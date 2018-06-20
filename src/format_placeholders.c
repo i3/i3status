@@ -30,7 +30,7 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
     /* We have to first iterate over the string to see how much buffer space
      * we need to allocate. */
     int buffer_len = strlen(format) + 1;
-    for (char *walk = format; *walk != '\0'; walk++) {
+    for (const char *walk = format; *walk != '\0'; walk++) {
         for (int i = 0; i < num; i++) {
             if (!STARTS_WITH(walk, placeholders[i].name))
                 continue;
@@ -44,7 +44,7 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
     /* Now we can parse the format string. */
     char buffer[buffer_len];
     char *outwalk = buffer;
-    for (char *walk = format; *walk != '\0'; walk++) {
+    for (const char *walk = format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
             continue;

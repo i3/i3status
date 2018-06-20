@@ -6,7 +6,7 @@ use warnings;
 
 chomp(my $cpu_count = `grep -c -P '^processor\\s+:' /proc/cpuinfo`);
 if ($cpu_count == 1) {
-    print "all: 00% CPU_0: 00% CPU_1: \n";
+    print "I can %haz literal% % ? %00%%\n";
 } else {
-    print "all: 50% CPU_0: 00% CPU_1: 100%\n";
+    print "I can %haz literal% % ? %50%%\n";
 }
