@@ -16,6 +16,7 @@ sub TestCase {
 
     my $conf = "$dir/i3status.conf";
     my $testres = `./i3status --run-once -c $conf`;
+    my $exitcode = $?;
     my $refres = "";
 
     if ( -f "@_/expected_output.txt") {
@@ -28,24 +29,33 @@ sub TestCase {
         system($EXECUTABLE_NAME, "@_/cleanup.pl", ($dir));
     }
 
+    if ( $exitcode != 0 ) {
+        say "Testing test case '", basename($dir), "'… ", BOLD, RED, "Crash!", RESET;
+        return 0;
+    }
+
     if ( "$testres" eq "$refres" ) {
         say "Testing test case '", basename($dir), "'… ", BOLD, GREEN, "OK", RESET;
         return 1;
     } else {
         say "Testing test case '", basename($dir), "'… ", BOLD, RED, "Failed!", RESET;
+        say "Expected: '$refres'";
+        say "Got: '$testres'";
         return 0;
     }
 }
 
 my $testcases = 'testcases';
-my $testresults = 1;
+my $testresults = 0;
 
 opendir(my $dir, $testcases) or die "Could not open directory $testcases: $!";
 
 while (my $entry = readdir($dir)) {
     next unless (-d "$testcases/$entry");
     next if ($entry =~ m/^\./);
-    $testresults = $testresults && TestCase("$testcases/$entry");
+    if (not TestCase("$testcases/$entry") ) {
+        $testresults = 1;
+    }
 }
 closedir($dir);
-exit 0;
+exit $testresults;
