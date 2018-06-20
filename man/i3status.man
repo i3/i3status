@@ -66,7 +66,6 @@ wireless wlan0 {
 }
 
 ethernet eth0 {
-        # if you use %speed, i3status requires the cap_net_admin capability
         format_up = "E: %ip (%speed)"
         format_down = "E: down"
 }
@@ -315,8 +314,7 @@ network interface found on the system (excluding devices starting with "lo").
 
 Gets the IP address and (if possible) the link speed of the given ethernet
 interface. If no IPv4 address is available and an IPv6 address is, it will be
-displayed. Getting the link speed requires the cap_net_admin capability.
-Set it using +setcap cap_net_admin=ep $(which i3status)+.
+displayed.
 
 The special interface name `_first_` will be replaced by the first non-wireless
 network interface found on the system (excluding devices starting with "lo").
