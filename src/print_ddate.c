@@ -112,6 +112,7 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     char string_N[STRING_SIZE];
     char string_n[STRING_SIZE];
     char string_t[STRING_SIZE];
+    char string_tibs_day[STRING_SIZE];
 
     /* Weekday in long and abbreviation */
     sprintf(string_A, "%s", day_long[dt->week_day]);
@@ -156,6 +157,8 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     sprintf(string_n, "\n");
     sprintf(string_t, "\t");
 
+    sprintf(string_tibs_day, "St. Tib's Day");
+
     placeholder_t placeholders[] = {
         {.name = "%A", .value = string_A},
         {.name = "%a", .value = string_a},
@@ -167,15 +170,12 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
         {.name = "%H", .value = string_H},
         {.name = "%N", .value = string_N},
         {.name = "%n", .value = string_n},
-        {.name = "%t", .value = string_t}};
+        {.name = "%t", .value = string_t},
+        {.name = "{", .value = string_tibs_day},
+        {.name = "}", .value = ""}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     buffer = format_placeholders(format, &placeholders[0], num);
-
-    if (dt->st_tibs_day && strchr(format, '{') != NULL) {
-        /* We outpt "St. Tib's Day... */
-        strcat(buffer, "St. Tib's Day");
-    }
 
     OUTPUT_FULL_TEXT(buffer);
 }

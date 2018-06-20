@@ -611,9 +611,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
     char string_status[STRING_SIZE];
     char string_percentage[STRING_SIZE];
-    char string_remaining[STRING_SIZE];
-    char string_emptytime[STRING_SIZE];
-    char string_consumption[STRING_SIZE];
+    char string_remaining[STRING_SIZE] = "";
+    char string_emptytime[STRING_SIZE] = "";
+    char string_consumption[STRING_SIZE] = "";
 
     const char *statusstr;
     switch (batt_info.status) {
