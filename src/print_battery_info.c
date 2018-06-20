@@ -459,8 +459,8 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
             is_found = true;
             add_battery_info(batt_info, &batt_buf);
         }
+        globfree(&globbuf);
     }
-    globfree(&globbuf);
     free(globpath);
 
     if (!is_found) {
