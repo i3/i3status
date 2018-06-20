@@ -24,7 +24,7 @@ bool process_runs(const char *path) {
     static glob_t globbuf;
     memset(pidbuf, 0, sizeof(pidbuf));
 
-    if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+    if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
         die("glob() failed\n");
     if (globbuf.gl_pathc == 0) {
         /* No glob matches, the specified path does not contain a wildcard. */
