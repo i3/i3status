@@ -186,7 +186,8 @@ char *sstrdup(const char *str);
 
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
-void die(const char *fmt, ...);
+
+void die(const char *fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 bool slurp(const char *filename, char *destination, int size);
 
 /* src/output.c */

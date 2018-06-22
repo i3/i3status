@@ -106,7 +106,7 @@ static bool path_exists(const char *path) {
 
 static void *scalloc(size_t size) {
     void *result = calloc(size, 1);
-    exit_if_null(result, "Error: out of memory (calloc(%zd))\n", size);
+    exit_if_null(result, "Error: out of memory (calloc(%zu))\n", size);
     return result;
 }
 
@@ -142,7 +142,7 @@ static int parse_min_width(cfg_t *context, cfg_opt_t *option, const char *value,
     long num = strtol(value, &end, 10);
 
     if (num < 0)
-        die("Invalid min_width attribute found in section %s, line %d: %d\n"
+        die("Invalid min_width attribute found in section %s, line %d: %ld\n"
             "Expected positive integer or string\n",
             context->name, context->line, num);
     else if (num == LONG_MIN || num == LONG_MAX || (end && *end != '\0'))

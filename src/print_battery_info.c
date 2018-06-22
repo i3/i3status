@@ -450,14 +450,17 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
                 .present_rate = 0,
                 .status = CS_UNKNOWN,
             };
-            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down))
+            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
+                globfree(&globbuf);
+                free(globpath);
                 return false;
+            }
 
             is_found = true;
             add_battery_info(batt_info, &batt_buf);
         }
+        globfree(&globbuf);
     }
-    globfree(&globbuf);
     free(globpath);
 
     if (!is_found) {

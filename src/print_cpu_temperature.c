@@ -223,7 +223,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         asprintf(&thermal_zone, THERMAL_ZONE, zone);
     else {
         static glob_t globbuf;
-        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) < 0)
+        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
             die("glob() failed\n");
         if (globbuf.gl_pathc == 0) {
             /* No glob matches, the specified path does not contain a wildcard. */
