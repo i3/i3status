@@ -5,7 +5,7 @@
  * © 2009 Michael Stapelberg and contributors (see also: LICENSE)
  *
  */
-// copied from  i3:libi3/format_placeholders.c
+// copied from  i3:libi3/format_placeholders.c and modified a bit
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,7 +16,7 @@
 #include "i3status.h"
 
 #ifndef STARTS_WITH
-#define STARTS_WITH(string, needle) (strncasecmp((string), (needle), strlen((needle))) == 0)
+#define STARTS_WITH(string, needle) (strncmp((string), (needle), strlen((needle))) == 0)
 #endif
 
 /*

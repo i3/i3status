@@ -171,8 +171,8 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
         {.name = "%N", .value = string_N},
         {.name = "%n", .value = string_n},
         {.name = "%t", .value = string_t},
-        {.name = "{", .value = string_tibs_day},
-        {.name = "}", .value = ""}};
+        {.name = "%{", .value = string_tibs_day},
+        {.name = "%}", .value = ""}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     buffer = format_placeholders(format, &placeholders[0], num);
