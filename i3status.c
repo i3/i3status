@@ -336,6 +336,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t wireless_opts[] = {
         CFG_STR("format_up", "W: (%quality at %essid, %bitrate) %ip", CFGF_NONE),
         CFG_STR("format_down", "W: down", CFGF_NONE),
+        CFG_STR("format_quality", "%3d%s", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -693,7 +694,7 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_WIRELESS);
                 if (interface == NULL)
                     interface = title;
-                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_quality"));
                 SEC_CLOSE_MAP;
             }
 

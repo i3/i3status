@@ -300,7 +300,8 @@ There also is an option "format_down". You can hide the output with
 
 Gets the link quality, frequency and ESSID of the given wireless network
 interface. You can specify different format strings for the network being
-connected or not connected.
+connected or not connected. The quality is padded with leading zeroes by
+default; to pad with something else use +format_quality+.
 
 The special interface name `_first_` will be replaced by the first wireless
 network interface found on the system (excluding devices starting with "lo").
@@ -310,6 +311,8 @@ network interface found on the system (excluding devices starting with "lo").
 *Example format_up*: +W: (%quality at %essid, %bitrate / %frequency) %ip+
 
 *Example format_down*: +W: down+
+
+*Example format_quality*: +"%03d%s"+
 
 === Ethernet
 

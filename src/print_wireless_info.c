@@ -480,7 +480,7 @@ error1:
  * | 127.0.0.1    | no IP        | IPv4      | ok                |
  * | 127.0.0.1    | ::1/128      | IPv4      | ok                |
  */
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_quality) {
     const char *walk;
     char *outwalk = buffer;
     wireless_info_t info;
@@ -540,7 +540,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (BEGINS_WITH(walk + 1, "quality")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
                 if (info.quality_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+                    outwalk += sprintf(outwalk, format_quality, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d", info.quality);
             } else {
