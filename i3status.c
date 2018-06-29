@@ -375,7 +375,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("threshold_type", "time", CFGF_NONE),
         CFG_BOOL("last_full_capacity", false, CFGF_NONE),
         CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
-        CFG_BOOL("hide_seconds", false, CFGF_NONE),
+        CFG_BOOL("hide_seconds", true, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,

@@ -333,8 +333,8 @@ estimated to be empty. If you want to use the last full capacity instead of the
 design capacity (when using the design capacity, it may happen that your
 battery is at 23% when fully charged because it’s old. In general, I want to
 see it this way, because it tells me how worn off my battery is.), just specify
-+last_full_capacity = true+. You can hide seconds in the remaining time and
-empty time estimations by setting +hide_seconds = true+.
++last_full_capacity = true+. You can show seconds in the remaining time and
+empty time estimations by setting +hide_seconds = false+.
 
 If you want the battery percentage to be shown without decimals, add
 +integer_battery_capacity = true+.
