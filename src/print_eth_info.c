@@ -33,7 +33,6 @@
 
 static int print_eth_speed(char *outwalk, const char *interface) {
 #if defined(LINUX)
-    /* This code path requires root privileges */
     int ethspeed = 0;
     struct ifreq ifr;
     struct ethtool_cmd ecmd;

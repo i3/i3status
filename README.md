@@ -16,13 +16,12 @@ i3status has the following dependencies:
   * libyajl-dev
   * libasound2-dev
   * libnl-genl-3-dev
-  * libcap2-bin (for getting network status without root permissions)
   * asciidoc (only for the documentation)
   * libpulse-dev (for getting the current volume using PulseAudio)
 
 On debian-based systems, the following line will install all requirements:
 ```bash
-apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libcap2-bin libpulse-dev libnl-genl-3-dev
+apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libpulse-dev libnl-genl-3-dev
 ```
 
 ## Upstream
