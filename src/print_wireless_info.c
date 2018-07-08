@@ -543,29 +543,29 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
         if (info.quality_max)
-            sprintf(string_quality, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+            snprintf(string_quality, STRING_SIZE, "%3d%s", PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
         else
-            sprintf(string_quality, "%d", info.quality);
+            snprintf(string_quality, STRING_SIZE, "%d", info.quality);
     } else {
-        sprintf(string_quality, "?");
+        snprintf(string_quality, STRING_SIZE, "?");
     }
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
         if (info.signal_level_max)
-            sprintf(string_signal, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+            snprintf(string_signal, STRING_SIZE, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
         else
-            sprintf(string_signal, "%d dBm", info.signal_level);
+            snprintf(string_signal, STRING_SIZE, "%d dBm", info.signal_level);
     } else {
-        sprintf(string_signal, "?");
+        snprintf(string_signal, STRING_SIZE, "?");
     }
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
         if (info.noise_level_max)
-            sprintf(string_noise, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+            snprintf(string_noise, STRING_SIZE, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
         else
-            sprintf(string_noise, "%d dBm", info.noise_level);
+            snprintf(string_noise, STRING_SIZE, "%d dBm", info.noise_level);
     } else {
-        sprintf(string_noise, "?");
+        snprintf(string_noise, STRING_SIZE, "?");
     }
 
     char *tmp = string_essid;
@@ -574,14 +574,14 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         maybe_escape_markup(info.essid, &tmp);
     else
 #endif
-        sprintf(string_essid, "?");
+        snprintf(string_essid, STRING_SIZE, "?");
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
-        sprintf(string_frequency, "%1.1f GHz", info.frequency / 1e9);
+        snprintf(string_frequency, STRING_SIZE, "%1.1f GHz", info.frequency / 1e9);
     else
-        sprintf(string_frequency, "?");
+        snprintf(string_frequency, STRING_SIZE, "?");
 
-    sprintf(string_ip, "%s", ip_address);
+    snprintf(string_ip, STRING_SIZE, "%s", ip_address);
 
 #ifdef __linux__
     print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate);

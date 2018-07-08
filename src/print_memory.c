@@ -28,11 +28,11 @@ static void print_bytes_human(char *outwalk, uint64_t bytes) {
         size /= bin_base;
         exponent += 1;
     }
-    snprintf(outwalk, STRING_SIZE - 1, "%.1f %sB", size, iec_symbols[exponent]);
+    snprintf(outwalk, STRING_SIZE, "%.1f %sB", size, iec_symbols[exponent]);
 }
 
 static void print_percentage(char *outwalk, float percent) {
-    snprintf(outwalk, STRING_SIZE - 1, "%.1f%s", percent, pct_mark);
+    snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
 }
 
 /*

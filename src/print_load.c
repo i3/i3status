@@ -34,9 +34,9 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
     char string_loadavg_5[STRING_SIZE];
     char string_loadavg_15[STRING_SIZE];
 
-    sprintf(string_loadavg_1, "%1.2f", loadavg[0]);
-    sprintf(string_loadavg_5, "%1.2f", loadavg[1]);
-    sprintf(string_loadavg_15, "%1.2f", loadavg[2]);
+    snprintf(string_loadavg_1, STRING_SIZE, "%1.2f", loadavg[0]);
+    snprintf(string_loadavg_5, STRING_SIZE, "%1.2f", loadavg[1]);
+    snprintf(string_loadavg_15, STRING_SIZE, "%1.2f", loadavg[2]);
 
     placeholder_t placeholders[] = {
         {.name = "%1min", .value = string_loadavg_1},

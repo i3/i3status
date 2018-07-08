@@ -629,12 +629,12 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         default:
             statusstr = status_unk;
     }
-    sprintf(string_status, "%s", statusstr);
+    snprintf(string_status, STRING_SIZE, "%s", statusstr);
 
     if (integer_battery_capacity) {
-        sprintf(string_percentage, "%.00f%s", batt_info.percentage_remaining, pct_mark);
+        snprintf(string_percentage, STRING_SIZE, "%.00f%s", batt_info.percentage_remaining, pct_mark);
     } else {
-        sprintf(string_percentage, "%.02f%s", batt_info.percentage_remaining, pct_mark);
+        snprintf(string_percentage, STRING_SIZE, "%.02f%s", batt_info.percentage_remaining, pct_mark);
     }
 
     if (batt_info.seconds_remaining >= 0) {
@@ -646,9 +646,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         seconds -= (minutes * 60);
 
         if (hide_seconds)
-            sprintf(string_remaining, "%02d:%02d", max(hours, 0), max(minutes, 0));
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d", max(hours, 0), max(minutes, 0));
         else
-            sprintf(string_remaining, "%02d:%02d:%02d", max(hours, 0), max(minutes, 0), max(seconds, 0));
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d:%02d", max(hours, 0), max(minutes, 0), max(seconds, 0));
     }
 
     if (batt_info.seconds_remaining >= 0) {
@@ -657,13 +657,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         struct tm *empty_tm = localtime(&empty_time);
 
         if (hide_seconds)
-            sprintf(string_emptytime, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
         else
-            sprintf(string_emptytime, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
     }
 
     if (batt_info.present_rate >= 0)
-        sprintf(string_consumption, "%1.2fW", batt_info.present_rate / 1e6);
+        snprintf(string_consumption, STRING_SIZE, "%1.2fW", batt_info.present_rate / 1e6);
 
     placeholder_t placeholders[] = {
         {.name = "%status", .value = string_status},

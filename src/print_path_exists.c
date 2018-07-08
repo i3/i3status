@@ -28,8 +28,8 @@ void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const
     char string_title[STRING_SIZE];
     char string_status[STRING_SIZE];
 
-    sprintf(string_title, "%s", title);
-    sprintf(string_status, "%s", (exists ? "yes" : "no"));
+    snprintf(string_title, STRING_SIZE, "%s", title);
+    snprintf(string_status, STRING_SIZE, "%s", (exists ? "yes" : "no"));
 
     placeholder_t placeholders[] = {
         {.name = "%title", .value = string_title},

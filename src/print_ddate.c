@@ -115,14 +115,14 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     char string_tibs_day[STRING_SIZE];
 
     /* Weekday in long and abbreviation */
-    sprintf(string_A, "%s", day_long[dt->week_day]);
-    sprintf(string_a, "%s", day_short[dt->week_day]);
+    snprintf(string_A, STRING_SIZE, "%s", day_long[dt->week_day]);
+    snprintf(string_a, STRING_SIZE, "%s", day_short[dt->week_day]);
     /* Season in long and abbreviation */
-    sprintf(string_B, "%s", season_long[dt->season]);
-    sprintf(string_b, "%s", season_short[dt->season]);
+    snprintf(string_B, STRING_SIZE, "%s", season_long[dt->season]);
+    snprintf(string_b, STRING_SIZE, "%s", season_short[dt->season]);
     /* Day of the season (ordinal and cardinal) */
-    sprintf(string_d, "%d", dt->season_day + 1);
-    sprintf(string_e, "%d", dt->season_day + 1);
+    snprintf(string_d, STRING_SIZE, "%d", dt->season_day + 1);
+    snprintf(string_e, STRING_SIZE, "%d", dt->season_day + 1);
     if (dt->season_day > 9 && dt->season_day < 13) {
         strcat(string_e, "th");
     }
@@ -141,23 +141,23 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
             break;
     }
     /* YOLD */
-    sprintf(string_Y, "%d", dt->year);
+    snprintf(string_Y, STRING_SIZE, "%d", dt->year);
     /* Holidays */
     if (dt->season_day == 4) {
-        sprintf(string_H, "%s", holidays[dt->season]);
+        snprintf(string_H, STRING_SIZE, "%s", holidays[dt->season]);
     }
     if (dt->season_day == 49) {
-        sprintf(string_H, "%s", holidays[dt->season + 5]);
+        snprintf(string_H, STRING_SIZE, "%s", holidays[dt->season + 5]);
     }
     /* Stop parsing the format string, except on Holidays */
     if (dt->season_day != 4 && dt->season_day != 49) {
-        sprintf(string_N, "%s", "\0");
+        snprintf(string_N, STRING_SIZE, "%s", "\0");
     }
     /* Newline- and Tabbing-characters */
-    sprintf(string_n, "\n");
-    sprintf(string_t, "\t");
+    snprintf(string_n, STRING_SIZE, "\n");
+    snprintf(string_t, STRING_SIZE, "\t");
 
-    sprintf(string_tibs_day, "St. Tib's Day");
+    snprintf(string_tibs_day, STRING_SIZE, "St. Tib's Day");
 
     placeholder_t placeholders[] = {
         {.name = "%A", .value = string_A},

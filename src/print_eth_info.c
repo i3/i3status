@@ -181,7 +181,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
     char string_speed[STRING_SIZE];
     char string_interface[STRING_SIZE];
 
-    sprintf(string_ip, "%s", ip_address);
+    snprintf(string_ip, STRING_SIZE, "%s", ip_address);
     print_eth_speed(string_speed, interface);
     sprintf(string_interface, "%s", interface);
 

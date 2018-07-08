@@ -51,17 +51,14 @@
     }
 
 static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, const char *devicename) {
-    char string_percent[STRING_SIZE];
     char string_volume[STRING_SIZE];
 
-    sprintf(string_percent, "%s", pct_mark);
-    sprintf(string_volume, "%d%s", ivolume, pct_mark);
+    snprintf(string_volume, STRING_SIZE, "%d%s", ivolume, pct_mark);
 
     placeholder_t placeholders[] = {
         {.name = "%%", .value = string_percent},
         {.name = "%volume", .value = string_volume},
-        {.name = "%devicename", .value = devicename}
-    };
+        {.name = "%devicename", .value = devicename}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     buffer = format_placeholders(fmt, &placeholders[0], num);

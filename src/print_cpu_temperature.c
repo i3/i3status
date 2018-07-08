@@ -251,7 +251,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
     char string_degrees[STRING_SIZE];
 
-    sprintf(string_degrees, "%s", temperature.formatted_value);
+    snprintf(string_degrees, STRING_SIZE, "%s", temperature.formatted_value);
 
     placeholder_t placeholders[] = {
         {.name = "%degrees", .value = string_degrees}};

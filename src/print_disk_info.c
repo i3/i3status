@@ -191,10 +191,10 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     print_bytes_human(string_used, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
     print_bytes_human(string_total, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, prefix_type);
     print_bytes_human(string_avail, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, prefix_type);
-    sprintf(string_percentage_free, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
-    sprintf(string_percentage_used_of_avail, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
-    sprintf(string_percentage_used, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
-    sprintf(string_percentage_avail, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_free, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_used_of_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_used, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
 
     placeholder_t placeholders[] = {
         {.name = "%free", .value = string_free},

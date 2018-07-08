@@ -135,7 +135,7 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
 
     char string_ip[STRING_SIZE];
 
-    snprintf(string_ip, STRING_SIZE - 1, "%s", addr_string);
+    snprintf(string_ip, STRING_SIZE, "%s", addr_string);
 
     placeholder_t placeholders[] = {
         {.name = "%ip", .value = string_ip}};
