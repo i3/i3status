@@ -17,9 +17,9 @@ addons:
     # xmlto pulls in a2x which we need for generating manpages from asciidoc.
     - xmlto
     - libcap2-bin
-    - clang-format-3.5
+    - clang-format-3.8
     - libllvm3.5
 script:
   - make -j
-  - clang-format-3.5 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+  - clang-format-3.8 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
   - make test
