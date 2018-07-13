@@ -1,9 +1,9 @@
 // vim:ts=4:sw=4:expandtab
 #include <ctype.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
@@ -16,16 +16,20 @@
 #endif
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
 #include <dev/acpica/acpiio.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#endif
+
+#if defined(__DragonFly__)
+#include <sys/fcntl.h>
 #endif
 
 #if defined(__OpenBSD__)
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <machine/apmvar.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
 #endif
 
 #if defined(__NetBSD__)
@@ -54,6 +58,22 @@ struct battery_info {
     float percentage_remaining;
     charging_status_t status;
 };
+
+#if defined(__DragonFly__)
+#define ACPIDEV "/dev/acpi"
+static int acpifd;
+
+static bool acpi_init(void) {
+    if (acpifd == 0) {
+        acpifd = open(ACPIDEV, O_RDWR);
+        if (acpifd == -1)
+            acpifd = open(ACPIDEV, O_RDONLY);
+        if (acpifd == -1)
+            return false;
+    }
+    return true;
+}
+#endif
 
 #if defined(LINUX) || defined(__NetBSD__)
 /*
@@ -189,7 +209,34 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             batt_info->full_last = (((float)voltage / 1000.0) * ((float)batt_info->full_last / 1000.0));
         }
     }
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#elif defined(__DragonFly__)
+    union acpi_battery_ioctl_arg battio;
+    if (acpi_init()) {
+        battio.unit = number;
+        ioctl(acpifd, ACPIIO_BATT_GET_BIF, &battio);
+        batt_info->full_design = battio.bif.dcap;
+        batt_info->full_last = battio.bif.lfcap;
+        battio.unit = number;
+        ioctl(acpifd, ACPIIO_BATT_GET_BATTINFO, &battio);
+        batt_info->percentage_remaining = battio.battinfo.cap;
+        batt_info->present_rate = battio.battinfo.rate;
+        batt_info->seconds_remaining = battio.battinfo.min * 60;
+        switch (battio.battinfo.state) {
+            case 0:
+                batt_info->status = CS_FULL;
+                break;
+            case ACPI_BATT_STAT_CHARGING:
+                batt_info->status = CS_CHARGING;
+                break;
+            case ACPI_BATT_STAT_DISCHARG:
+                batt_info->status = CS_DISCHARGING;
+                break;
+            default:
+                batt_info->status = CS_UNKNOWN;
+        }
+        OUTPUT_FULL_TEXT(format_down);
+    }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     int state;
     int sysctl_rslt;
     size_t sysctl_size = sizeof(sysctl_rslt);
