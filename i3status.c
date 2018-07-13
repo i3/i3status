@@ -44,7 +44,8 @@
     CFG_STR_CB("align", NULL, CFGF_NONE, parse_align)
 
 #define CFG_COLOR_OPTS(good, degraded, bad)             \
-    CFG_STR("color_good", good, CFGF_NONE),             \
+    CFG_STR("color_good", good, CFGF_NONE)              \
+    ,                                                   \
         CFG_STR("color_degraded", degraded, CFGF_NONE), \
         CFG_STR("color_bad", bad, CFGF_NONE)
 
