@@ -23,15 +23,17 @@ void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const c
     for (; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
 
-        if (BEGINS_WITH(walk + 1, "title")) {
+        } else if (BEGINS_WITH(walk + 1, "title")) {
             outwalk += sprintf(outwalk, "%s", title);
             walk += strlen("title");
+
         } else if (BEGINS_WITH(walk + 1, "status")) {
             outwalk += sprintf(outwalk, "%s", (running ? "yes" : "no"));
             walk += strlen("status");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 

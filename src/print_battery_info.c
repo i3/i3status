@@ -622,10 +622,8 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
 
-        if (BEGINS_WITH(walk + 1, "status")) {
+        } else if (BEGINS_WITH(walk + 1, "status")) {
             const char *statusstr;
             switch (batt_info.status) {
                 case CS_CHARGING:
@@ -643,6 +641,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
             outwalk += sprintf(outwalk, "%s", statusstr);
             walk += strlen("status");
+
         } else if (BEGINS_WITH(walk + 1, "percentage")) {
             if (integer_battery_capacity) {
                 outwalk += sprintf(outwalk, "%.00f%s", batt_info.percentage_remaining, pct_mark);
@@ -650,6 +649,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 outwalk += sprintf(outwalk, "%.02f%s", batt_info.percentage_remaining, pct_mark);
             }
             walk += strlen("percentage");
+
         } else if (BEGINS_WITH(walk + 1, "remaining")) {
             if (batt_info.seconds_remaining >= 0) {
                 int seconds, hours, minutes;
@@ -668,6 +668,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             }
             walk += strlen("remaining");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
+
         } else if (BEGINS_WITH(walk + 1, "emptytime")) {
             if (batt_info.seconds_remaining >= 0) {
                 time_t empty_time = time(NULL) + batt_info.seconds_remaining;
@@ -683,12 +684,16 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             }
             walk += strlen("emptytime");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
+
         } else if (BEGINS_WITH(walk + 1, "consumption")) {
             if (batt_info.present_rate >= 0)
                 outwalk += sprintf(outwalk, "%1.2fW", batt_info.present_rate / 1e6);
 
             walk += strlen("consumption");
             EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 

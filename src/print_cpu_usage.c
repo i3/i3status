@@ -144,15 +144,13 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
 
-        if (BEGINS_WITH(walk + 1, "usage")) {
+        } else if (BEGINS_WITH(walk + 1, "usage")) {
             outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
             walk += strlen("usage");
         }
 #if defined(LINUX)
-        if (BEGINS_WITH(walk + 1, "cpu")) {
+        else if (BEGINS_WITH(walk + 1, "cpu")) {
             int number = 0;
             sscanf(walk + 1, "cpu%d", &number);
             if (number < 0 || number >= cpu_count) {
@@ -172,6 +170,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
             walk += strlen("cpu") + padding;
         }
 #endif
+        else {
+            *(outwalk++) = '%';
+        }
     }
 
     for (int i = 0; i < cpu_count; i++)

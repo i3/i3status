@@ -250,11 +250,13 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "degrees")) {
+
+        } else if (BEGINS_WITH(walk + 1, "degrees")) {
             outwalk += sprintf(outwalk, "%s", temperature.formatted_value);
             walk += strlen("degrees");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 

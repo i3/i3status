@@ -159,51 +159,45 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "total")) {
+
+        } else if (BEGINS_WITH(walk + 1, "total")) {
             outwalk += print_bytes_human(outwalk, ram_total);
             walk += strlen("total");
-        }
 
-        if (BEGINS_WITH(walk + 1, "used")) {
+        } else if (BEGINS_WITH(walk + 1, "used")) {
             outwalk += print_bytes_human(outwalk, ram_used);
             walk += strlen("used");
-        }
 
-        if (BEGINS_WITH(walk + 1, "free")) {
+        } else if (BEGINS_WITH(walk + 1, "free")) {
             outwalk += print_bytes_human(outwalk, ram_free);
             walk += strlen("free");
-        }
 
-        if (BEGINS_WITH(walk + 1, "available")) {
+        } else if (BEGINS_WITH(walk + 1, "available")) {
             outwalk += print_bytes_human(outwalk, ram_available);
             walk += strlen("available");
-        }
 
-        if (BEGINS_WITH(walk + 1, "shared")) {
+        } else if (BEGINS_WITH(walk + 1, "shared")) {
             outwalk += print_bytes_human(outwalk, ram_shared);
             walk += strlen("shared");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_free")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_free")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_free / ram_total, pct_mark);
             walk += strlen("percentage_free");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_available")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_available")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_available / ram_total, pct_mark);
             walk += strlen("percentage_available");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_used")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_used")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_used / ram_total, pct_mark);
             walk += strlen("percentage_used");
-        }
 
-        if (BEGINS_WITH(walk + 1, "percentage_shared")) {
+        } else if (BEGINS_WITH(walk + 1, "percentage_shared")) {
             outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_shared / ram_total, pct_mark);
             walk += strlen("percentage_shared");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 

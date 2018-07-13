@@ -29,21 +29,21 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
     for (walk = selected_format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
-            continue;
-        }
-        if (BEGINS_WITH(walk + 1, "1min")) {
+
+        } else if (BEGINS_WITH(walk + 1, "1min")) {
             outwalk += sprintf(outwalk, "%1.2f", loadavg[0]);
             walk += strlen("1min");
-        }
 
-        if (BEGINS_WITH(walk + 1, "5min")) {
+        } else if (BEGINS_WITH(walk + 1, "5min")) {
             outwalk += sprintf(outwalk, "%1.2f", loadavg[1]);
             walk += strlen("5min");
-        }
 
-        if (BEGINS_WITH(walk + 1, "15min")) {
+        } else if (BEGINS_WITH(walk + 1, "15min")) {
             outwalk += sprintf(outwalk, "%1.2f", loadavg[2]);
             walk += strlen("15min");
+
+        } else {
+            *(outwalk++) = '%';
         }
     }
 
