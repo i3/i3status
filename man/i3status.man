@@ -650,7 +650,7 @@ disk "/" {
 == Using i3status with dzen2
 
 After installing dzen2, you can directly use it with i3status. Just ensure that
-+output_format+ is set to +dzen2+.
++output_format+ is set to +dzen2+. *Note*: +min_width+ is not supported.
 
 *Example for usage of i3status with dzen2*:
 --------------------------------------------------------------
@@ -662,7 +662,7 @@ i3status | dzen2 -fg white -ta r -w 1280 \
 
 To get xmobar to start, you might need to copy the default configuration
 file to +~/.xmobarrc+. Also, ensure that the +output_format+ option for i3status
-is set to +xmobar+.
+is set to +xmobar+. *Note*: +min_width+ is not supported.
 
 *Example for usage of i3status with xmobar*:
 ---------------------------------------------------------------------
