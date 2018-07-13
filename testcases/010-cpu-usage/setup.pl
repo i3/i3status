@@ -11,7 +11,7 @@ if ($#ARGV != 0 || ! -d $ARGV[0]) {
 
 chomp(my $cpu_count = `grep -c -P '^processor\\s+:' /proc/cpuinfo`);
 my $output_file = "$ARGV[0]/stat";
-open(my $fh, '>', $output_file) or die "Could not open file '$output_file' $!";
+open(my $fh, '>:encoding(iso-8859-1)', $output_file) or die "Could not open file '$output_file' $!";
 print $fh "cpu  0 0 0 0 0 0 0 0 0 0\n";
 print $fh "cpu0 100 0 0 0 0 0 0 0 0 0\n";
 if ($cpu_count > 1) {
