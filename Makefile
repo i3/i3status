@@ -85,6 +85,11 @@ OBJS:=$(filter-out src/pulse.o, $(OBJS))
 LIBS:=$(filter-out -lpulse, $(LIBS))
 endif
 
+ifeq ($(OS),DragonFly)
+OBJS:=$(filter-out src/pulse.o, $(OBJS))
+LIBS:=$(filter-out -lpulse, $(LIBS)) -lpthread
+endif
+
 src/%.o: src/%.c include/i3status.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 	@echo " CC $<"
