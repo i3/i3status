@@ -38,6 +38,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
+#include <stdlib.h>
 #include <net/if.h>
 #include <net/if_media.h>
 #include <netproto/802_11/ieee80211.h>
