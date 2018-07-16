@@ -14,7 +14,8 @@ typedef struct indexed_volume_s {
     char *name;
     uint32_t idx;
     int volume;
-    TAILQ_ENTRY(indexed_volume_s) entries;
+    TAILQ_ENTRY(indexed_volume_s)
+    entries;
 } indexed_volume_t;
 
 static pa_threaded_mainloop *main_loop = NULL;
@@ -23,7 +24,8 @@ static pa_mainloop_api *api = NULL;
 static bool context_ready = false;
 static bool mainloop_thread_running = false;
 static uint32_t default_sink_idx = DEFAULT_SINK_INDEX;
-TAILQ_HEAD(tailhead, indexed_volume_s) cached_volume =
+TAILQ_HEAD(tailhead, indexed_volume_s)
+cached_volume =
     TAILQ_HEAD_INITIALIZER(cached_volume);
 static pthread_mutex_t pulse_mutex = PTHREAD_MUTEX_INITIALIZER;
 
