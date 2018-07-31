@@ -163,7 +163,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
             }
             int padding = 1;
             int step = 10;
-            while (step < number) {
+            while (step <= number) {
                 step *= 10;
                 padding++;
             }
