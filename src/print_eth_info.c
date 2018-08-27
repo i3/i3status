@@ -134,6 +134,8 @@ static int print_eth_speed(char *outwalk, const char *interface) {
  * | 127.0.0.1    | ::1/128      | IPv4      | ok                |
  */
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
+    const char *format = format_down;  // default format
+
     const char *walk;
     char *outwalk = buffer;
 
@@ -157,7 +159,6 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
     if (ipv4_address == NULL) {
         if (ipv6_address == NULL) {
             START_COLOR("color_bad");
-            outwalk += sprintf(outwalk, "%s", format_down);
             goto out;
         } else {
             prefer_ipv4 = false;
@@ -166,13 +167,17 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
         prefer_ipv4 = false;
     }
 
+    format = format_up;
+
     const char *ip_address = (prefer_ipv4) ? ipv4_address : ipv6_address;
     if (BEGINS_WITH(ip_address, "no IP")) {
         START_COLOR("color_degraded");
     } else {
         START_COLOR("color_good");
     }
-    for (walk = format_up; *walk != '\0'; walk++) {
+
+out:
+    for (walk = format; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
 
@@ -184,12 +189,14 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
             outwalk += print_eth_speed(outwalk, interface);
             walk += strlen("speed");
 
+        } else if (BEGINS_WITH(walk + 1, "interface")) {
+            outwalk += sprintf(outwalk, "%s", interface);
+            walk += strlen("interface");
+
         } else {
             *(outwalk++) = '%';
         }
     }
-
-out:
     END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
