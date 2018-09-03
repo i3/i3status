@@ -179,7 +179,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             batt_info->status = CS_CHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
             batt_info->status = CS_FULL;
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging") || BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Not charging"))
             batt_info->status = CS_DISCHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
             batt_info->status = CS_UNKNOWN;
