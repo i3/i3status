@@ -10,8 +10,7 @@
 #include <yajl/yajl_version.h>
 #include "i3status.h"
 
-void print_static_text(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down)
-{
+void print_static_text(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down) {
     static long long last_mtime;
     static char *contents;
     const char *walk;
@@ -21,14 +20,14 @@ void print_static_text(yajl_gen json_gen, char *buffer, const char *title, const
 
     found = stat(pidfile, &sb) == 0;
     if (found && sb.st_mtime < last_mtime)
-	return;
+        return;
 
     if (found) {
-	free(contents);
-	contents = malloc(sb.st_size + 1);
-	if (!slurp(pidfile, contents, sb.st_size + 1))
-	    return;
-	last_mtime = sb.st_mtime;
+        free(contents);
+        contents = malloc(sb.st_size + 1);
+        if (!slurp(pidfile, contents, sb.st_size + 1))
+            return;
+        last_mtime = sb.st_mtime;
     }
 
     if (found || format_down == NULL) {
@@ -50,12 +49,10 @@ void print_static_text(yajl_gen json_gen, char *buffer, const char *title, const
             walk += strlen("title");
 
         } else if (BEGINS_WITH(walk + 1, "status")) {
-            outwalk += sprintf(outwalk, "%s", (found
-					       ? (*contents ? "exists" : "empty")
-					       : "missing"));
+            outwalk += sprintf(outwalk, "%s", (found ? (*contents ? "exists" : "empty") : "missing"));
             walk += strlen("status");
 
-	} else if (BEGINS_WITH(walk + 1, "contents")) {
+        } else if (BEGINS_WITH(walk + 1, "contents")) {
             outwalk += sprintf(outwalk, "%s", *contents ? contents : "*");
             walk += strlen("contents");
 
