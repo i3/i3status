@@ -110,9 +110,10 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     char string_Y[STRING_SIZE];
     char string_H[STRING_SIZE];
     char string_N[STRING_SIZE];
-    char string_n[STRING_SIZE];
-    char string_t[STRING_SIZE];
-    char string_tibs_day[STRING_SIZE];
+    /* Newline- and Tabbing-characters */
+    char string_n[STRING_SIZE] = "\n";
+    char string_t[STRING_SIZE] = "\t";
+    char string_tibs_day[STRING_SIZE] = "St. Tib's Day";
 
     /* Weekday in long and abbreviation */
     snprintf(string_A, STRING_SIZE, "%s", day_long[dt->week_day]);
@@ -153,11 +154,6 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     if (dt->season_day != 4 && dt->season_day != 49) {
         snprintf(string_N, STRING_SIZE, "%s", "\0");
     }
-    /* Newline- and Tabbing-characters */
-    snprintf(string_n, STRING_SIZE, "\n");
-    snprintf(string_t, STRING_SIZE, "\t");
-
-    snprintf(string_tibs_day, STRING_SIZE, "St. Tib's Day");
 
     placeholder_t placeholders[] = {
         {.name = "%A", .value = string_A},
