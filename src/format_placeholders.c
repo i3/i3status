@@ -15,8 +15,8 @@
 
 #include "i3status.h"
 
-#ifndef STARTS_WITH
-#define STARTS_WITH(string, needle) (strncmp((string), (needle), strlen((needle))) == 0)
+#ifndef CS_STARTS_WITH
+#define CS_STARTS_WITH(string, needle) (strncmp((string), (needle), strlen((needle))) == 0)
 #endif
 
 /*
@@ -32,7 +32,7 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
     int buffer_len = strlen(format) + 1;
     for (const char *walk = format; *walk != '\0'; walk++) {
         for (int i = 0; i < num; i++) {
-            if (!STARTS_WITH(walk, placeholders[i].name))
+            if (!CS_STARTS_WITH(walk, placeholders[i].name))
                 continue;
 
             buffer_len = buffer_len - strlen(placeholders[i].name) + strlen(placeholders[i].value);
@@ -52,7 +52,7 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
 
         bool matched = false;
         for (int i = 0; i < num; i++) {
-            if (!STARTS_WITH(walk, placeholders[i].name)) {
+            if (!CS_STARTS_WITH(walk, placeholders[i].name)) {
                 continue;
             }
 
