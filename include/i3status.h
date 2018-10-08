@@ -226,6 +226,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold);
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
+void print_static_text(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool pulse_initialize(void);
