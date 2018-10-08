@@ -114,7 +114,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         buffer = apply_volume_format(muted ? fmt_muted : fmt,
                                      buffer,
                                      ivolume,
-                                    description);
+                                     description);
         goto out;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */

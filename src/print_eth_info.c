@@ -139,6 +139,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *format = format_down;  // default format
     char *outwalk = buffer;
+    size_t num = 0;
 
     INSTANCE(interface);
 
@@ -183,17 +184,18 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 
     snprintf(string_ip, STRING_SIZE, "%s", ip_address);
     print_eth_speed(string_speed, interface);
-    sprintf(string_interface, "%s", interface);
+    snprintf(string_interface, STRING_SIZE, "%s", interface);
 
     placeholder_t placeholders[] = {
         {.name = "%ip", .value = string_ip},
         {.name = "%speed", .value = string_speed},
         {.name = "%interface", .value = string_interface}};
 
-    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(format, &placeholders[0], num);
+    num = sizeof(placeholders) / sizeof(placeholder_t);
 
 out:
+    buffer = format_placeholders(format, &placeholders[0], num);
+
     END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
