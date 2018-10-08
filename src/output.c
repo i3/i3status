@@ -126,7 +126,7 @@ void maybe_escape_markup(char *text, char **buffer) {
 /*
  * remove leading spaces
  */
-char *rtrim(const char *s) {
+char *ltrim(const char *s) {
     while (isspace(*s))
         ++s;
     return strdup(s);
@@ -135,7 +135,7 @@ char *rtrim(const char *s) {
 /*
  * remove trailing spaces
  */
-char *ltrim(const char *s) {
+char *rtrim(const char *s) {
     char *r = strdup(s);
     if (r != NULL) {
         char *fr = r + strlen(s) - 1;
