@@ -489,7 +489,7 @@ format_above_threshold.
 
 *Example format*: +%1min %5min %15min+
 
-*Example max_threshold*: +"0,1"+
+*Example max_threshold*: +"0.1"+
 
 *Example format_above_threshold*: +Warning: %1min %5min %15min+
 
