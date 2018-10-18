@@ -11,6 +11,7 @@
  * See file LICENSE for license information.
  *
  */
+#include <config.h>
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>

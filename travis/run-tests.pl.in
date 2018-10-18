@@ -15,7 +15,7 @@ sub TestCase {
     }
 
     my $conf = "$dir/i3status.conf";
-    my $testres = `./i3status --run-once -c $conf`;
+    my $testres = `cd @abs_top_srcdir@ && LC_ALL=C @abs_top_builddir@/i3status --run-once -c $conf`;
     my $exitcode = $?;
     my $refres = "";
 
@@ -45,7 +45,7 @@ sub TestCase {
     }
 }
 
-my $testcases = 'testcases';
+my $testcases = '@abs_top_srcdir@/testcases';
 my $testresults = 0;
 
 opendir(my $dir, $testcases) or die "Could not open directory $testcases: $!";

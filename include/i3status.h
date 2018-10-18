@@ -37,7 +37,7 @@ extern char *pct_mark;
 #define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
 
-#if defined(LINUX)
+#if defined(__linux__)
 
 #define THERMAL_ZONE "/sys/class/thermal/thermal_zone%d/temp"
 

@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <sys/sysinfo.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -60,7 +61,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     int diff_idle, diff_total, diff_usage;
     bool colorful_output = false;
 
-#if defined(LINUX)
+#if defined(__linux__)
 
     // Detecting if CPU count has changed
     int curr_cpu_count = get_nprocs_conf();
@@ -161,7 +162,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
             outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
             walk += strlen("usage");
         }
-#if defined(LINUX)
+#if defined(__linux__)
         else if (BEGINS_WITH(walk + 1, "cpu")) {
             int number = -1;
             sscanf(walk + 1, "cpu%d", &number);
