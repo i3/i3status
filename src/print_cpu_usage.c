@@ -151,7 +151,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
         }
 #if defined(LINUX)
         else if (BEGINS_WITH(walk + 1, "cpu")) {
-            int number = 0;
+            int number = -1;
             sscanf(walk + 1, "cpu%d", &number);
             if (number < 0 || number >= cpu_count) {
                 fprintf(stderr, "provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
