@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <sys/sysinfo.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
@@ -62,7 +63,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
 #if defined(LINUX)
 
     // Detecting if CPU count has changed
-    int curr_cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+    int curr_cpu_count = get_nprocs_conf();
     if (curr_cpu_count != cpu_count) {
         cpu_count = curr_cpu_count;
         free(prev_cpus);
@@ -71,19 +72,30 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
         curr_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
     }
 
+    memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
     char buf[4096];
+    curr_cpu_count = get_nprocs();
     if (!slurp(path, buf, sizeof(buf)))
         goto error;
     // Parsing all cpu values using strtok
     if (strtok(buf, "\n") == NULL)
         goto error;
     char *buf_itr = NULL;
-    for (int cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {
+    for (int idx = 0; idx < curr_cpu_count; ++idx) {
         buf_itr = strtok(NULL, "\n");
-        int curr_cpu_idx = -1;
-        if (!buf_itr || sscanf(buf_itr, "cpu%d %d %d %d %d", &curr_cpu_idx, &curr_cpus[cpu_idx].user, &curr_cpus[cpu_idx].nice, &curr_cpus[cpu_idx].system, &curr_cpus[cpu_idx].idle) != 5 || curr_cpu_idx != cpu_idx)
+        int cpu_idx, user, nice, system, idle;
+        if (!buf_itr || sscanf(buf_itr, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
             goto error;
-        curr_cpus[cpu_idx].total = curr_cpus[cpu_idx].user + curr_cpus[cpu_idx].nice + curr_cpus[cpu_idx].system + curr_cpus[cpu_idx].idle;
+        }
+        if (cpu_idx < 0 || cpu_idx >= cpu_count)
+            goto error;
+        curr_cpus[cpu_idx].user = user;
+        curr_cpus[cpu_idx].nice = nice;
+        curr_cpus[cpu_idx].system = system;
+        curr_cpus[cpu_idx].idle = idle;
+        curr_cpus[cpu_idx].total = user + nice + system + idle;
+    }
+    for (int cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {
         curr_all.user += curr_cpus[cpu_idx].user;
         curr_all.nice += curr_cpus[cpu_idx].nice;
         curr_all.system += curr_cpus[cpu_idx].system;
@@ -175,8 +187,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
         }
     }
 
-    for (int i = 0; i < cpu_count; i++)
-        prev_cpus[i] = curr_cpus[i];
+    struct cpu_usage *temp_cpus = prev_cpus;
+    prev_cpus = curr_cpus;
+    curr_cpus = temp_cpus;
 
     if (colorful_output)
         END_COLOR;
