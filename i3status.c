@@ -666,7 +666,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         if (exit_upon_signal) {
-            fprintf(stderr, "Exiting due to signal.\n");
+            fprintf(stderr, "i3status: exiting due to signal.\n");
             exit(1);
         }
         struct timeval tv;

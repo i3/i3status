@@ -165,8 +165,10 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
         else if (BEGINS_WITH(walk + 1, "cpu")) {
             int number = -1;
             sscanf(walk + 1, "cpu%d", &number);
-            if (number < 0 || number >= cpu_count) {
-                fprintf(stderr, "provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
+            if (number == -1) {
+                fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
+            } else if (number >= cpu_count) {
+                fprintf(stderr, "i3status: provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
             } else {
                 int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
                 int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
