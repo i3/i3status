@@ -97,6 +97,7 @@ path_exists VPN {
 
 tztime local {
         format = "%Y-%m-%d %H:%M:%S"
+        only_when_tz_different = true
 }
 
 tztime berlin {
@@ -514,6 +515,8 @@ Files below that path make for valid timezone strings, e.g. for
 +/usr/share/zoneinfo/Europe/Berlin+ you can set timezone to +Europe/Berlin+
 in the +tztime+ module.
 To override the locale settings of your environment, set the +locale+ option.
+To display time only when the timezone is different from local timezone, set
++only_when_tz_different+ to true.
 
 *Example order*: +tztime berlin+
 
@@ -533,6 +536,7 @@ tztime berlin {
 	format = "<span foreground='#ffffff'>time:</span> %time"
 	format_time = "%H:%M %Z"
 	timezone = "Europe/Berlin"
+	only_when_tz_different = false
 }
 -------------------------------------------------------------
 

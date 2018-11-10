@@ -399,6 +399,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("timezone", "", CFGF_NONE),
         CFG_STR("locale", "", CFGF_NONE),
         CFG_STR("format_time", NULL, CFGF_NONE),
+        CFG_BOOL("only_when_tz_different", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -749,13 +750,13 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("time") {
                 SEC_OPEN_MAP("time");
-                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, NULL, NULL, tv.tv_sec);
+                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, NULL, NULL, false, tv.tv_sec);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("tztime") {
                 SEC_OPEN_MAP("tztime");
-                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), cfg_getstr(sec, "locale"), cfg_getstr(sec, "format_time"), tv.tv_sec);
+                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), cfg_getstr(sec, "locale"), cfg_getstr(sec, "format_time"), cfg_getbool(sec, "only_when_tz_different"), tv.tv_sec);
                 SEC_CLOSE_MAP;
             }
 

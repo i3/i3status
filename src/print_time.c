@@ -34,17 +34,27 @@ void set_timezone(const char *tz) {
     tzset();
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, time_t t) {
+void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool only_when_tz_different, time_t t) {
     const char *walk;
     char *outwalk = buffer;
-    struct tm tm;
+    struct tm local_tm, tm;
     char timebuf[1024];
 
     if (title != NULL)
         INSTANCE(title);
 
+    set_timezone(NULL);
+    localtime_r(&t, &local_tm);
+
     set_timezone(tz);
     localtime_r(&t, &tm);
+
+    // When only_when_tz_different is true, compare local and target time to display only if different
+    time_t local_t = mktime(&local_tm);
+    double diff = difftime(local_t, t);
+    if (only_when_tz_different && diff == 0.0) {
+        return;
+    }
 
     if (locale != NULL) {
         setlocale(LC_ALL, locale);
