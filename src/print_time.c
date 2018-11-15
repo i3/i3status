@@ -34,7 +34,7 @@ void set_timezone(const char *tz) {
     tzset();
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool only_when_tz_different, time_t t) {
+void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t) {
     const char *walk;
     char *outwalk = buffer;
     struct tm local_tm, tm;
@@ -49,11 +49,11 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
     set_timezone(tz);
     localtime_r(&t, &tm);
 
-    // When only_when_tz_different is true, compare local and target time to display only if different
+    // When hide_if_equals_localtime is true, compare local and target time to display only if different
     time_t local_t = mktime(&local_tm);
     double diff = difftime(local_t, t);
-    if (only_when_tz_different && diff == 0.0) {
-        return;
+    if (hide_if_equals_localtime && diff == 0.0) {
+        goto out;
     }
 
     if (locale != NULL) {
@@ -83,6 +83,7 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
         setlocale(LC_ALL, "");
     }
 
+out:
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
 }
