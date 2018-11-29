@@ -611,6 +611,17 @@ volume master {
 }
 -------------------------------------------------------------
 
+=== Execute
+
+Outputs the stdout of the specified shell command.
+
+*Example configuration*:
+-------------------------------------------------------------
+exec uname {
+	command = "uname -smor"
+}
+-------------------------------------------------------------
+
 == Universal module options
 
 When using the i3bar output format, there are a few additional options that
