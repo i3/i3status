@@ -621,6 +621,14 @@ exec uname {
 	command = "uname -smor"
 }
 -------------------------------------------------------------
+*Example configuration (Average CPU frequency)*:
+-------------------------------------------------------------
+exec avg_cpuMHz {
+	command = "/bin/sh -c 'cat /proc/cpuinfo|grep \"cpu MHz\"|\
+	sed \"s/.*: //\"|\
+	awk \"BEGIN{s=0}{s+=\\$1}END{printf(\\\"%.1fMHz\\\", s/NR)}\"'"
+}
+-------------------------------------------------------------
 
 == Universal module options
 
