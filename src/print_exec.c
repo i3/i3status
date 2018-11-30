@@ -9,23 +9,21 @@
 
 #include "i3status.h"
 
-
-
 void print_exec(yajl_gen json_gen, char *buffer, const char *command) {
     char *outwalk = buffer;
 
     FILE *fproc = popen(command, "r");
     char buf[256];
-    while(!feof(fproc)){
+    while (!feof(fproc)) {
         size_t rd = fread(buf, 1, 255, fproc);
-        snprintf(outwalk, rd+1, "%s", buf);
-        outwalk+=rd;
+        snprintf(outwalk, rd + 1, "%s", buf);
+        outwalk += rd;
     }
     pclose(fproc);
 
-    while(*(outwalk-1)=='\n') outwalk--;
+    while (*(outwalk - 1) == '\n')
+        outwalk--;
 
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
 }
-
