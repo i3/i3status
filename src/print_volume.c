@@ -30,6 +30,23 @@
 #include "i3status.h"
 #include "queue.h"
 
+#define ALSA_VOLUME(channel)                                                    \
+    err = snd_mixer_selem_get_##channel##_dB_range(elem, &min, &max) ||         \
+          snd_mixer_selem_get_##channel##_dB(elem, 0, &val);                    \
+    if (err != 0 || min >= max) {                                               \
+        err = snd_mixer_selem_get_##channel##_volume_range(elem, &min, &max) || \
+              snd_mixer_selem_get_##channel##_volume(elem, 0, &val);            \
+        force_linear = true;                                                    \
+    }
+
+#define ALSA_MUTE_SWITCH(channel)                                                        \
+    if ((err = snd_mixer_selem_get_##channel##_switch(elem, 0, &pbval)) < 0)             \
+        fprintf(stderr, "i3status: ALSA: " #channel "_switch: %s\n", snd_strerror(err)); \
+    if (!pbval) {                                                                        \
+        START_COLOR("color_degraded");                                                   \
+        fmt = fmt_muted;                                                                 \
+    }
+
 static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
     const char *walk = fmt;
 
@@ -165,12 +182,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     /* Get the volume range to convert the volume later */
     snd_mixer_handle_events(m);
-    err = snd_mixer_selem_get_playback_dB_range(elem, &min, &max) ||
-          snd_mixer_selem_get_playback_dB(elem, 0, &val);
-    if (err != 0 || min >= max) {
-        err = snd_mixer_selem_get_playback_volume_range(elem, &min, &max) ||
-              snd_mixer_selem_get_playback_volume(elem, 0, &val);
-        force_linear = true;
+    if (!strncasecmp(mixer, "capture", strlen("capture"))) {
+        ALSA_VOLUME(capture)
+    } else {
+        ALSA_VOLUME(playback)
     }
 
     if (err != 0) {
@@ -195,12 +210,9 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     /* Check for mute */
     if (snd_mixer_selem_has_playback_switch(elem)) {
-        if ((err = snd_mixer_selem_get_playback_switch(elem, 0, &pbval)) < 0)
-            fprintf(stderr, "i3status: ALSA: playback_switch: %s\n", snd_strerror(err));
-        if (!pbval) {
-            START_COLOR("color_degraded");
-            fmt = fmt_muted;
-        }
+        ALSA_MUTE_SWITCH(playback)
+    } else if (snd_mixer_selem_has_capture_switch(elem)) {
+        ALSA_MUTE_SWITCH(capture)
     }
 
     snd_mixer_close(m);
