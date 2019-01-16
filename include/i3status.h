@@ -231,6 +231,7 @@ bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
+void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;

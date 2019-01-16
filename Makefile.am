@@ -67,6 +67,7 @@ i3status_SOURCES = \
 	src/print_time.c \
 	src/print_volume.c \
 	src/print_wireless_info.c \
+	src/print_file_contents.c \
 	src/process_runs.c \
 	src/pulse.c
 
