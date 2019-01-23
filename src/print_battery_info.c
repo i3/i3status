@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 
 #include "i3status.h"
 
-#if defined(LINUX)
+#if defined(__linux__)
 #include <errno.h>
 #include <glob.h>
 #include <sys/types.h>
@@ -75,7 +76,7 @@ static bool acpi_init(void) {
 }
 #endif
 
-#if defined(LINUX) || defined(__NetBSD__)
+#if defined(__linux__) || defined(__NetBSD__)
 /*
  * Add batt_info data to acc.
  */
@@ -132,7 +133,7 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
 static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
 
-#if defined(LINUX)
+#if defined(__linux__)
     char buf[1024];
     const char *walk, *last;
     bool watt_as_unit = false;
@@ -469,7 +470,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
  * Returns false on error, and an error message will have been written.
  */
 static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
-#if defined(LINUX)
+#if defined(__linux__)
     char *outwalk = buffer;
     bool is_found = false;
 

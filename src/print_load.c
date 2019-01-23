@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include "i3status.h"
 #include <stdlib.h>
 #include <stdio.h>

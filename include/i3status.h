@@ -38,7 +38,7 @@ extern char *pct_mark;
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
 #define MAX_SINK_DESCRIPTION_LEN (128) /* arbitrary */
 
-#if defined(LINUX)
+#if defined(__linux__)
 
 #define THERMAL_ZONE "/sys/class/thermal/thermal_zone%d/temp"
 

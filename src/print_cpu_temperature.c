@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <glob.h>
@@ -52,7 +53,7 @@ typedef struct temperature_s {
 #define ERROR_CODE 1
 
 static int read_temperature(char *thermal_zone, temperature_t *temperature) {
-#if defined(LINUX)
+#if defined(__linux__)
     static char buf[16];
     long int temp;
 

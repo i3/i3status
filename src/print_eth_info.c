@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@
 
 #include "i3status.h"
 
-#if defined(LINUX)
+#if defined(__linux__)
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 #define PART_ETHSPEED "E: %s (%d Mbit/s)"
@@ -32,7 +33,7 @@
 #endif
 
 static int print_eth_speed(char *outwalk, const char *interface) {
-#if defined(LINUX)
+#if defined(__linux__)
     int ethspeed = 0;
     struct ifreq ifr;
     struct ethtool_cmd ecmd;

@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>

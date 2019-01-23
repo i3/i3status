@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
-#ifdef LINUX
+#ifdef __linux__
 #include <alsa/asoundlib.h>
 #include <alloca.h>
 #include <math.h>
@@ -147,7 +148,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
  * proceed to ALSA / OSS */
 #endif
 
-#ifdef LINUX
+#ifdef __linux__
     const long MAX_LINEAR_DB_SCALE = 24;
     int err;
     snd_mixer_t *m;

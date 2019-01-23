@@ -1,4 +1,5 @@
 // vim:ts=4:sw=4:expandtab
+#include <config.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -310,7 +311,7 @@ bool pulse_initialize(void) {
         pa_proplist *proplist = pa_proplist_new();
         pa_proplist_sets(proplist, PA_PROP_APPLICATION_NAME, APP_NAME);
         pa_proplist_sets(proplist, PA_PROP_APPLICATION_ID, APP_ID);
-        pa_proplist_sets(proplist, PA_PROP_APPLICATION_VERSION, VERSION);
+        pa_proplist_sets(proplist, PA_PROP_APPLICATION_VERSION, I3STATUS_VERSION);
         context = pa_context_new_with_proplist(api, APP_NAME, proplist);
         pa_proplist_free(proplist);
         if (!context)
