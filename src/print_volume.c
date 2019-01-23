@@ -47,7 +47,7 @@
         fmt = fmt_muted;                                                                 \
     }
 
-static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
+static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume, const char *devicename) {
     const char *walk = fmt;
 
     for (; *walk != '\0'; walk++) {
@@ -61,6 +61,10 @@ static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume) {
         } else if (BEGINS_WITH(walk + 1, "volume")) {
             outwalk += sprintf(outwalk, "%d%s", ivolume, pct_mark);
             walk += strlen("volume");
+
+        } else if (BEGINS_WITH(walk + 1, "devicename")) {
+            outwalk += sprintf(outwalk, "%s", devicename);
+            walk += strlen("devicename");
 
         } else {
             *(outwalk++) = '%';
@@ -93,36 +97,51 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                                         !isdigit(device[strlen("pulse:")])
                                     ? device + strlen("pulse:")
                                     : NULL;
-        int cvolume = pulse_initialize() ? volume_pulseaudio(sink_idx, sink_name) : 0;
+        int cvolume = 0;
+        char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
+
+        if (pulse_initialize()) {
+            cvolume = volume_pulseaudio(sink_idx, sink_name);
+            /* false result means error, stick to empty-string */
+            if (!description_pulseaudio(sink_idx, sink_name, description)) {
+                description[0] = '\0';
+            }
+        }
+
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (muted) {
             START_COLOR("color_degraded");
             pbval = 0;
         }
+
         /* negative result means error, stick to 0 */
         if (ivolume < 0)
             ivolume = 0;
         outwalk = apply_volume_format(muted ? fmt_muted : fmt,
                                       outwalk,
-                                      ivolume);
+                                      ivolume,
+                                      description);
         goto out;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
+        char description[MAX_SINK_DESCRIPTION_LEN];
+        bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
         int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
-        if (ivolume >= 0) {
+        if (ivolume >= 0 && success) {
             if (muted) {
                 START_COLOR("color_degraded");
                 pbval = 0;
             }
             outwalk = apply_volume_format(muted ? fmt_muted : fmt,
                                           outwalk,
-                                          ivolume);
+                                          ivolume,
+                                          description);
             goto out;
         }
-        /* negative result means error, fail PulseAudio attempt */
+        /* negative result or NULL description means error, fail PulseAudio attempt */
     }
 /* If some other device was specified or PulseAudio is not detected,
  * proceed to ALSA / OSS */
@@ -135,6 +154,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     snd_mixer_selem_id_t *sid;
     snd_mixer_elem_t *elem;
     long min, max, val;
+    const char *mixer_name;
     bool force_linear = false;
     int avg;
 
@@ -193,6 +213,12 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out;
     }
 
+    mixer_name = snd_mixer_selem_get_name(elem);
+    if (!mixer_name) {
+        fprintf(stderr, "i3status: ALSA: NULL mixer_name.\n");
+        goto out;
+    }
+
     /* Use linear mapping for raw register values or small ranges of 24 dB */
     if (force_linear || max - min <= MAX_LINEAR_DB_SCALE * 100) {
         float avgf = ((float)(val - min) / (max - min)) * 100;
@@ -215,16 +241,17 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         ALSA_MUTE_SWITCH(capture)
     }
 
+    outwalk = apply_volume_format(fmt, outwalk, avg, mixer_name);
+
     snd_mixer_close(m);
     snd_mixer_selem_id_free(sid);
-
-    outwalk = apply_volume_format(fmt, outwalk, avg);
 
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     char *mixerpath;
     char defaultmixer[] = "/dev/mixer";
     int mixfd, vol, devmask = 0;
+    const char *devicename = "UNSUPPORTED"; /* TODO: implement support for this */
     pbval = 1;
 
     if (mixer_idx > 0)
@@ -326,7 +353,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
 #endif
-    outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f);
+    outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f, devicename);
     close(mixfd);
 #endif
 

@@ -581,9 +581,9 @@ to "default", PulseAudio will be tried if detected and will fallback to ALSA
 
 *Example order*: +volume master+
 
-*Example format*: +♪: %volume+
+*Example format*: +♪ (%devicename): %volume+
 
-*Example format_muted*: +♪: 0%%+
+*Example format_muted*: +♪ (%devicename): 0%%+
 
 *Example configuration*:
 -------------------------------------------------------------

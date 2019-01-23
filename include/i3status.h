@@ -36,6 +36,7 @@ extern char *pct_mark;
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
 #define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
+#define MAX_SINK_DESCRIPTION_LEN (128) /* arbitrary */
 
 #if defined(LINUX)
 
@@ -228,6 +229,7 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
+bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
 
 /* socket file descriptor for general purposes */
