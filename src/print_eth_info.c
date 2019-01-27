@@ -43,7 +43,7 @@ static int print_eth_speed(char *outwalk, const char *interface) {
     ifr.ifr_data = (caddr_t)&ecmd;
     (void)strcpy(ifr.ifr_name, interface);
     if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0) {
-        ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ecmd.speed);
+        ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ethtool_cmd_speed(&ecmd));
         return sprintf(outwalk, "%d Mbit/s", ethspeed);
     } else
         return sprintf(outwalk, "?");
