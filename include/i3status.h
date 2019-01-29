@@ -240,4 +240,9 @@ extern cfg_t *cfg, *cfg_general, *cfg_section;
 extern void **cur_instance;
 
 extern pthread_t main_thread;
+
+#ifndef GLOB_TILDE
+#define GLOB_TILDE 0
+#endif
+
 #endif
