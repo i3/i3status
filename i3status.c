@@ -207,35 +207,23 @@ static int valid_color(const char *value) {
 
 /*
  * This function resolves ~ in pathnames.
- * It may resolve wildcards in the first part of the path, but if no match
- * or multiple matches are found, it just returns a copy of path as given.
+ * The syntax '~user' is not supported.
  *
  */
 static char *resolve_tilde(const char *path) {
-    static glob_t globbuf;
-    char *head, *tail, *result = NULL;
+    char *home, *result = NULL;
 
-    tail = strchr(path, '/');
-    head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
-
-    int res = glob(head, GLOB_TILDE, NULL, &globbuf);
-    free(head);
-    /* no match, or many wildcard matches are bad */
-    if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
-        result = sstrdup(path);
-    else if (res != 0) {
-        die("glob() failed");
-    } else {
-        head = globbuf.gl_pathv[0];
-        result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
-        strcpy(result, head);
-        if (tail) {
-            strcat(result, tail);
+    if (path[0] == '~' && (path[1] == '/' || path[1] == '\0')) {
+        home = getenv("HOME");
+        if (home != NULL) {
+            result = scalloc(strlen(home) + strlen(path));
+            strcpy(result, home);
+            strcat(result, path + 1);
+            return result;
         }
     }
-    globfree(&globbuf);
 
-    return result;
+    return sstrdup(path);
 }
 
 static char *get_config_path(void) {
