@@ -102,7 +102,9 @@ AC_PROG_RANLIB
 AC_PROG_LN_S
 
 AC_PATH_PROG([PATH_ASCIIDOC], [asciidoc])
-AC_PATH_PROG([PATH_XMLTO], [xmlto])
+AC_PATH_PROG([PATH_XMLTO], [xmlto], [no])
+AS_IF([test x"$PATH_XMLTO" = x"no"],
+      [AC_MSG_ERROR([xmlto is required for generating man pages])])
 
 AM_PROG_AR
 
