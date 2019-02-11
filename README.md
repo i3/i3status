@@ -30,7 +30,15 @@ i3status is developed at https://github.com/i3/i3status
 
 ## Compilation 
 
-Compiling is done with the usual make-line
+Prefer installing i3status via your Linux distribution’s package manager.
+
+If you absolutely have to build from source, use:
+
 ```bash
-  make && sudo make install
+  autoreconf -fi
+  mkdir build
+  cd build
+  ../configure
+  make -j8
+  sudo make install
 ```
