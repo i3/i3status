@@ -1,7 +1,7 @@
 @CODE_COVERAGE_RULES@
 
 echo-version:
-	@echo "@I3LOCK_VERSION@"
+	@echo "@I3STATUS_VERSION@"
 
 bin_PROGRAMS = i3status
 
