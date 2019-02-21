@@ -123,6 +123,11 @@ memory {
 disk "/" {
 	format = "%free"
 }
+
+read_file uptime {
+	path = "/proc/uptime"
+}
+
 -------------------------------------------------------------
 
 === General
@@ -610,6 +615,25 @@ volume master {
 	device = "pulse:alsa_output.pci-0000_00_14.2.analog-stereo"
 }
 -------------------------------------------------------------
+
+=== File Contents
+
+Outputs the contents of the specified file. You can use this to check contents
+of files on your system, for example /proc/uptime. By default the function only
+reads the first 254 characters of the file, if you want to override this set 
+the Max_characters option. It will never read beyond the first 4095 characters.
+If the file is not found "no file" will be printed, if the file can't be read
+"error read" will be printed.
+
+*Example order*: read_file UPTIME
+
+*Example format*: "%title: %content"
+
+*Example format_bad*: "%title - %errno: %error"
+
+*Example path*: "/proc/uptime"
+
+*Example Max_characters*: 255
 
 == Universal module options
 
