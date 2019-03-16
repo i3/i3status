@@ -119,13 +119,12 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
 }
 
 static void print_bssid(char *buffer, int buflen, uint8_t bssid[]) {
-
     unsigned int i;
     char tmp[16];
 
-    snprintf(buffer, buflen, "%02x", (unsigned char) bssid[0]);
+    snprintf(buffer, buflen, "%02x", (unsigned char)bssid[0]);
     for (i = 1; i < ETH_ALEN; i++) {
-        snprintf(tmp, sizeof(tmp), ":%02x", (unsigned char) bssid[i]);
+        snprintf(tmp, sizeof(tmp), ":%02x", (unsigned char)bssid[i]);
         strncat(buffer, tmp, buflen - strlen(buffer) - 1);
     }
 }
@@ -608,9 +607,8 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
             outwalk += sprintf(outwalk, "%s", br_buffer);
             walk += strlen("bitrate");
-        }
-        else if (BEGINS_WITH(walk + 1, "bssid")) {
-            char bssid_buffer[ETH_ALEN*3]; // xx: + \0
+        } else if (BEGINS_WITH(walk + 1, "bssid")) {
+            char bssid_buffer[ETH_ALEN * 3];  // xx: + \0
 
             print_bssid(bssid_buffer, sizeof(bssid_buffer), info.bssid);
 
