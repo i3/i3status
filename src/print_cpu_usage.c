@@ -76,7 +76,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
-    char buf[4096];
+    char buf[16384];
     curr_cpu_count = get_nprocs();
     if (!slurp(path, buf, sizeof(buf)))
         goto error;
