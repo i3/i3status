@@ -185,17 +185,17 @@ static void store_info_from_sink_cb(pa_context *c,
      * DEFAULT_SINK_INDEX as the index, and another with its proper value
      * (using bitwise OR to avoid early-out logic) */
     if ((info->index == default_sink_idx &&
-    	save_sink_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
-    	save_sink_info(info->index, composed_volume, info->description, info->name)) {
+         save_sink_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
+        save_sink_info(info->index, composed_volume, info->description, info->name)) {
         /* if the volume, mute flag or description changed, wake the main thread */
         pthread_kill(main_thread, SIGUSR1);
     }
 }
 
 static void store_info_from_source_cb(pa_context *c,
-									  const pa_source_info *info,
-									  int eol,
-									  void *userdata) {
+                                      const pa_source_info *info,
+                                      int eol,
+                                      void *userdata) {
     if (eol < 0) {
         if (pa_context_errno(c) == PA_ERR_NOENTITY)
             return;
@@ -211,21 +211,21 @@ static void store_info_from_source_cb(pa_context *c,
     int vol_perc = roundf((float)avg_vol * 100 / PA_VOLUME_NORM);
     int composed_volume = COMPOSE_VOLUME_MUTE(vol_perc, info->mute);
 
-//    /* if this is the default sink we must try to save it twice: once with
-//     * DEFAULT_SINK_INDEX as the index, and another with its proper value
-//     * (using bitwise OR to avoid early-out logic) */
-//    if ((info->index == default_sink_idx &&
-//         save_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
-//        save_info(info->index, composed_volume, info->description, info->name)) {
-//        /* if the volume, mute flag or description changed, wake the main thread */
-//        pthread_kill(main_thread, SIGUSR1);
-//    }
-//    if (save_source_info(info->index, composed_volume, info->description, info->name)) {
-//        pthread_kill(main_thread, SIGUSR1);
-//    }
+    //    /* if this is the default sink we must try to save it twice: once with
+    //     * DEFAULT_SINK_INDEX as the index, and another with its proper value
+    //     * (using bitwise OR to avoid early-out logic) */
+    //    if ((info->index == default_sink_idx &&
+    //         save_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
+    //        save_info(info->index, composed_volume, info->description, info->name)) {
+    //        /* if the volume, mute flag or description changed, wake the main thread */
+    //        pthread_kill(main_thread, SIGUSR1);
+    //    }
+    //    if (save_source_info(info->index, composed_volume, info->description, info->name)) {
+    //        pthread_kill(main_thread, SIGUSR1);
+    //    }
     if ((info->index == default_source_idx &&
-    	save_source_info(DEFAULT_SOURCE_INDEX, composed_volume, info->description, NULL)) |
-    	save_source_info(info->index, composed_volume, info->description, info->name)) {
+         save_source_info(DEFAULT_SOURCE_INDEX, composed_volume, info->description, NULL)) |
+        save_source_info(info->index, composed_volume, info->description, info->name)) {
         /* if the volume, mute flag or description changed, wake the main thread */
         pthread_kill(main_thread, SIGUSR1);
     }
@@ -247,19 +247,19 @@ static void get_sink_info(pa_context *c, uint32_t idx, const char *name) {
 }
 
 static void get_source_info(pa_context *c, uint32_t idx, const char *name) {
-	pa_operation *o;
+    pa_operation *o;
 
-	if (name) {
-		o = pa_context_get_source_info_by_name(
-			c, name, store_info_from_source_cb, NULL);
-	} else {
-		o = pa_context_get_source_info_by_index(
-			c, idx, store_info_from_source_cb, NULL);
-	}
+    if (name) {
+        o = pa_context_get_source_info_by_name(
+            c, name, store_info_from_source_cb, NULL);
+    } else {
+        o = pa_context_get_source_info_by_index(
+            c, idx, store_info_from_source_cb, NULL);
+    }
 
-	if (o) {
+    if (o) {
         pulseaudio_free_operation(c, o);
-	}
+    }
 }
 
 static void store_default_sink_cb(pa_context *c,
@@ -276,11 +276,11 @@ static void store_default_sink_cb(pa_context *c,
 }
 
 static void store_default_source_cb(pa_context *c,
-                                  const pa_source_info *i,
-                                  int eol,
-                                  void *userdata) {
+                                    const pa_source_info *i,
+                                    int eol,
+                                    void *userdata) {
     if (i) {
-    	if (default_source_idx != i->index) {
+        if (default_source_idx != i->index) {
             /* default sink changed? */
             default_source_idx = i->index;
             store_info_from_source_cb(c, i, eol, userdata);
@@ -322,8 +322,8 @@ static void subscribe_cb(pa_context *c, pa_subscription_event_type_t t,
             get_sink_info(c, idx, NULL);
             break;
         case PA_SUBSCRIPTION_EVENT_SOURCE:
-        	get_source_info(c, idx, NULL);
-        	break;
+            get_source_info(c, idx, NULL);
+            break;
         default:
             break;
     }
@@ -347,7 +347,7 @@ static void context_state_callback(pa_context *c, void *userdata) {
 
             pa_operation *o = pa_context_subscribe(
                 c,
-				PA_SUBSCRIPTION_MASK_SOURCE | PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER,
+                PA_SUBSCRIPTION_MASK_SOURCE | PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER,
                 NULL,
                 NULL);
             if (!pulseaudio_free_operation(c, o))
