@@ -93,18 +93,39 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
     if (!strncasecmp(device, "pulse", strlen("pulse"))) {
-        uint32_t sink_idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
-        const char *sink_name = device[strlen("pulse")] == ':' &&
-                                        !isdigit(device[strlen("pulse:")])
-                                    ? device + strlen("pulse:")
-                                    : NULL;
+    	uint32_t idx = DEFAULT_SINK_INDEX;
+    	const char *name;
+    	uint32_t pulse_type;
+    	if(!strncasecmp(device, "pulse:sink", strlen("pulse:sink"))) {
+            idx = device[strlen("pulse:sink")] == ':' ? (uint32_t)atoi(device + strlen("pulse:sink:")) : DEFAULT_SINK_INDEX;
+            name = device[strlen("pulse:sink")] == ':' &&
+                                            !isdigit(device[strlen("pulse:sink:")])
+                                        ? device + strlen("pulse:sink:")
+                                        : NULL;
+            pulse_type = 0;
+    	} else if(!strncasecmp(device, "pulse:source", strlen("pulse:source"))) {
+            idx = device[strlen("pulse:source")] == ':' ? (uint32_t)atoi(device + strlen("pulse:source:")) : DEFAULT_SOURCE_INDEX;
+            name = device[strlen("pulse:source")] == ':' &&
+                                            !isdigit(device[strlen("pulse:source:")])
+                                        ? device + strlen("pulse:source:")
+                                        : NULL;
+            pulse_type = 1;
+    	} else {
+            idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
+            name = device[strlen("pulse")] == ':' &&
+                                            !isdigit(device[strlen("pulse:")])
+                                        ? device + strlen("pulse:")
+                                        : NULL;
+            pulse_type = 0;
+    	}
+
         int cvolume = 0;
         char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
 
         if (pulse_initialize()) {
-            cvolume = volume_pulseaudio(sink_idx, sink_name);
+        	cvolume = pulse_type == 0 ? volume_sink_pulseaudio(idx, name) : volume_source_pulseaudio(idx, name);
             /* false result means error, stick to empty-string */
-            if (!description_pulseaudio(sink_idx, sink_name, description)) {
+            if (!(pulse_type == 0 ? description_sink_pulseaudio(idx, name, description) : description_source_pulseaudio(idx, name, description))) {
                 description[0] = '\0';
             }
         }
@@ -127,8 +148,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
         char description[MAX_SINK_DESCRIPTION_LEN];
-        bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
-        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
+//        bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
+//        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
+        bool success = description_sink_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
+        int cvolume = volume_sink_pulseaudio(DEFAULT_SINK_INDEX, NULL);
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0 && success) {

@@ -26,9 +26,13 @@ static pa_mainloop_api *api = NULL;
 static bool context_ready = false;
 static bool mainloop_thread_running = false;
 static uint32_t default_sink_idx = DEFAULT_SINK_INDEX;
-TAILQ_HEAD(tailhead, index_info_s)
-cached_info =
-    TAILQ_HEAD_INITIALIZER(cached_info);
+static uint32_t default_source_idx = DEFAULT_SOURCE_INDEX;
+TAILQ_HEAD(sink_tailhead, index_info_s)
+cached_sink_info =
+    TAILQ_HEAD_INITIALIZER(cached_sink_info);
+TAILQ_HEAD(source_tailhead, index_info_s)
+cached_source_info =
+    TAILQ_HEAD_INITIALIZER(cached_sink_info);
 static pthread_mutex_t pulse_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void pulseaudio_error_log(pa_context *c) {
@@ -50,7 +54,7 @@ static bool pulseaudio_free_operation(pa_context *c, pa_operation *o) {
  * save the info for the specified sink index
  * returning true if the value was changed
  */
-static bool save_info(uint32_t sink_idx, int new_volume, const char *new_description, const char *name) {
+static bool save_sink_info(uint32_t sink_idx, int new_volume, const char *new_description, const char *name) {
     pthread_mutex_lock(&pulse_mutex);
     index_info_t *entry;
 
@@ -60,7 +64,7 @@ static bool save_info(uint32_t sink_idx, int new_volume, const char *new_descrip
         fprintf(stderr, "i3status: PulseAudio: NULL new_description provided\n");
     }
 
-    TAILQ_FOREACH(entry, &cached_info, entries) {
+    TAILQ_FOREACH(entry, &cached_sink_info, entries) {
         if (name) {
             if (!entry->name || strcmp(entry->name, name)) {
                 continue;
@@ -89,8 +93,62 @@ static bool save_info(uint32_t sink_idx, int new_volume, const char *new_descrip
     }
     /* index not found, store it */
     entry = malloc(sizeof(*entry));
-    TAILQ_INSERT_HEAD(&cached_info, entry, entries);
+    TAILQ_INSERT_HEAD(&cached_sink_info, entry, entries);
     entry->idx = sink_idx;
+    entry->volume = new_volume;
+    strncpy(entry->description, new_description, sizeof(entry->description) - 1);
+    entry->description[sizeof(entry->description) - 1] = '\0';
+    if (name) {
+        entry->name = malloc(strlen(name) + 1);
+        strcpy(entry->name, name);
+    } else {
+        entry->name = NULL;
+    }
+    pthread_mutex_unlock(&pulse_mutex);
+    return true;
+}
+
+static bool save_source_info(uint32_t source_idx, int new_volume, const char *new_description, const char *name) {
+    pthread_mutex_lock(&pulse_mutex);
+    index_info_t *entry;
+
+    /* if this is NULL, gracefully handle and replace with empty-string */
+    if (!new_description) {
+        new_description = "";
+        fprintf(stderr, "i3status: PulseAudio: NULL new_description provided\n");
+    }
+
+    TAILQ_FOREACH(entry, &cached_source_info, entries) {
+        if (name) {
+            if (!entry->name || strcmp(entry->name, name)) {
+                continue;
+            }
+        } else {
+            if (entry->idx != source_idx) {
+                continue;
+            }
+        }
+
+        bool changed = false;
+
+        if (new_volume != entry->volume) {
+            entry->volume = new_volume;
+            changed = true;
+        }
+
+        if (strncmp(entry->description, new_description, sizeof(entry->description))) {
+            strncpy(entry->description, new_description, sizeof(entry->description) - 1);
+            entry->description[sizeof(entry->description) - 1] = '\0';
+            changed = true;
+        }
+
+        pthread_mutex_unlock(&pulse_mutex);
+        return changed;
+    }
+    /* index not found, store it */
+    entry = malloc(sizeof(*entry));
+    TAILQ_INSERT_HEAD(&cached_source_info, entry, entries);
+    entry->idx = source_idx;
     entry->volume = new_volume;
     strncpy(entry->description, new_description, sizeof(entry->description) - 1);
     entry->description[sizeof(entry->description) - 1] = '\0';
@@ -127,8 +185,47 @@ static void store_info_from_sink_cb(pa_context *c,
      * DEFAULT_SINK_INDEX as the index, and another with its proper value
      * (using bitwise OR to avoid early-out logic) */
     if ((info->index == default_sink_idx &&
-         save_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
-        save_info(info->index, composed_volume, info->description, info->name)) {
+    	save_sink_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
+    	save_sink_info(info->index, composed_volume, info->description, info->name)) {
+        /* if the volume, mute flag or description changed, wake the main thread */
+        pthread_kill(main_thread, SIGUSR1);
+    }
+}
+
+static void store_info_from_source_cb(pa_context *c,
+									  const pa_source_info *info,
+									  int eol,
+									  void *userdata) {
+    if (eol < 0) {
+        if (pa_context_errno(c) == PA_ERR_NOENTITY)
+            return;
+
+        pulseaudio_error_log(c);
+        return;
+    }
+
+    if (eol > 0)
+        return;
+
+    int avg_vol = pa_cvolume_avg(&info->volume);
+    int vol_perc = roundf((float)avg_vol * 100 / PA_VOLUME_NORM);
+    int composed_volume = COMPOSE_VOLUME_MUTE(vol_perc, info->mute);
+
+//    /* if this is the default sink we must try to save it twice: once with
+//     * DEFAULT_SINK_INDEX as the index, and another with its proper value
+//     * (using bitwise OR to avoid early-out logic) */
+//    if ((info->index == default_sink_idx &&
+//         save_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
+//        save_info(info->index, composed_volume, info->description, info->name)) {
+//        /* if the volume, mute flag or description changed, wake the main thread */
+//        pthread_kill(main_thread, SIGUSR1);
+//    }
+//    if (save_source_info(info->index, composed_volume, info->description, info->name)) {
+//        pthread_kill(main_thread, SIGUSR1);
+//    }
+    if ((info->index == default_source_idx &&
+    	save_source_info(DEFAULT_SOURCE_INDEX, composed_volume, info->description, NULL)) |
+    	save_source_info(info->index, composed_volume, info->description, info->name)) {
         /* if the volume, mute flag or description changed, wake the main thread */
         pthread_kill(main_thread, SIGUSR1);
     }
@@ -149,6 +246,22 @@ static void get_sink_info(pa_context *c, uint32_t idx, const char *name) {
     }
 }
 
+static void get_source_info(pa_context *c, uint32_t idx, const char *name) {
+	pa_operation *o;
+
+	if (name) {
+		o = pa_context_get_source_info_by_name(
+			c, name, store_info_from_source_cb, NULL);
+	} else {
+		o = pa_context_get_source_info_by_index(
+			c, idx, store_info_from_source_cb, NULL);
+	}
+
+	if (o) {
+        pulseaudio_free_operation(c, o);
+	}
+}
+
 static void store_default_sink_cb(pa_context *c,
                                   const pa_sink_info *i,
                                   int eol,
@@ -162,11 +275,33 @@ static void store_default_sink_cb(pa_context *c,
     }
 }
 
+static void store_default_source_cb(pa_context *c,
+                                  const pa_source_info *i,
+                                  int eol,
+                                  void *userdata) {
+    if (i) {
+    	if (default_source_idx != i->index) {
+            /* default sink changed? */
+            default_source_idx = i->index;
+            store_info_from_source_cb(c, i, eol, userdata);
+        }
+    }
+}
+
 static void update_default_sink(pa_context *c) {
     pa_operation *o = pa_context_get_sink_info_by_name(
         c,
         "@DEFAULT_SINK@",
         store_default_sink_cb,
+        NULL);
+    pulseaudio_free_operation(c, o);
+}
+
+static void update_default_source(pa_context *c) {
+    pa_operation *o = pa_context_get_source_info_by_name(
+        c,
+        "@DEFAULT_SOURCE@",
+        store_default_source_cb,
         NULL);
     pulseaudio_free_operation(c, o);
 }
@@ -181,10 +316,14 @@ static void subscribe_cb(pa_context *c, pa_subscription_event_type_t t,
         case PA_SUBSCRIPTION_EVENT_SERVER:
             /* server change event, see if the default sink changed */
             update_default_sink(c);
+            update_default_source(c);
             break;
         case PA_SUBSCRIPTION_EVENT_SINK:
             get_sink_info(c, idx, NULL);
             break;
+        case PA_SUBSCRIPTION_EVENT_SOURCE:
+        	get_source_info(c, idx, NULL);
+        	break;
         default:
             break;
     }
@@ -204,10 +343,11 @@ static void context_state_callback(pa_context *c, void *userdata) {
         case PA_CONTEXT_READY: {
             pa_context_set_subscribe_callback(c, subscribe_cb, NULL);
             update_default_sink(c);
+            update_default_source(c);
 
             pa_operation *o = pa_context_subscribe(
                 c,
-                PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER,
+				PA_SUBSCRIPTION_MASK_SOURCE | PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER,
                 NULL,
                 NULL);
             if (!pulseaudio_free_operation(c, o))
@@ -228,13 +368,13 @@ static void context_state_callback(pa_context *c, void *userdata) {
  * returns the current volume in percent, which, as per PulseAudio,
  * may be > 100%
  */
-int volume_pulseaudio(uint32_t sink_idx, const char *sink_name) {
+int volume_sink_pulseaudio(uint32_t sink_idx, const char *sink_name) {
     if (!context_ready || default_sink_idx == DEFAULT_SINK_INDEX)
         return -1;
 
     pthread_mutex_lock(&pulse_mutex);
     const index_info_t *entry;
-    TAILQ_FOREACH(entry, &cached_info, entries) {
+    TAILQ_FOREACH(entry, &cached_sink_info, entries) {
         if (sink_name) {
             if (!entry->name || strcmp(entry->name, sink_name)) {
                 continue;
@@ -259,14 +399,45 @@ int volume_pulseaudio(uint32_t sink_idx, const char *sink_name) {
     return 0;
 }
 
-bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]) {
+int volume_source_pulseaudio(uint32_t source_idx, const char *source_name) {
+    if (!context_ready || default_source_idx == DEFAULT_SOURCE_INDEX)
+        return -1;
+
+    pthread_mutex_lock(&pulse_mutex);
+    const index_info_t *entry;
+    TAILQ_FOREACH(entry, &cached_source_info, entries) {
+        if (source_name) {
+            if (!entry->name || strcmp(entry->name, source_name)) {
+                continue;
+            }
+        } else {
+            if (entry->idx != source_idx) {
+                continue;
+            }
+        }
+        int vol = entry->volume;
+        pthread_mutex_unlock(&pulse_mutex);
+        return vol;
+    }
+    pthread_mutex_unlock(&pulse_mutex);
+    /* first time requires a prime callback call because we only get updates
+     * when the description or volume actually changes, but we need it to be
+     * correct even if it never changes */
+    pa_threaded_mainloop_lock(main_loop);
+    get_source_info(context, source_idx, source_name);
+    pa_threaded_mainloop_unlock(main_loop);
+    /* show 0 while we don't have this information */
+    return 0;
+}
+
+bool description_sink_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]) {
     if (!context_ready || default_sink_idx == DEFAULT_SINK_INDEX) {
         return false;
     }
 
     pthread_mutex_lock(&pulse_mutex);
     const index_info_t *entry;
-    TAILQ_FOREACH(entry, &cached_info, entries) {
+    TAILQ_FOREACH(entry, &cached_sink_info, entries) {
         if (sink_name) {
             if (!entry->name || strcmp(entry->name, sink_name)) {
                 continue;
@@ -287,6 +458,40 @@ bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffe
      * correct even if it never changes */
     pa_threaded_mainloop_lock(main_loop);
     get_sink_info(context, sink_idx, sink_name);
+    pa_threaded_mainloop_unlock(main_loop);
+    /* show empty string while we don't have this information */
+    buffer[0] = '\0';
+    return true;
+}
+
+bool description_source_pulseaudio(uint32_t source_idx, const char *source_name, char buffer[MAX_SOURCE_DESCRIPTION_LEN]) {
+    if (!context_ready || default_sink_idx == DEFAULT_SINK_INDEX) {
+        return false;
+    }
+
+    pthread_mutex_lock(&pulse_mutex);
+    const index_info_t *entry;
+    TAILQ_FOREACH(entry, &cached_source_info, entries) {
+        if (source_name) {
+            if (!entry->name || strcmp(entry->name, source_name)) {
+                continue;
+            }
+        } else {
+            if (entry->idx != source_idx) {
+                continue;
+            }
+        }
+        strncpy(buffer, entry->description, sizeof(entry->description) - 1);
+        pthread_mutex_unlock(&pulse_mutex);
+        buffer[sizeof(entry->description) - 1] = '\0';
+        return true;
+    }
+    pthread_mutex_unlock(&pulse_mutex);
+    /* first time requires a prime callback call because we only get updates
+     * when the description or volume actually changes, but we need it to be
+     * correct even if it never changes */
+    pa_threaded_mainloop_lock(main_loop);
+    get_source_info(context, source_idx, source_name);
     pa_threaded_mainloop_unlock(main_loop);
     /* show empty string while we don't have this information */
     buffer[0] = '\0';

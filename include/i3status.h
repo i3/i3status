@@ -33,10 +33,12 @@ extern char *pct_mark;
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define DEFAULT_SINK_INDEX UINT32_MAX
+#define DEFAULT_SOURCE_INDEX UINT32_MAX
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
 #define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
 #define MAX_SINK_DESCRIPTION_LEN (128) /* arbitrary */
+#define MAX_SOURCE_DESCRIPTION_LEN (128)
 
 #if defined(__linux__)
 
@@ -228,8 +230,10 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
 bool process_runs(const char *path);
-int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
-bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
+int volume_sink_pulseaudio(uint32_t sink_idx, const char *sink_name);
+int volume_source_pulseaudio(uint32_t source_idx, const char *source_name);
+bool description_sink_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
+bool description_source_pulseaudio(uint32_t source_idx, const char *source_name, char buffer[MAX_SOURCE_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
 
