@@ -23,7 +23,7 @@ static void *scalloc(size_t size) {
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars) {
     const char *walk = format;
     char *outwalk = buffer;
-    char *buf = scalloc(max_chars * sizeof(char));
+    char *buf = scalloc(max_chars * sizeof(char) + 1);
 
     int n = -1;
     int fd = open(path, O_RDONLY);
