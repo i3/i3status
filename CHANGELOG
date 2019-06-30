@@ -1,3 +1,32 @@
+2019-06-30 i3status 2.13
+
+ • add memory module
+ • add read_file module
+ • drop CAP_NET_ADMIN (not needed on Linux ≥ 2.6.37)
+ • switch to autotools 
+ • battery: hide seconds by default
+ • wireless: add format_quality
+ • doc: clarify min_width not being supported with dzen2/xmobar
+ • battery: read multiple batteries on DragonFlyBSD
+ • make: don’t use pulseaudio on DragonFlyBSD
+ • wireless: detect interface type on DragonFlyBSD
+ • cpu usage: fix: correctly print usage for cpu 10
+ • cpu usage: fix: correctly print for invalid %cpu placeholder
+ • cpu usage: support non-consecutive CPUs
+ • time: add only_when_tz_different option
+ • ethernet: add %interface
+ • ethernet: fix speed display for 100 Gbit/s cards
+ • battery: handle POWER_SUPPLY_STATUS=Not charging
+ • volume: provide more natural volume percentage with ALSA
+ • volume: fix ALSA capture device monitoring
+ • volume: implement %devicename for PulseAudio and ALSA
+ • config: re-arrange disk after network interfaces
+ • fix: include sys/socket.h on macOS
+ • fix: strip network interface labels
+ • fix glob(3) error handling
+ • various testsuite improvements
+ • switch to clang-format-3.8
+ 
 2018-05-11 i3status 2.12
 
  • fix NULL value on OpenBSD when there is no acpitz0
