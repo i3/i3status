@@ -20,6 +20,8 @@
 #include <dev/acpica/acpiio.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/sensors.h>
 #endif
 
 #if defined(__DragonFly__)
@@ -31,6 +33,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/sensors.h>
 #endif
 
 #if defined(__NetBSD__)
@@ -269,11 +272,16 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
 #elif defined(__OpenBSD__)
     /*
 	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
-	 * the generic interface on macppc/sparc64/zaurus, instead of using sysctl(3) and
-	 * probing acpi(4) devices.
+	 * the generic interface on macppc/sparc64/zaurus.  Machines that have ACPI
+	 * battery sensors gain some extra information.
 	 */
     struct apm_power_info apm_info;
+    struct sensordev sensordev;
+    struct sensor sensor;
+    size_t sdlen, slen;
     int apm_fd;
+    int dev, mib[5] = {CTL_HW, HW_SENSORS, 0, 0, 0};
+    int volts = 0;
 
     apm_fd = open("/dev/apm", O_RDONLY);
     if (apm_fd < 0) {
@@ -310,6 +318,41 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /* Can't give a meaningful value for remaining minutes if we're charging. */
     if (batt_info->status != CS_CHARGING) {
         batt_info->seconds_remaining = apm_info.minutes_left * 60;
+    }
+
+    /* If acpibat* are present, check sensors for data not present via APM. */
+    batt_info->present_rate = 0;
+    sdlen = sizeof(sensordev);
+    slen = sizeof(sensor);
+
+    for (dev = 0;; dev++) {
+        mib[2] = dev;
+        if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
+            break;
+        }
+        /* 'path' is the node within the full path */
+        if (BEGINS_WITH(sensordev.xname, "acpibat")) {
+            /* power0 */
+            mib[3] = SENSOR_WATTS;
+            mib[4] = 0;
+            if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+                /* try current0 */
+                mib[3] = SENSOR_AMPS;
+                if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1)
+                    continue;
+                volts = sensor.value;
+
+                /* we also need current voltage to convert amps to watts */
+                mib[3] = SENSOR_VOLTS_DC;
+                mib[4] = 1;
+                if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1)
+                    continue;
+
+                batt_info->present_rate += (((float)volts / 1000.0) * ((float)sensor.value / 1000.0));
+            } else {
+                batt_info->present_rate += sensor.value;
+            }
+        }
     }
 #elif defined(__NetBSD__)
     /*
