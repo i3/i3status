@@ -147,10 +147,14 @@ extern char *pct_mark;
     do {                                                                                    \
         if (cfg_getbool(cfg_general, "colors")) {                                           \
             const char *_val = NULL;                                                        \
-            if (cfg_section)                                                                \
-                _val = cfg_getstr(cfg_section, colorstr);                                   \
-            if (!_val)                                                                      \
-                _val = cfg_getstr(cfg_general, colorstr);                                   \
+            if (colorstr[0] == '#')                                                         \
+                _val = colorstr;                                                            \
+            else {                                                                          \
+                if (cfg_section)                                                            \
+                    _val = cfg_getstr(cfg_section, colorstr);                               \
+                if (!_val)                                                                  \
+                    _val = cfg_getstr(cfg_general, colorstr);                               \
+            }                                                                               \
             if (output_format == O_I3BAR) {                                                 \
                 yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
                 yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val));       \
@@ -232,6 +236,7 @@ int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
+void print_text(yajl_gen json_gen, char *buffer, const char *text, const char *colorstr);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;

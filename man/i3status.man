@@ -635,6 +635,22 @@ If the file is not found "no file" will be printed, if the file can't be read
 
 *Example Max_characters*: 255
 
+=== Text
+
+Outputs arbitrary colored text blocks via +text+ and +color+ options. Intended
+for use as string literals and placeholders for post-processing.
+
+*Example configuration*:
+-------------------------------------------------------------
+text name {
+	text = "SpongeBobSquarePants"
+	color = "#555555"
+}
+text net_speed {
+	text = "_NET_SPEED_CONSOLIDATED_"
+}
+-------------------------------------------------------------
+
 == Universal module options
 
 When using the i3bar output format, there are a few additional options that

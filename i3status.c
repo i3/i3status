@@ -503,6 +503,15 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t text_opts[] = {
+        CFG_STR("text", NULL, CFGF_NONE),
+        CFG_STR("color", NULL, CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -522,6 +531,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("memory", memory_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_SEC("read_file", read_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("text", text_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()};
 
     char *configfile = NULL;
@@ -804,6 +814,19 @@ int main(int argc, char *argv[]) {
             CASE_SEC_TITLE("read_file") {
                 SEC_OPEN_MAP("read_file");
                 print_file_contents(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_bad"), cfg_getint(sec, "max_characters"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("text") {
+                SEC_OPEN_MAP("text");
+                const char *colorstr = NULL;
+                if (cfg_getbool(cfg_general, "colors")) {
+                    colorstr = cfg_getstr(sec, "color");
+                    if (strlen(colorstr) < 1 ||
+                       (colorstr[0] == '#' && !valid_color(colorstr)))
+                        die("Bad color format in text module");
+                }
+                print_text(json_gen, buffer, cfg_getstr(sec, "text"), colorstr);
                 SEC_CLOSE_MAP;
             }
         }
