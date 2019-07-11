@@ -68,8 +68,11 @@ i3status_SOURCES = \
 	src/print_volume.c \
 	src/print_wireless_info.c \
 	src/print_file_contents.c \
-	src/process_runs.c \
-	src/pulse.c
+	src/process_runs.c
+
+if PULSE
+i3status_SOURCES += src/pulse.c
+endif
 
 dist_sysconf_DATA = \
 	i3status.conf
