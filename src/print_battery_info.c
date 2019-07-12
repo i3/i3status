@@ -34,6 +34,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/sensors.h>
+#include <sys/sysctl.h>
 #endif
 
 #if defined(__NetBSD__)
