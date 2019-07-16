@@ -79,20 +79,18 @@ AC_CANONICAL_HOST
 
 PKG_CHECK_MODULES([CONFUSE], [libconfuse])
 PKG_CHECK_MODULES([YAJL], [yajl])
+PKG_CHECK_MODULES([PULSE], [libpulse], pulse=true, pulse=false)
+AM_CONDITIONAL([PULSE], [test x$pulse = xtrue])
 
-pulse=false
 case $host_os in
 	linux*)
 	PKG_CHECK_MODULES([NLGENL], [libnl-genl-3.0])
 	PKG_CHECK_MODULES([ALSA], [alsa])
-	PKG_CHECK_MODULES([PULSE], [libpulse])
-	pulse=true
 	;;
 	netbsd*)
 	AC_SEARCH_LIBS([prop_string_create], [prop])
 	;;
 esac
-AM_CONDITIONAL([PULSE], [test x$pulse = xtrue])
 
 dnl TODO: check for libbsd for GNU/kFreeBSD
 
