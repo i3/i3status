@@ -20,8 +20,6 @@
 #include <dev/acpica/acpiio.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
-#include <sys/sysctl.h>
-#include <sys/sensors.h>
 #endif
 
 #if defined(__DragonFly__)
@@ -33,6 +31,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
 #include <sys/sensors.h>
 #include <sys/sysctl.h>
 #endif
