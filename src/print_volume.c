@@ -86,7 +86,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         free(instance);
     }
 
-#if !defined(__DragonFly__) && !defined(__OpenBSD__)
+#if HAS_PULSEAUDIO
     /* Try PulseAudio first */
 
     /* If the device name has the format "pulse[:N]" where N is the

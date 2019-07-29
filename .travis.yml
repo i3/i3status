@@ -22,5 +22,6 @@ addons:
 script:
   - clang-format-3.8 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
   # TODO: re-enable sanitizers once issues are fixed
-  - autoreconf -fi && mkdir -p build && cd build && (../configure --disable-sanitizers || (cat config.log; false)) && make -j V=1
-  - make -j check V=1 || (cat test-suite.log; false)
+  - autoreconf -fi && mkdir -p build && cd build && (../configure --disable-sanitizers || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
+  - make clean && (../configure --disable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
+  - make -j 8 check V=1 || (cat test-suite.log; false)

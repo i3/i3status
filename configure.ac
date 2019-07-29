@@ -80,25 +80,29 @@ AC_CANONICAL_HOST
 PKG_CHECK_MODULES([CONFUSE], [libconfuse])
 PKG_CHECK_MODULES([YAJL], [yajl])
 
-pulse=true
+AC_ARG_ENABLE(pulseaudio,
+  AS_HELP_STRING(
+    [--disable-pulseaudio],
+    [build without pulseaudio support]),
+  [ax_pulse=$enableval],
+  [ax_pulse=yes])
+AM_CONDITIONAL([PULSE], [test x$ax_pulse = xyes])
+AS_IF([test x"$ax_pulse" = x"yes"],
+      [PKG_CHECK_MODULES([PULSE], [libpulse])])
+pulse_def=0
+AS_IF([test x"$ax_pulse" = x"yes"],
+      [pulse_def=1])
+AC_DEFINE_UNQUOTED([HAS_PULSEAUDIO], [$pulse_def], [Build with pulseaudio])
+
 case $host_os in
 	linux*)
 	PKG_CHECK_MODULES([NLGENL], [libnl-genl-3.0])
 	PKG_CHECK_MODULES([ALSA], [alsa])
 	;;
-	openbsd*)
-	pulse=false
-	;;
-	dragonfly*)
-	pulse=false
-	;;
 	netbsd*)
 	AC_SEARCH_LIBS([prop_string_create], [prop])
 	;;
 esac
-AM_CONDITIONAL([PULSE], [test x$pulse = xtrue])
-AS_IF([test x"$pulse" = x"true"],
-      [PKG_CHECK_MODULES([PULSE], [libpulse])])
 
 dnl TODO: check for libbsd for GNU/kFreeBSD
 
@@ -160,6 +164,7 @@ AS_HELP_STRING([is release version:], [${is_release}])
 AS_HELP_STRING([enable debug flags:], [${ax_enable_debug}])
 AS_HELP_STRING([code coverage:], [${CODE_COVERAGE_ENABLED}])
 AS_HELP_STRING([enabled sanitizers:], [${ax_enabled_sanitizers}])
+AS_HELP_STRING([pulseaudio support:], [${ax_pulse}])
 
 To compile, run:
 

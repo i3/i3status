@@ -565,7 +565,13 @@ int main(int argc, char *argv[]) {
                 return 0;
                 break;
             case 'v':
-                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n");
+                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
+#if HAS_PULSEAUDIO
+                       "Built with pulseaudio support\n"
+#else
+                       "Built without pulseaudio support\n"
+#endif
+                       );
                 return 0;
                 break;
             case 0:
