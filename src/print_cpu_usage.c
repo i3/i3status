@@ -9,6 +9,7 @@
 #include <string.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <errno.h>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
@@ -76,28 +77,41 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
-    char buf[4096];
+    FILE *f = fopen(path, "r");
+    if (f == NULL) {
+        fprintf(stderr, "i3status: open %s: %s\n", path, strerror(errno));
+        goto error;
+    }
     curr_cpu_count = get_nprocs();
-    if (!slurp(path, buf, sizeof(buf)))
-        goto error;
-    // Parsing all cpu values using strtok
-    if (strtok(buf, "\n") == NULL)
-        goto error;
-    char *buf_itr = NULL;
+    char line[4096];
+
+    /* Discard first line (cpu ), start at second line (cpu0) */
+    if (fgets(line, sizeof(line), f) == NULL) {
+        fclose(f);
+        goto error; /* unexpected EOF or read error */
+    }
+
     for (int idx = 0; idx < curr_cpu_count; ++idx) {
-        buf_itr = strtok(NULL, "\n");
+        if (fgets(line, sizeof(line), f) == NULL) {
+            fclose(f);
+            goto error; /* unexpected EOF or read error */
+        }
         int cpu_idx, user, nice, system, idle;
-        if (!buf_itr || sscanf(buf_itr, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
+        if (sscanf(line, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
+            fclose(f);
             goto error;
         }
-        if (cpu_idx < 0 || cpu_idx >= cpu_count)
+        if (cpu_idx < 0 || cpu_idx >= cpu_count) {
+            fclose(f);
             goto error;
+        }
         curr_cpus[cpu_idx].user = user;
         curr_cpus[cpu_idx].nice = nice;
         curr_cpus[cpu_idx].system = system;
         curr_cpus[cpu_idx].idle = idle;
         curr_cpus[cpu_idx].total = user + nice + system + idle;
     }
+    fclose(f);
     for (int cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {
         curr_all.user += curr_cpus[cpu_idx].user;
         curr_all.nice += curr_cpus[cpu_idx].nice;
