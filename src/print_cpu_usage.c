@@ -46,7 +46,9 @@ struct cpu_usage {
     int total;
 };
 
+#if defined(__linux__)
 static int cpu_count = 0;
+#endif
 static struct cpu_usage prev_all = {0, 0, 0, 0, 0};
 static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;

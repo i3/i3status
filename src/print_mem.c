@@ -10,10 +10,14 @@
 #define BINARY_BASE UINT64_C(1024)
 
 #define MAX_EXPONENT 4
+
+#if defined(linux)
 static const char *const iec_symbols[MAX_EXPONENT + 1] = {"", "Ki", "Mi", "Gi", "Ti"};
 
 static const char memoryfile_linux[] = "/proc/meminfo";
+#endif
 
+#if defined(linux)
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -28,7 +32,9 @@ static int print_bytes_human(char *outwalk, uint64_t bytes) {
     }
     return sprintf(outwalk, "%.1f %sB", size, iec_symbols[exponent]);
 }
+#endif
 
+#if defined(linux)
 /*
  * Convert a string to its absolute representation based on the total
  * memory of `mem_total`.
@@ -72,6 +78,7 @@ static long memory_absolute(const long mem_total, const char *size) {
 
     return mem_absolute;
 }
+#endif
 
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method) {
     char *outwalk = buffer;
