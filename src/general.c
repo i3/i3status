@@ -14,6 +14,9 @@
 /*
  * Reads size bytes into the destination buffer from filename.
  *
+ * On success, true is returned. Otherwise, false is returned and the content
+ * of destination is left untouched.
+ *
  */
 bool slurp(const char *filename, char *destination, int size) {
     int fd;
