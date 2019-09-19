@@ -27,7 +27,7 @@ bool slurp(const char *filename, char *destination, int size) {
         destination[n] = '\0';
     (void)close(fd);
 
-    return true;
+    return n != -1;
 }
 
 /*
