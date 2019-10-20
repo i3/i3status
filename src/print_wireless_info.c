@@ -189,6 +189,16 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
     // used to specify bit/s, so we convert to use the same code path.
     info->bitrate = (int)nla_get_u16(rinfo[NL80211_RATE_INFO_BITRATE]) * 100 * 1000;
 
+    if (sinfo[NL80211_STA_INFO_SIGNAL] != NULL) {
+        info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+        info->signal_level = (int8_t)nla_get_u8(sinfo[NL80211_STA_INFO_SIGNAL]);
+
+        info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
+        info->quality = nl80211_xbm_to_percent(info->signal_level, 1);
+        info->quality_max = 100;
+        info->quality_average = 50;
+    }
+
     return NL_SKIP;
 }
 
