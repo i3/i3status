@@ -22,15 +22,19 @@ static const char memoryfile_linux[] = "/proc/meminfo";
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static int print_bytes_human(char *outwalk, uint64_t bytes) {
+static int print_bytes_human(char *outwalk, uint64_t bytes, const char *unit, const int decimals) {
     double size = bytes;
     int exponent = 0;
     int bin_base = BINARY_BASE;
     while (size >= bin_base && exponent < MAX_EXPONENT) {
+        if (strcasecmp(unit, iec_symbols[exponent]) == 0) {
+            break;
+        }
+
         size /= bin_base;
         exponent += 1;
     }
-    return sprintf(outwalk, "%.1f %sB", size, iec_symbols[exponent]);
+    return sprintf(outwalk, "%.*f %sB", decimals, size, iec_symbols[exponent]);
 }
 #endif
 
@@ -80,7 +84,7 @@ static long memory_absolute(const long mem_total, const char *size) {
 }
 #endif
 
-void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method) {
+void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals) {
     char *outwalk = buffer;
 
 #if defined(linux)
@@ -169,23 +173,23 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
             *(outwalk++) = *walk;
 
         } else if (BEGINS_WITH(walk + 1, "total")) {
-            outwalk += print_bytes_human(outwalk, ram_total);
+            outwalk += print_bytes_human(outwalk, ram_total, unit, decimals);
             walk += strlen("total");
 
         } else if (BEGINS_WITH(walk + 1, "used")) {
-            outwalk += print_bytes_human(outwalk, ram_used);
+            outwalk += print_bytes_human(outwalk, ram_used, unit, decimals);
             walk += strlen("used");
 
         } else if (BEGINS_WITH(walk + 1, "free")) {
-            outwalk += print_bytes_human(outwalk, ram_free);
+            outwalk += print_bytes_human(outwalk, ram_free, unit, decimals);
             walk += strlen("free");
 
         } else if (BEGINS_WITH(walk + 1, "available")) {
-            outwalk += print_bytes_human(outwalk, ram_available);
+            outwalk += print_bytes_human(outwalk, ram_available, unit, decimals);
             walk += strlen("available");
 
         } else if (BEGINS_WITH(walk + 1, "shared")) {
-            outwalk += print_bytes_human(outwalk, ram_shared);
+            outwalk += print_bytes_human(outwalk, ram_shared, unit, decimals);
             walk += strlen("shared");
 
         } else if (BEGINS_WITH(walk + 1, "percentage_free")) {

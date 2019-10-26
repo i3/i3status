@@ -463,6 +463,15 @@ If the +format_degraded+ parameter is given and either the critical or the
 degraded threshold applies, +format_degraded+ will get used as format string.
 It acts equivalently to +format+.
 
+It's also possible to define the unit for the various format placeholders. As
++/proc/meminfo+ returns the memory in kB they will be converted to the given
+unit. If no unit is given or the +auto+ option is used, the conversion will
+select the maximum possible unit.
+
+As the converted format placeholder will be a decimal number, the number of
+decimals can be configured via the +decimals+ option. If no such option is
+given the converted format placeholder will have one decimal.
+
 As Linux' meminfo doesn't expose the overall memory in use, there are multiple
 methods to distinguish the actually used memory. 
 
@@ -475,6 +484,10 @@ methods to distinguish the actually used memory.
 *Example format*: +%free %available (%used) / %total+
 
 *Example format*: +%percentage_used used, %percentage_free free, %percentage_shared shared+
+
+*Example unit*: auto, Ki, Mi, Gi, Ti
+
+*Example decimals*: 0, 1, 2, 3
 
 *Example threshold_degraded*: +10%+
 
