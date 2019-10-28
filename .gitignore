@@ -1,3 +1,4 @@
+*~
 *.o
 .*.swp
 i3status
@@ -9,6 +10,7 @@ man/i3status.1
 
 # http://www.gnu.org/software/automake
 
+Makefile
 Makefile.in
 /ar-lib
 /test-driver
