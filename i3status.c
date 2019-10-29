@@ -369,6 +369,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t battery_opts[] = {
         CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
         CFG_STR("format_down", "No battery", CFGF_NONE),
+        CFG_STR("format_percentage", "%.02f%s", CFGF_NONE),
         CFG_STR("status_chr", "CHR", CFGF_NONE),
         CFG_STR("status_bat", "BAT", CFGF_NONE),
         CFG_STR("status_unk", "UNK", CFGF_NONE),
@@ -676,6 +677,19 @@ int main(int argc, char *argv[]) {
             cfg_general->name, cfg_general->line, interval);
     }
 
+    cfg_section = cfg_getsec(cfg, "battery");
+    if (cfg_section != NULL) {
+        bool integer_battery_capacity = cfg_getbool(cfg_section, "integer_battery_capacity");
+        char *format_percentage = cfg_getstr(cfg_section, "format_percentage");
+        if (integer_battery_capacity) {
+            if (strcmp("%.02f%s", format_percentage) == 0) {
+                cfg_setstr(cfg_section, "format_percentage", "%.00f%s");
+            } else {
+                fprintf(stderr, "i3status: integer_battery_capacity is deprecated\n");
+            }
+        }
+    }
+
     /* One memory page which each plugin can use to buffer output.
      * Even though it’s unclean, we just assume that the user will not
      * specify a format string which expands to something longer than 4096
@@ -735,7 +749,7 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("battery") {
                 SEC_OPEN_MAP("battery");
-                print_battery_info(json_gen, buffer, (strcasecmp(title, "all") == 0 ? -1 : atoi(title)), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "status_chr"), cfg_getstr(sec, "status_bat"), cfg_getstr(sec, "status_unk"), cfg_getstr(sec, "status_full"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getbool(sec, "integer_battery_capacity"), cfg_getbool(sec, "hide_seconds"));
+                print_battery_info(json_gen, buffer, (strcasecmp(title, "all") == 0 ? -1 : atoi(title)), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "status_chr"), cfg_getstr(sec, "status_bat"), cfg_getstr(sec, "status_unk"), cfg_getstr(sec, "status_full"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getstr(sec, "format_percentage"), cfg_getbool(sec, "hide_seconds"));
                 SEC_CLOSE_MAP;
             }
 

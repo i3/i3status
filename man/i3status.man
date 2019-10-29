@@ -345,8 +345,10 @@ see it this way, because it tells me how worn off my battery is.), just specify
 +last_full_capacity = true+. You can show seconds in the remaining time and
 empty time estimations by setting +hide_seconds = false+.
 
-If you want the battery percentage to be shown without decimals, add
-+integer_battery_capacity = true+.
+If you want the battery percentage to be shown in another format, use
++format_percentage+.
++integer_battery_capacity = true+ is a legacy option for
++format_percentage = "%.00f%s"+
 
 If your battery is represented in a non-standard path in /sys, be sure to
 modify the "path" property accordingly, i.e. pointing to the uevent file on
@@ -376,6 +378,8 @@ FULL) is used.
 *Example format*: +%status %remaining (%emptytime %consumption)+
 
 *Example format_down*: +No battery+
+
+*Example format_percentage*: +"%.02f%s"+
 
 *Example status_chr*: +⚡ CHR+
 
