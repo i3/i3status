@@ -572,6 +572,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
 
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
     const char *walk;
+    const char *statuswalk = NULL;
     char *outwalk = buffer;
     struct battery_info batt_info = {
         .full_design = -1,
@@ -661,13 +662,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }                                                      \
     } while (0)
 
-    for (walk = format; *walk != '\0'; walk++) {
+    walk = format;
+    while (*walk != '\0') {
         char *prevoutwalk = outwalk;
 
         if (*walk != '%') {
             *(outwalk++) = *walk;
 
-        } else if (BEGINS_WITH(walk + 1, "status")) {
+        } else if (BEGINS_WITH(walk + 1, "status") && !statuswalk) {
             const char *statusstr;
             switch (batt_info.status) {
                 case CS_CHARGING:
@@ -683,8 +685,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                     statusstr = status_unk;
             }
 
-            outwalk += sprintf(outwalk, "%s", statusstr);
+            /* Begin looping through status string */
             walk += strlen("status");
+            statuswalk = walk;
+            walk = statusstr;
+            continue;
 
         } else if (BEGINS_WITH(walk + 1, "percentage")) {
             if (integer_battery_capacity) {
@@ -739,6 +744,14 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         } else {
             *(outwalk++) = '%';
         }
+
+        /* If we have reached the end of a status string, resume format loop */
+        if (statuswalk && *(walk + 1) == '\0') {
+            walk = statuswalk;
+            statuswalk = NULL;
+        }
+
+        walk++;
     }
 
     if (colorful_output)
