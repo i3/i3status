@@ -570,7 +570,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
     return true;
 }
 
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
+void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, const char *format_percentage, bool hide_seconds) {
     const char *walk;
     char *outwalk = buffer;
     struct battery_info batt_info = {
@@ -586,7 +586,9 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
-    integer_battery_capacity = true;
+    if (strcmp("%.02f%s", format_percentage) == 0) {
+        format_percentage = "%.00f%s";
+    }
 #endif
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery time in minutes. */
@@ -687,11 +689,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             walk += strlen("status");
 
         } else if (BEGINS_WITH(walk + 1, "percentage")) {
-            if (integer_battery_capacity) {
-                outwalk += sprintf(outwalk, "%.00f%s", batt_info.percentage_remaining, pct_mark);
-            } else {
-                outwalk += sprintf(outwalk, "%.02f%s", batt_info.percentage_remaining, pct_mark);
-            }
+            outwalk += sprintf(outwalk, format_percentage, batt_info.percentage_remaining, pct_mark);
             walk += strlen("percentage");
 
         } else if (BEGINS_WITH(walk + 1, "remaining")) {
