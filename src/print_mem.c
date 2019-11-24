@@ -7,14 +7,11 @@
 #include <yajl/yajl_version.h>
 #include "i3status.h"
 
-#define BINARY_BASE UINT64_C(1024)
-
-#define MAX_EXPONENT 4
+#define BINARY_BASE 1024UL
 
 #if defined(linux)
-static const char *const iec_symbols[MAX_EXPONENT + 1] = {"", "Ki", "Mi", "Gi", "Ti"};
-
-static const char memoryfile_linux[] = "/proc/meminfo";
+static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
+#define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
 #endif
 
 #if defined(linux)
@@ -22,19 +19,18 @@ static const char memoryfile_linux[] = "/proc/meminfo";
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static int print_bytes_human(char *outwalk, uint64_t bytes, const char *unit, const int decimals) {
-    double size = bytes;
+static int print_bytes_human(char *outwalk, unsigned long bytes, const char *unit, const int decimals) {
+    double base = bytes;
     int exponent = 0;
-    int bin_base = BINARY_BASE;
-    while (size >= bin_base && exponent < MAX_EXPONENT) {
+    while (base >= BINARY_BASE && exponent < MAX_EXPONENT) {
         if (strcasecmp(unit, iec_symbols[exponent]) == 0) {
             break;
         }
 
-        size /= bin_base;
+        base /= BINARY_BASE;
         exponent += 1;
     }
-    return sprintf(outwalk, "%.*f %sB", decimals, size, iec_symbols[exponent]);
+    return sprintf(outwalk, "%.*f %s", decimals, base, iec_symbols[exponent]);
 }
 #endif
 
@@ -44,43 +40,38 @@ static int print_bytes_human(char *outwalk, uint64_t bytes, const char *unit, co
  * memory of `mem_total`.
  *
  * The string can contain any percentage values, which then return a
- * the value of `size` in relation to `mem_total`.
+ * the value of `mem_amount` in relation to `mem_total`.
  * Alternatively an absolute value can be given, suffixed with an iec
  * symbol.
  *
  */
-static long memory_absolute(const long mem_total, const char *size) {
-    char *endptr = NULL;
+static unsigned long memory_absolute(const char *mem_amount, const unsigned long mem_total) {
+    char *endptr;
+    unsigned long amount = strtoul(mem_amount, &endptr, 10);
 
-    long mem_absolute = strtol(size, &endptr, 10);
+    while (endptr[0] != '\0' && isspace(endptr[0]))
+        endptr++;
 
-    if (endptr) {
-        while (endptr[0] != '\0' && isspace(endptr[0]))
-            endptr++;
-
-        switch (endptr[0]) {
-            case 'T':
-            case 't':
-                mem_absolute *= BINARY_BASE;
-            case 'G':
-            case 'g':
-                mem_absolute *= BINARY_BASE;
-            case 'M':
-            case 'm':
-                mem_absolute *= BINARY_BASE;
-            case 'K':
-            case 'k':
-                mem_absolute *= BINARY_BASE;
-                break;
-            case '%':
-                mem_absolute = mem_total * mem_absolute / 100;
-                break;
-            default:
-                break;
-        }
+    switch (endptr[0]) {
+        case 'T':
+        case 't':
+            amount *= BINARY_BASE;
+        case 'G':
+        case 'g':
+            amount *= BINARY_BASE;
+        case 'M':
+        case 'm':
+            amount *= BINARY_BASE;
+        case 'K':
+        case 'k':
+            amount *= BINARY_BASE;
+            break;
+        case '%':
+            amount = mem_total * amount / 100;
+            break;
     }
 
-    return mem_absolute;
+    return amount;
 }
 #endif
 
@@ -92,55 +83,53 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     const char *walk;
     const char *output_color = NULL;
 
-    long ram_total = -1;
-    long ram_free = -1;
-    long ram_available = -1;
-    long ram_used = -1;
-    long ram_shared = -1;
-    long ram_cached = -1;
-    long ram_buffers = -1;
+    int unread_fields = 6;
+    unsigned long ram_total;
+    unsigned long ram_free;
+    unsigned long ram_available;
+    unsigned long ram_buffers;
+    unsigned long ram_cached;
+    unsigned long ram_shared;
 
-    FILE *file = fopen(memoryfile_linux, "r");
+    FILE *file = fopen("/proc/meminfo", "r");
     if (!file) {
         goto error;
     }
-    char line[128];
-    while (fgets(line, sizeof line, file)) {
+    for (char line[128]; fgets(line, sizeof line, file);) {
         if (BEGINS_WITH(line, "MemTotal:")) {
-            ram_total = strtol(line + strlen("MemTotal:"), NULL, 10);
+            ram_total = strtoul(line + strlen("MemTotal:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "MemFree:")) {
+            ram_free = strtoul(line + strlen("MemFree:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "MemAvailable:")) {
+            ram_available = strtoul(line + strlen("MemAvailable:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Buffers:")) {
+            ram_buffers = strtoul(line + strlen("Buffers:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Cached:")) {
+            ram_cached = strtoul(line + strlen("Cached:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Shmem:")) {
+            ram_shared = strtoul(line + strlen("Shmem:"), NULL, 10);
+        } else {
+            continue;
         }
-        if (BEGINS_WITH(line, "MemFree:")) {
-            ram_free = strtol(line + strlen("MemFree:"), NULL, 10);
-        }
-        if (BEGINS_WITH(line, "MemAvailable:")) {
-            ram_available = strtol(line + strlen("MemAvailable:"), NULL, 10);
-        }
-        if (BEGINS_WITH(line, "Buffers:")) {
-            ram_buffers = strtol(line + strlen("Buffers:"), NULL, 10);
-        }
-        if (BEGINS_WITH(line, "Cached:")) {
-            ram_cached = strtol(line + strlen("Cached:"), NULL, 10);
-        }
-        if (BEGINS_WITH(line, "Shmem:")) {
-            ram_shared = strtol(line + strlen("Shmem:"), NULL, 10);
-        }
-        if (ram_total != -1 && ram_free != -1 && ram_available != -1 && ram_buffers != -1 && ram_cached != -1 && ram_shared != -1) {
+        if (--unread_fields == 0) {
             break;
         }
     }
     fclose(file);
 
-    if (ram_total == -1 || ram_free == -1 || ram_available == -1 || ram_buffers == -1 || ram_cached == -1 || ram_shared == -1) {
+    if (unread_fields > 0) {
         goto error;
     }
 
-    ram_total = ram_total * BINARY_BASE;
-    ram_free = ram_free * BINARY_BASE;
-    ram_available = ram_available * BINARY_BASE;
-    ram_buffers = ram_buffers * BINARY_BASE;
-    ram_cached = ram_cached * BINARY_BASE;
-    ram_shared = ram_shared * BINARY_BASE;
+    // Values are in kB, convert them to B.
+    ram_total *= 1024UL;
+    ram_free *= 1024UL;
+    ram_available *= 1024UL;
+    ram_buffers *= 1024UL;
+    ram_cached *= 1024UL;
+    ram_shared *= 1024UL;
 
+    unsigned long ram_used;
     if (BEGINS_WITH(memory_used_method, "memavailable")) {
         ram_used = ram_total - ram_available;
     } else if (BEGINS_WITH(memory_used_method, "classical")) {
@@ -148,15 +137,15 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     }
 
     if (threshold_degraded) {
-        long abs = memory_absolute(ram_total, threshold_degraded);
-        if (ram_available < abs) {
+        const unsigned long threshold = memory_absolute(threshold_degraded, ram_total);
+        if (ram_available < threshold) {
             output_color = "color_degraded";
         }
     }
 
     if (threshold_critical) {
-        long abs = memory_absolute(ram_total, threshold_critical);
-        if (ram_available < abs) {
+        const unsigned long threshold = memory_absolute(threshold_critical, ram_total);
+        if (ram_available < threshold) {
             output_color = "color_bad";
         }
     }
