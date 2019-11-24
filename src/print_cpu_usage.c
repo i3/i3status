@@ -62,9 +62,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     const char *selected_format = format;
     const char *walk;
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
     int diff_idle, diff_total, diff_usage;
-    bool colorful_output = false;
 
 #if defined(__linux__)
 
@@ -161,13 +161,11 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
 #endif
 
     if (diff_usage >= max_threshold) {
-        START_COLOR("color_bad");
-        colorful_output = true;
+        outcolor = COLOR_BAD;
         if (format_above_threshold != NULL)
             selected_format = format_above_threshold;
     } else if (diff_usage >= degraded_threshold) {
-        START_COLOR("color_degraded");
-        colorful_output = true;
+        outcolor = COLOR_DEGRADED;
         if (format_above_degraded_threshold != NULL)
             selected_format = format_above_degraded_threshold;
     }
@@ -211,9 +209,6 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     struct cpu_usage *temp_cpus = prev_cpus;
     prev_cpus = curr_cpus;
     curr_cpus = temp_cpus;
-
-    if (colorful_output)
-        END_COLOR;
 
     OUTPUT_FULL_TEXT(buffer);
     return;

@@ -139,6 +139,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 
     const char *walk;
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
 
     INSTANCE(interface);
 
@@ -159,7 +160,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
     bool prefer_ipv4 = true;
     if (ipv4_address == NULL) {
         if (ipv6_address == NULL) {
-            START_COLOR("color_bad");
+            outcolor = COLOR_BAD;
             goto out;
         } else {
             prefer_ipv4 = false;
@@ -172,9 +173,9 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 
     const char *ip_address = (prefer_ipv4) ? ipv4_address : ipv6_address;
     if (BEGINS_WITH(ip_address, "no IP")) {
-        START_COLOR("color_degraded");
+        outcolor = COLOR_DEGRADED;
     } else {
-        START_COLOR("color_good");
+        outcolor = COLOR_GOOD;
     }
 
 out:
@@ -198,7 +199,6 @@ out:
             *(outwalk++) = '%';
         }
     }
-    END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
     OUTPUT_FULL_TEXT(buffer);

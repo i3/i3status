@@ -211,10 +211,10 @@ error_netbsd1:
  */
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int max_threshold) {
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
 #ifdef THERMAL_ZONE
     const char *selected_format = format;
     const char *walk;
-    bool colorful_output = false;
     char *thermal_zone;
     temperature_t temperature;
     temperature.raw_value = 0;
@@ -242,8 +242,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         goto error;
 
     if (temperature.raw_value >= max_threshold) {
-        START_COLOR("color_bad");
-        colorful_output = true;
+        outcolor = COLOR_BAD;
         if (format_above_threshold != NULL)
             selected_format = format_above_threshold;
     }
@@ -259,11 +258,6 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         } else {
             *(outwalk++) = '%';
         }
-    }
-
-    if (colorful_output) {
-        END_COLOR;
-        colorful_output = false;
     }
 
     free(thermal_zone);

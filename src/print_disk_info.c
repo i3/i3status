@@ -115,7 +115,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     const char *selected_format = format;
     const char *walk;
     char *outwalk = buffer;
-    bool colorful_output = false;
+    output_color_t outcolor = COLOR_DEFAULT;
     bool mounted = false;
 
     INSTANCE(path);
@@ -171,8 +171,7 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             format_not_mounted = "";
         selected_format = format_not_mounted;
     } else if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
-        START_COLOR("color_bad");
-        colorful_output = true;
+        outcolor = COLOR_BAD;
         if (format_below_threshold != NULL)
             selected_format = format_below_threshold;
     }
@@ -217,9 +216,6 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             *(outwalk++) = '%';
         }
     }
-
-    if (colorful_output)
-        END_COLOR;
 
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);

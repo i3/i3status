@@ -86,11 +86,11 @@ static long memory_absolute(const long mem_total, const char *size) {
 
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals) {
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
 
 #if defined(linux)
     const char *selected_format = format;
     const char *walk;
-    const char *output_color = NULL;
 
     long ram_total = -1;
     long ram_free = -1;
@@ -150,22 +150,19 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     if (threshold_degraded) {
         long abs = memory_absolute(ram_total, threshold_degraded);
         if (ram_available < abs) {
-            output_color = "color_degraded";
+            outcolor = COLOR_DEGRADED;
         }
     }
 
     if (threshold_critical) {
         long abs = memory_absolute(ram_total, threshold_critical);
         if (ram_available < abs) {
-            output_color = "color_bad";
+            outcolor = COLOR_BAD;
         }
     }
 
-    if (output_color) {
-        START_COLOR(output_color);
-
-        if (format_degraded)
-            selected_format = format_degraded;
+    if (outcolor != COLOR_DEFAULT && format_degraded) {
+        selected_format = format_degraded;
     }
 
     for (walk = selected_format; *walk != '\0'; walk++) {
@@ -212,9 +209,6 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
             *(outwalk++) = '%';
         }
     }
-
-    if (output_color)
-        END_COLOR;
 
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);

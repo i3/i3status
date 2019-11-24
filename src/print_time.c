@@ -37,6 +37,7 @@ void set_timezone(const char *tz) {
 
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t) {
     const char *walk;
+    output_color_t outcolor = COLOR_DEFAULT;
     char *outwalk = buffer;
     struct tm local_tm, tm;
     char timebuf[1024];

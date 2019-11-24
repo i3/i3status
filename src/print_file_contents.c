@@ -23,6 +23,7 @@ static void *scalloc(size_t size) {
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars) {
     const char *walk = format;
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
     char *buf = scalloc(max_chars * sizeof(char) + 1);
 
     int n = -1;
@@ -36,10 +37,10 @@ void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, con
             buf[n] = '\0';
         }
         (void)close(fd);
-        START_COLOR("color_good");
+        outcolor = COLOR_GOOD;
     } else if (errno != 0) {
         walk = format_bad;
-        START_COLOR("color_bad");
+        outcolor = COLOR_BAD;
     }
 
     for (; *walk != '\0'; walk++) {
@@ -68,6 +69,5 @@ void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, con
 
     free(buf);
 
-    END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
 }

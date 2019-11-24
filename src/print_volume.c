@@ -41,10 +41,11 @@
     }
 
 #define ALSA_MUTE_SWITCH(channel)                                                        \
-    if ((err = snd_mixer_selem_get_##channel##_switch(elem, 0, &pbval)) < 0)             \
+    int value = 1;                                                                       \
+    if ((err = snd_mixer_selem_get_##channel##_switch(elem, 0, &value)) < 0)             \
         fprintf(stderr, "i3status: ALSA: " #channel "_switch: %s\n", snd_strerror(err)); \
-    if (!pbval) {                                                                        \
-        START_COLOR("color_degraded");                                                   \
+    if (!value) {                                                                        \
+        outcolor = COLOR_DEGRADED;                                                       \
         fmt = fmt_muted;                                                                 \
     }
 
@@ -76,7 +77,7 @@ static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume, co
 
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
     char *outwalk = buffer;
-    int pbval = 1;
+    output_color_t outcolor = COLOR_DEFAULT;
 
     /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {
@@ -112,8 +113,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (muted) {
-            START_COLOR("color_degraded");
-            pbval = 0;
+            outcolor = COLOR_DEGRADED;
         }
 
         /* negative result means error, stick to 0 */
@@ -133,8 +133,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0 && success) {
             if (muted) {
-                START_COLOR("color_degraded");
-                pbval = 0;
+                outcolor = COLOR_DEGRADED;
             }
             outwalk = apply_volume_format(muted ? fmt_muted : fmt,
                                           outwalk,
@@ -253,7 +252,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     char defaultmixer[] = "/dev/mixer";
     int mixfd, vol, devmask = 0;
     const char *devicename = "UNSUPPORTED"; /* TODO: implement support for this */
-    pbval = 1;
 
     if (mixer_idx > 0)
         asprintf(&mixerpath, "/dev/mixer%d", mixer_idx);
@@ -333,9 +331,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out;
 
     if (master_mute_idx != -1 && vinfo.un.ord) {
-        START_COLOR("color_degraded");
+        outcolor = COLOR_DEGRADED;
         fmt = fmt_muted;
-        pbval = 0;
     }
 
 #else
@@ -349,8 +346,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     if (((vol & 0x7f) == 0) && (((vol >> 8) & 0x7f) == 0)) {
-        START_COLOR("color_degraded");
-        pbval = 0;
+        outcolor = COLOR_DEGRADED;
     }
 
 #endif
@@ -360,7 +356,5 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 out:
     *outwalk = '\0';
-    if (!pbval)
-        END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
 }

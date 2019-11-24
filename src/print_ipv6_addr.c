@@ -121,16 +121,16 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
     const char *walk;
     char *addr_string = get_ipv6_addr();
     char *outwalk = buffer;
+    output_color_t outcolor = COLOR_DEFAULT;
 
     if (addr_string == NULL) {
-        START_COLOR("color_bad");
+        outcolor = COLOR_BAD;
         outwalk += sprintf(outwalk, "%s", format_down);
-        END_COLOR;
         OUTPUT_FULL_TEXT(buffer);
         return;
     }
 
-    START_COLOR("color_good");
+    outcolor = COLOR_GOOD;
     for (walk = format_up; *walk != '\0'; walk++) {
         if (*walk != '%') {
             *(outwalk++) = *walk;
@@ -143,6 +143,5 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
             *(outwalk++) = '%';
         }
     }
-    END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
 }
