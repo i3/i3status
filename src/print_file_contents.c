@@ -7,66 +7,70 @@
 #include <yajl/yajl_version.h>
 #include <sys/types.h>
 
+#include <wordexp.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include "i3status.h"
 
-static void *scalloc(size_t size) {
-    void *result = calloc(size, 1);
-    if (result == NULL) {
-        die("Error: out of memory (calloc(%zu))\n", size);
-    }
-    return result;
-}
-
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars) {
-    const char *walk = format;
-    char *outwalk = buffer;
-    char *buf = scalloc(max_chars * sizeof(char) + 1);
+    errno = 0;
 
-    int n = -1;
-    int fd = open(path, O_RDONLY);
+    wordexp_t we;
+    if (wordexp(path, &we, 0) != 0)
+        die("Failed to expand path: %s.\n");
+    if (we.we_wordc != 1)
+        die("Path expanded into %d words: %s.\n"
+            "Expected one word. Please make sure all spaces are escaped.\n",
+            we.we_wordc, path);
+    FILE *f = fopen(we.we_wordv[0], "r");
+    wordfree(&we);
+
+    char *linebuf = NULL;
+    if (f != NULL) {
+        linebuf = malloc(max_chars * sizeof(char) + 1);
+        if (linebuf != NULL) {
+            const size_t nread = fread(linebuf, sizeof(char), max_chars, f);
+            linebuf[nread] = '\0';
+        }
+        fclose(f);
+    }
 
     INSTANCE(path);
 
-    if (fd > -1) {
-        n = read(fd, buf, max_chars);
-        if (n != -1) {
-            buf[n] = '\0';
-        }
-        (void)close(fd);
+    const char *walk;
+    char *outwalk = buffer;
+    if (linebuf != NULL) {
+        walk = format;
         START_COLOR("color_good");
-    } else if (errno != 0) {
+    } else {
         walk = format_bad;
         START_COLOR("color_bad");
     }
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-        } else if (BEGINS_WITH(walk + 1, "title")) {
+    while (*walk != '\0') {
+        if (BEGINS_WITH(walk, "%title")) {
+            walk += strlen("%title");
             outwalk += sprintf(outwalk, "%s", title);
-            walk += strlen("title");
-        } else if (BEGINS_WITH(walk + 1, "content")) {
-            for (char *s = buf; *s != '\0' && n > 0; s++, n--) {
-                if (*s != '\n') {
-                    *(outwalk++) = *s;
-                }
+        } else if (BEGINS_WITH(walk, "%content")) {
+            walk += strlen("%content");
+            if (linebuf != NULL) {
+                const size_t linelen = strcspn(linebuf, "\r\n");
+                memcpy(outwalk, linebuf, linelen);
+                outwalk += linelen;
             }
-            walk += strlen("content");
-        } else if (BEGINS_WITH(walk + 1, "errno")) {
+        } else if (BEGINS_WITH(walk, "%errno")) {
+            walk += strlen("%errno");
             outwalk += sprintf(outwalk, "%d", errno);
-            walk += strlen("errno");
-        } else if (BEGINS_WITH(walk + 1, "error")) {
+        } else if (BEGINS_WITH(walk, "%error")) {
+            walk += strlen("%error");
             outwalk += sprintf(outwalk, "%s", strerror(errno));
-            walk += strlen("error");
         } else {
-            *(outwalk++) = '%';
+            *outwalk++ = *walk++;
         }
     }
 
-    free(buf);
+    free(linebuf);
 
     END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
