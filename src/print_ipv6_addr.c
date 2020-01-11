@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -117,9 +119,64 @@ static char *get_ipv6_addr(void) {
     return NULL;
 }
 
+/*
+ * Returns the name of the interface with which the given IPv6 address is
+ * associated.
+ * The return value is a statically allocated char* and mustn't be freed.
+ * TODO: find a sensible criteria to immediately return the cached iface_string
+ * without going through getifaddrs' linked list.
+ */
+char *get_iface_addr(const char *searched_addr_string) {
+    static char iface_string[IFNAMSIZ] = "";
+    struct ifaddrs *addresses;
+
+    if (searched_addr_string == NULL)
+        return iface_string;
+
+    /* getifaddrs(3) returns a linked list of all the available IP addresses on
+     * the system. */
+    if (getifaddrs(&addresses) == -1) {
+        perror("getifaddrs()");
+        return NULL;
+    }
+
+    /* Search the linked list for our IP address */
+    for (struct ifaddrs *addr = addresses; addr != NULL; addr = addr->ifa_next) {
+        if (addr->ifa_addr && addr->ifa_addr->sa_family == AF_INET6) {
+            /* That's an IPv6 address, we cast the ifa_addr part of the
+            * structure to a more specialized structure that can be used by
+            * other functions easier. */
+            struct in6_addr *ip_addr = &((struct sockaddr_in6 *)addr->ifa_addr)->sin6_addr;
+
+            /* Get the string representation of the current address */
+            char addr_string[INET6_ADDRSTRLEN];
+            if (inet_ntop(AF_INET6, ip_addr, addr_string, sizeof(addr_string)) == NULL) {
+                perror("inet_ntop()");
+                return NULL;
+            }
+
+            if (!strcmp(addr_string, searched_addr_string)) {
+                /* Found the address we wanted */
+                strncpy(iface_string, addr->ifa_name, sizeof(iface_string));
+                break;
+            }
+        }
+    }
+
+    freeifaddrs(addresses);
+
+    if (*iface_string == '\0') {
+        /* We did not find the interface of the given address. */
+        return NULL;
+    } else {
+        return iface_string;
+    }
+}
+
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down) {
     const char *walk;
     char *addr_string = get_ipv6_addr();
+    char *iface_string = get_iface_addr(addr_string);
     char *outwalk = buffer;
 
     if (addr_string == NULL) {
@@ -138,6 +195,10 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
         } else if (BEGINS_WITH(walk + 1, "ip")) {
             outwalk += sprintf(outwalk, "%s", addr_string);
             walk += strlen("ip");
+
+        } else if (BEGINS_WITH(walk + 1, "iface")) {
+            outwalk += sprintf(outwalk, "%s", iface_string);
+            walk += strlen("iface");
 
         } else {
             *(outwalk++) = '%';

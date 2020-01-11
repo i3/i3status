@@ -227,7 +227,7 @@ disk "/" {
 This module gets the IPv6 address used for outgoing connections (that is, the
 best available public IPv6 address on your computer).
 
-*Example format_up*: +%ip+
+*Example format_up*: +%iface: %ip+
 
 *Example format_down*: +no IPv6+
 
