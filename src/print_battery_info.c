@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 10
+
 #if defined(__linux__)
 #include <errno.h>
 #include <glob.h>
@@ -571,7 +573,6 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
 }
 
 void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, const char *format_percentage, bool hide_seconds) {
-    const char *walk;
     char *outwalk = buffer;
     struct battery_info batt_info = {
         .full_design = -1,
@@ -653,94 +654,70 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         }
     }
 
-#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()                   \
-    do {                                                       \
-        if (outwalk == prevoutwalk) {                          \
-            if (outwalk > buffer && isspace((int)outwalk[-1])) \
-                outwalk--;                                     \
-            else if (isspace((int)*(walk + 1)))                \
-                walk++;                                        \
-        }                                                      \
-    } while (0)
+    char string_status[STRING_SIZE];
+    char string_percentage[STRING_SIZE];
+    // following variables are not alwasy set. If they are not set they should be empty.
+    char string_remaining[STRING_SIZE] = "";
+    char string_emptytime[STRING_SIZE] = "";
+    char string_consumption[STRING_SIZE] = "";
 
-    for (walk = format; *walk != '\0'; walk++) {
-        char *prevoutwalk = outwalk;
-
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-
-        } else if (BEGINS_WITH(walk + 1, "status")) {
-            const char *statusstr;
-            switch (batt_info.status) {
-                case CS_CHARGING:
-                    statusstr = status_chr;
-                    break;
-                case CS_DISCHARGING:
-                    statusstr = status_bat;
-                    break;
-                case CS_FULL:
-                    statusstr = status_full;
-                    break;
-                default:
-                    statusstr = status_unk;
-            }
-
-            outwalk += sprintf(outwalk, "%s", statusstr);
-            walk += strlen("status");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage")) {
-            outwalk += sprintf(outwalk, format_percentage, batt_info.percentage_remaining, pct_mark);
-            walk += strlen("percentage");
-
-        } else if (BEGINS_WITH(walk + 1, "remaining")) {
-            if (batt_info.seconds_remaining >= 0) {
-                int seconds, hours, minutes;
-
-                hours = batt_info.seconds_remaining / 3600;
-                seconds = batt_info.seconds_remaining - (hours * 3600);
-                minutes = seconds / 60;
-                seconds -= (minutes * 60);
-
-                if (hide_seconds)
-                    outwalk += sprintf(outwalk, "%02d:%02d",
-                                       max(hours, 0), max(minutes, 0));
-                else
-                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
-                                       max(hours, 0), max(minutes, 0), max(seconds, 0));
-            }
-            walk += strlen("remaining");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else if (BEGINS_WITH(walk + 1, "emptytime")) {
-            if (batt_info.seconds_remaining >= 0) {
-                time_t empty_time = time(NULL) + batt_info.seconds_remaining;
-                set_timezone(NULL); /* Use local time. */
-                struct tm *empty_tm = localtime(&empty_time);
-
-                if (hide_seconds)
-                    outwalk += sprintf(outwalk, "%02d:%02d",
-                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
-                else
-                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
-                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
-            }
-            walk += strlen("emptytime");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else if (BEGINS_WITH(walk + 1, "consumption")) {
-            if (batt_info.present_rate >= 0)
-                outwalk += sprintf(outwalk, "%1.2fW", batt_info.present_rate / 1e6);
-
-            walk += strlen("consumption");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else {
-            *(outwalk++) = '%';
-        }
+    const char *statusstr;
+    switch (batt_info.status) {
+        case CS_CHARGING:
+            statusstr = status_chr;
+            break;
+        case CS_DISCHARGING:
+            statusstr = status_bat;
+            break;
+        case CS_FULL:
+            statusstr = status_full;
+            break;
+        default:
+            statusstr = status_unk;
     }
+    snprintf(string_status, STRING_SIZE, "%s", statusstr);
+    snprintf(string_percentage, STRING_SIZE, format_percentage, batt_info.percentage_remaining, pct_mark);
+
+    if (batt_info.seconds_remaining >= 0) {
+        int seconds, hours, minutes;
+        hours = batt_info.seconds_remaining / 3600;
+        seconds = batt_info.seconds_remaining - (hours * 3600);
+        minutes = seconds / 60;
+        seconds -= (minutes * 60);
+        if (hide_seconds)
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d", max(hours, 0), max(minutes, 0));
+        else
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d:%02d", max(hours, 0), max(minutes, 0), max(seconds, 0));
+    }
+
+    if (batt_info.seconds_remaining >= 0) {
+        time_t empty_time = time(NULL) + batt_info.seconds_remaining;
+        set_timezone(NULL); /* Use local time. */
+        struct tm *empty_tm = localtime(&empty_time);
+        if (hide_seconds)
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+        else
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+    }
+
+    if (batt_info.present_rate >= 0)
+        snprintf(string_consumption, STRING_SIZE, "%1.2fW", batt_info.present_rate / 1e6);
+
+    placeholder_t placeholders[] = {
+        {.name = "%status", .value = string_status},
+        {.name = "%percentage", .value = string_percentage},
+        {.name = "%remaining", .value = string_remaining},
+        {.name = "%emptytime", .value = string_emptytime},
+        {.name = "%consumption", .value = string_consumption}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    char *untrimmed = format_placeholders(format, &placeholders[0], num);
+    buffer = trim(untrimmed);
+    free(untrimmed);
 
     if (colorful_output)
         END_COLOR;
 
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }

@@ -50,6 +50,7 @@ i3status_SOURCES = \
 	i3status.c \
 	src/auto_detect_format.c \
 	src/first_network_device.c \
+	src/format_placeholders.c \
 	src/general.c \
 	src/output.c \
 	src/print_battery_info.c \
