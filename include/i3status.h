@@ -232,7 +232,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t);
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr(const char *interface, int family);
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *quality_min_lenght);
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_bitrate, const char *format_noise, const char *format_quality, const char *format_signal);
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down);
 void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);

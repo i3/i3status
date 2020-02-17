@@ -97,7 +97,7 @@ typedef struct {
 
 #ifdef __linux__
 // Like iw_print_bitrate, but without the dependency on libiw.
-static void print_bitrate(char *buffer, int buflen, int bitrate) {
+static void print_bitrate(char *buffer, int buflen, int bitrate, const char *format_bitrate) {
     const int kilo = 1e3;
     const int mega = 1e6;
     const int giga = 1e9;
@@ -116,7 +116,7 @@ static void print_bitrate(char *buffer, int buflen, int bitrate) {
         scale = 'k';
         divisor = kilo;
     }
-    snprintf(buffer, buflen, "%g %cb/s", rate / divisor, scale);
+    snprintf(buffer, buflen, format_bitrate, rate / divisor, scale);
 }
 
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
@@ -491,7 +491,7 @@ error1:
  * | 127.0.0.1    | no IP        | IPv4      | ok                |
  * | 127.0.0.1    | ::1/128      | IPv4      | ok                |
  */
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_quality) {
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_bitrate, const char *format_noise, const char *format_quality, const char *format_signal) {
     const char *walk;
     char *outwalk = buffer;
     wireless_info_t info;
@@ -560,7 +560,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         } else if (BEGINS_WITH(walk + 1, "signal")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
                 if (info.signal_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+                    outwalk += sprintf(outwalk, format_signal, PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d dBm", info.signal_level);
             } else {
@@ -571,7 +571,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         } else if (BEGINS_WITH(walk + 1, "noise")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
                 if (info.noise_level_max)
-                    outwalk += sprintf(outwalk, "%3d%s", PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+                    outwalk += sprintf(outwalk, format_noise, PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
                 else
                     outwalk += sprintf(outwalk, "%d dBm", info.noise_level);
             } else {
@@ -603,7 +603,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         else if (BEGINS_WITH(walk + 1, "bitrate")) {
             char br_buffer[128];
 
-            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate);
+            print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate, format_bitrate);
 
             outwalk += sprintf(outwalk, "%s", br_buffer);
             walk += strlen("bitrate");
