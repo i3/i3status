@@ -198,6 +198,20 @@ char *endcolor() __attribute__((pure));
 void reset_cursor(void);
 void maybe_escape_markup(char *text, char **buffer);
 
+char *rtrim(const char *s);
+char *ltrim(const char *s);
+char *trim(const char *s);
+
+// copied from  i3:libi3/format_placeholders.c
+/* src/format_placeholders.c */
+typedef struct {
+    /* The placeholder to be replaced, e.g., "%title". */
+    char *name;
+    /* The value this placeholder should be replaced with. */
+    char *value;
+} placeholder_t;
+char *format_placeholders(const char *format, placeholder_t *placeholders, int num);
+
 /* src/auto_detect_format.c */
 char *auto_detect_format();
 
