@@ -111,9 +111,9 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     char string_H[STRING_SIZE];
     char string_N[STRING_SIZE];
     /* Newline- and Tabbing-characters */
-    char string_n[STRING_SIZE] = "\n";
-    char string_t[STRING_SIZE] = "\t";
-    char string_tibs_day[STRING_SIZE] = "St. Tib's Day";
+    char string_n[2] = "\n";
+    char string_t[2] = "\t";
+    char string_tibs_day[14] = "St. Tib's Day";
 
     /* Weekday in long and abbreviation */
     snprintf(string_A, STRING_SIZE, "%s", day_long[dt->week_day]);
