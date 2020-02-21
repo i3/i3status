@@ -9,6 +9,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 /* define fixed output-Strings */
 char *season_long[5] = {
     "Chaos",
@@ -59,116 +61,6 @@ struct disc_time {
     int st_tibs_day;
 };
 
-/* Print the date *dt in format *format */
-static int format_output(char *outwalk, char *format, struct disc_time *dt) {
-    char *orig_outwalk = outwalk;
-    char *i;
-    char *tibs_end = 0;
-
-    for (i = format; *i != '\0'; i++) {
-        if (*i != '%') {
-            *(outwalk++) = *i;
-            continue;
-        }
-        switch (*(i + 1)) {
-            /* Weekday in long and abbreviation */
-            case 'A':
-                outwalk += sprintf(outwalk, "%s", day_long[dt->week_day]);
-                break;
-            case 'a':
-                outwalk += sprintf(outwalk, "%s", day_short[dt->week_day]);
-                break;
-            /* Season in long and abbreviation */
-            case 'B':
-                outwalk += sprintf(outwalk, "%s", season_long[dt->season]);
-                break;
-            case 'b':
-                outwalk += sprintf(outwalk, "%s", season_short[dt->season]);
-                break;
-            /* Day of the season (ordinal and cardinal) */
-            case 'd':
-                outwalk += sprintf(outwalk, "%d", dt->season_day + 1);
-                break;
-            case 'e':
-                outwalk += sprintf(outwalk, "%d", dt->season_day + 1);
-                if (dt->season_day > 9 && dt->season_day < 13) {
-                    outwalk += sprintf(outwalk, "th");
-                    break;
-                }
-
-                switch (dt->season_day % 10) {
-                    case 0:
-                        outwalk += sprintf(outwalk, "st");
-                        break;
-                    case 1:
-                        outwalk += sprintf(outwalk, "nd");
-                        break;
-                    case 2:
-                        outwalk += sprintf(outwalk, "rd");
-                        break;
-                    default:
-                        outwalk += sprintf(outwalk, "th");
-                        break;
-                }
-                break;
-            /* YOLD */
-            case 'Y':
-                outwalk += sprintf(outwalk, "%d", dt->year);
-                break;
-            /* Holidays */
-            case 'H':
-                if (dt->season_day == 4) {
-                    outwalk += sprintf(outwalk, "%s", holidays[dt->season]);
-                }
-                if (dt->season_day == 49) {
-                    outwalk += sprintf(outwalk, "%s", holidays[dt->season + 5]);
-                }
-                break;
-            /* Stop parsing the format string, except on Holidays */
-            case 'N':
-                if (dt->season_day != 4 && dt->season_day != 49) {
-                    return (outwalk - orig_outwalk);
-                }
-                break;
-            /* Newline- and Tabbing-characters */
-            case 'n':
-                outwalk += sprintf(outwalk, "\n");
-                break;
-            case 't':
-                outwalk += sprintf(outwalk, "\t");
-                break;
-            /* The St. Tib's Day replacement */
-            case '{':
-                tibs_end = strstr(i, "%}");
-                if (tibs_end == NULL) {
-                    i++;
-                    break;
-                }
-                if (dt->st_tibs_day) {
-                    /* We outpt "St. Tib's Day... */
-                    outwalk += sprintf(outwalk, "St. Tib's Day");
-                } else {
-                    /* ...or parse the substring between %{ and %} ... */
-                    *tibs_end = '\0';
-                    outwalk += format_output(outwalk, i + 2, dt);
-                    *tibs_end = '%';
-                }
-                /* ...and continue with the rest */
-                i = tibs_end;
-                break;
-            case '}':
-                i++;
-                break;
-            default:
-                /* No escape-sequence, so we just skip */
-                outwalk += sprintf(outwalk, "%%%c", *(i + 1));
-                break;
-        }
-        i++;
-    }
-    return (outwalk - orig_outwalk);
-}
-
 /* Get the current date and convert it to discordian */
 struct disc_time *get_ddate(struct tm *current_tm) {
     static struct disc_time dt;
@@ -202,17 +94,83 @@ struct disc_time *get_ddate(struct tm *current_tm) {
 
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) {
     char *outwalk = buffer;
-    static char *form = NULL;
     struct tm current_tm;
     struct disc_time *dt;
     set_timezone(NULL); /* Use local time. */
     localtime_r(&t, &current_tm);
     if ((dt = get_ddate(&current_tm)) == NULL)
         return;
-    if (form == NULL)
-        if ((form = malloc(strlen(format) + 1)) == NULL)
-            return;
-    strcpy(form, format);
-    outwalk += format_output(outwalk, form, dt);
+
+    char string_A[STRING_SIZE];
+    char string_a[STRING_SIZE];
+    char string_B[STRING_SIZE];
+    char string_b[STRING_SIZE];
+    char string_d[STRING_SIZE];
+    char string_e[STRING_SIZE];
+    char string_Y[STRING_SIZE];
+    char string_H[STRING_SIZE];
+    char string_N[STRING_SIZE];
+    /* Newline- and Tabbing-characters */
+    char string_n[2] = "\n";
+    char string_t[2] = "\t";
+    char string_tibs_day[14] = "St. Tib's Day";
+
+    /* Weekday in long and abbreviation */
+    snprintf(string_A, STRING_SIZE, "%s", day_long[dt->week_day]);
+    snprintf(string_a, STRING_SIZE, "%s", day_short[dt->week_day]);
+    /* Season in long and abbreviation */
+    snprintf(string_B, STRING_SIZE, "%s", season_long[dt->season]);
+    snprintf(string_b, STRING_SIZE, "%s", season_short[dt->season]);
+    /* Day of the season (ordinal and cardinal) */
+    snprintf(string_d, STRING_SIZE, "%d", dt->season_day + 1);
+    snprintf(string_e, STRING_SIZE, "%d", dt->season_day + 1);
+    if (dt->season_day > 9 && dt->season_day < 13) {
+        strcat(string_e, "th");
+    }
+    switch (dt->season_day % 10) {
+        case 0:
+            strcat(string_e, "st");
+            break;
+        case 1:
+            strcat(string_e, "nd");
+            break;
+        case 2:
+            strcat(string_e, "rd");
+            break;
+        default:
+            strcat(string_e, "th");
+            break;
+    }
+    /* YOLD */
+    snprintf(string_Y, STRING_SIZE, "%d", dt->year);
+    /* Holidays */
+    if (dt->season_day == 4) {
+        snprintf(string_H, STRING_SIZE, "%s", holidays[dt->season]);
+    }
+    if (dt->season_day == 49) {
+        snprintf(string_H, STRING_SIZE, "%s", holidays[dt->season + 5]);
+    }
+    /* Stop parsing the format string, except on Holidays */
+    if (dt->season_day != 4 && dt->season_day != 49) {
+        snprintf(string_N, STRING_SIZE, "%s", "\0");
+    }
+
+    placeholder_t placeholders[] = {
+        {.name = "%A", .value = string_A},
+        {.name = "%a", .value = string_a},
+        {.name = "%B", .value = string_B},
+        {.name = "%b", .value = string_b},
+        {.name = "%d", .value = string_d},
+        {.name = "%e", .value = string_e},
+        {.name = "%Y", .value = string_Y},
+        {.name = "%H", .value = string_H},
+        {.name = "%N", .value = string_N},
+        {.name = "%n", .value = string_n},
+        {.name = "%t", .value = string_t},
+        {.name = "%{", .value = string_tibs_day},
+        {.name = "%}", .value = ""}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(format, &placeholders[0], num);
     OUTPUT_FULL_TEXT(buffer);
 }
