@@ -20,6 +20,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 #define BINARY_BASE UINT64_C(1024)
 #define DECIMAL_BASE UINT64_C(1000)
 
@@ -113,7 +115,6 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
  */
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
     const char *selected_format = format;
-    const char *walk;
     char *outwalk = buffer;
     bool colorful_output = false;
     bool mounted = false;
@@ -177,50 +178,41 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
             selected_format = format_below_threshold;
     }
 
-    for (walk = selected_format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_free[STRING_SIZE];
+    char string_used[STRING_SIZE];
+    char string_total[STRING_SIZE];
+    char string_avail[STRING_SIZE];
+    char string_percentage_free[STRING_SIZE];
+    char string_percentage_used_of_avail[STRING_SIZE];
+    char string_percentage_used[STRING_SIZE];
+    char string_percentage_avail[STRING_SIZE];
 
-        } else if (BEGINS_WITH(walk + 1, "free")) {
-            outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, prefix_type);
-            walk += strlen("free");
+    print_bytes_human(string_free, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, prefix_type);
+    print_bytes_human(string_used, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
+    print_bytes_human(string_total, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, prefix_type);
+    print_bytes_human(string_avail, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, prefix_type);
+    snprintf(string_percentage_free, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_used_of_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_used, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
 
-        } else if (BEGINS_WITH(walk + 1, "used")) {
-            outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
-            walk += strlen("used");
+    placeholder_t placeholders[] = {
+        {.name = "%free", .value = string_free},
+        {.name = "%used", .value = string_used},
+        {.name = "%total", .value = string_total},
+        {.name = "%avail", .value = string_avail},
+        {.name = "%percentage_free", .value = string_percentage_free},
+        {.name = "%percentage_used_of_avail", .value = string_percentage_used_of_avail},
+        {.name = "%percentage_used", .value = string_percentage_used},
+        {.name = "%percentage_avail", .value = string_percentage_avail}};
 
-        } else if (BEGINS_WITH(walk + 1, "total")) {
-            outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, prefix_type);
-            walk += strlen("total");
-
-        } else if (BEGINS_WITH(walk + 1, "avail")) {
-            outwalk += print_bytes_human(outwalk, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, prefix_type);
-            walk += strlen("avail");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_free")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
-            walk += strlen("percentage_free");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_used_of_avail")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
-            walk += strlen("percentage_used_of_avail");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_used")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
-            walk += strlen("percentage_used");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_avail")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
-            walk += strlen("percentage_avail");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(selected_format, &placeholders[0], num);
 
     if (colorful_output)
         END_COLOR;
 
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }
