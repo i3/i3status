@@ -38,7 +38,7 @@ If you absolutely have to build from source, use:
   autoreconf -fi
   mkdir build
   cd build
-  ../configure
+  ../configure --disable-sanitizers
   make -j8
   sudo make install
 ```
