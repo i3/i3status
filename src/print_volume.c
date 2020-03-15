@@ -15,13 +15,13 @@
 #include <math.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/soundcard.h>
 #endif
 
-#if defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/audioio.h>
@@ -261,7 +261,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         mixerpath = defaultmixer;
 
     if ((mixfd = open(mixerpath, O_RDWR)) < 0) {
-#if defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
         warn("audioio: Cannot open mixer");
 #else
         warn("OSS: Cannot open mixer");
@@ -272,7 +272,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     if (mixer_idx > 0)
         free(mixerpath);
 
-#if defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     int oclass_idx = -1, master_idx = -1, master_mute_idx = -1;
     int master_next = AUDIO_MIXER_LAST;
     mixer_devinfo_t devinfo, devinfo2;
@@ -327,15 +327,17 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         vol = (int)vinfo.un.value.level[AUDIO_MIXER_LEVEL_MONO];
     }
 
-    vinfo.dev = master_mute_idx;
-    vinfo.type = AUDIO_MIXER_ENUM;
-    if (ioctl(mixfd, AUDIO_MIXER_READ, &vinfo) == -1)
-        goto out;
+    if (master_mute_idx != -1) {
+        vinfo.dev = master_mute_idx;
+        vinfo.type = AUDIO_MIXER_ENUM;
+        if (ioctl(mixfd, AUDIO_MIXER_READ, &vinfo) == -1)
+            goto out;
 
-    if (master_mute_idx != -1 && vinfo.un.ord) {
-        START_COLOR("color_degraded");
-        fmt = fmt_muted;
-        pbval = 0;
+        if (vinfo.un.ord) {
+            START_COLOR("color_degraded");
+            fmt = fmt_muted;
+            pbval = 0;
+        }
     }
 
 #else
