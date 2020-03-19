@@ -1,4 +1,4 @@
-# i3status 
+# i3status
 
 ## Description
 
@@ -16,19 +16,20 @@ i3status has the following dependencies:
   * libyajl-dev
   * libasound2-dev
   * libnl-genl-3-dev
+  * autoconf (compile-time only dependency)
   * asciidoc (only for the documentation)
   * libpulse-dev (for getting the current volume using PulseAudio)
 
 On debian-based systems, the following line will install all requirements:
 ```bash
-apt-get install libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libpulse-dev libnl-genl-3-dev
+apt-get install autoconf libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libpulse-dev libnl-genl-3-dev
 ```
 
 ## Upstream
 
 i3status is developed at https://github.com/i3/i3status
 
-## Compilation 
+## Compilation
 
 Prefer installing i3status via your Linux distribution’s package manager.
 
