@@ -182,10 +182,10 @@ none::
 Does not use any color codes. Separates values by the pipe symbol by default.
 This should be used with i3bar and can be used for custom scripts.
 
-It's also possible to use the color_good, color_degraded, color_bad directives
-to define specific colors per module. If one of these directives is defined
-in a module section its value will override the value defined in the general
-section just for this module.
+It's also possible to use the +color_good+, +color_degraded+, +color_bad+
+directives to define specific colors per module. If one of these directives is
+defined in a module section its value will override the value defined in the
+general section just for this module.
 
 If you don't fancy the vertical separators between modules i3status/i3bar
 uses by default, you can employ the +separator+ directive to configure how
@@ -251,7 +251,7 @@ custom::
 The custom prefixes (K, M, G, T) represent multiples of powers of 1024.
 
 It is possible to define a low_threshold that causes the disk text to be
-displayed using color_bad. The low_threshold type can be of threshold_type
+displayed using +color_bad+. The low_threshold type can be of threshold_type
 "bytes_free", "bytes_avail", "percentage_free", or "percentage_avail", where
 the former two can be prepended by a generic prefix (k, m, g, t) having
 prefix_type. So, if you configure low_threshold to 2, threshold_type to
@@ -363,7 +363,7 @@ your system. The first occurrence of %d gets replaced with the battery number,
 but you can just hard-code a path as well.
 
 It is possible to define a low_threshold that causes the battery text to be
-colored color_bad. The low_threshold type can be of threshold_type "time" or
+colored +color_bad+. The low_threshold type can be of threshold_type "time" or
 "percentage". So, if you configure low_threshold to 10 and threshold_type to
 "time", and your battery lasts another 9 minutes, it will be colored red.
 
@@ -428,13 +428,13 @@ Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+
 (FreeBSD/OpenBSD).
 
 It is possible to define a max_threshold that will color the load
-value with color_bad in case the CPU average over the last interval is getting
+value with +color_bad+ in case the CPU average over the last interval is getting
 higher than the configured threshold. Defaults to 95. The output
 format when above max_threshold can be customized with
 format_above_threshold.
 
 It is possible to define a degraded_threshold that will color the load
-value with color_degraded in case the CPU average over the last interval is
+value with +color_degraded+ in case the CPU average over the last interval is
 getting higher than the configured threshold. Defaults to 90. The output format
 when above degraded threshold can be customized with
 format_above_degraded_threshold.
@@ -464,7 +464,7 @@ available. These will print human readable values. It's also possible to prefix
 the placeholders with +percentage_+ to get a value in percent.
 
 It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
-color the status bar output in color_degraded or color_bad, if the available
+color the status bar output in +color_degraded+ or +color_bad+, if the available
 memory falls below the given threshold. Possible values of the threshold can be
 any integer, suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively,
 the integer can be suffixed by a percent sign, which then rets evaluated
@@ -510,7 +510,7 @@ methods to distinguish the actually used memory.
 
 Gets the system load (number of processes waiting for CPU time in the last
 1, 5 and 15 minutes). It is possible to define a max_threshold that will
-color the load value color_bad in case the load average of the last minute is
+color the load value +color_bad+ in case the load average of the last minute is
 getting higher than the configured threshold. Defaults to 5. The output 
 format when above max_threshold can be customized with
 format_above_threshold.
