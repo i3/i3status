@@ -183,7 +183,8 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
 #if defined(__linux__)
         else if (BEGINS_WITH(walk + 1, "cpu")) {
             int number = -1;
-            sscanf(walk + 1, "cpu%d", &number);
+            int length = strlen("cpu");
+            sscanf(walk + 1, "cpu%d%n", &number, &length);
             if (number == -1) {
                 fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
             } else if (number >= cpu_count) {
@@ -194,13 +195,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
                 outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
             }
-            int padding = 1;
-            int step = 10;
-            while (step <= number) {
-                step *= 10;
-                padding++;
-            }
-            walk += strlen("cpu") + padding;
+            walk += length;
         }
 #endif
         else {
