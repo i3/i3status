@@ -182,10 +182,10 @@ none::
 Does not use any color codes. Separates values by the pipe symbol by default.
 This should be used with i3bar and can be used for custom scripts.
 
-It's also possible to use the color_good, color_degraded, color_bad directives
-to define specific colors per module. If one of these directives is defined
-in a module section its value will override the value defined in the general
-section just for this module.
+It's also possible to use the +color_good+, +color_degraded+, +color_bad+
+directives to define specific colors per module. If one of these directives is
+defined in a module section its value will override the value defined in the
+general section just for this module.
 
 If you don't fancy the vertical separators between modules i3status/i3bar
 uses by default, you can employ the +separator+ directive to configure how
@@ -235,8 +235,8 @@ best available public IPv6 address on your computer).
 
 Gets used, free, available and total amount of bytes on the given mounted filesystem.
 
-These values can also be expressed in percentages with the percentage_used,
-percentage_free, percentage_avail and percentage_used_of_avail formats.
+These values can also be expressed in percentages with the +percentage_used+,
++percentage_free+, +percentage_avail+ and +percentage_used_of_avail+ formats.
 
 Byte sizes are presented in a human readable format using a set of prefixes
 whose type can be specified via the "prefix_type" option. Three sets of
@@ -250,16 +250,16 @@ SI prefixes (k, M, G, T) represent multiples of powers of 1000.
 custom::
 The custom prefixes (K, M, G, T) represent multiples of powers of 1024.
 
-It is possible to define a low_threshold that causes the disk text to be
-displayed using color_bad. The low_threshold type can be of threshold_type
+It is possible to define a +low_threshold+ that causes the disk text to be
+displayed using +color_bad+. The +low_threshold+ type can be of +threshold_type+
 "bytes_free", "bytes_avail", "percentage_free", or "percentage_avail", where
 the former two can be prepended by a generic prefix (k, m, g, t) having
-prefix_type. So, if you configure low_threshold to 2, threshold_type to
+prefix_type. So, if you configure +low_threshold+ to 2, +threshold_type+ to
 "gbytes_avail", and prefix_type to "binary", and the remaining available disk
-space is below 2 GiB, it will be colored bad. If not specified, threshold_type
-is assumed to be "percentage_avail" and low_threshold to be set to 0, which
+space is below 2 GiB, it will be colored bad. If not specified, +threshold_type+
+is assumed to be "percentage_avail" and +low_threshold+ to be set to 0, which
 implies no coloring at all. You can customize the output format when below
-low_threshold with format_below_threshold.
++low_threshold+ with +format_below_threshold.+
 
 You can define a different format with the option "format_not_mounted"
 which is used if the path does not exist or is not a mount point. Defaults to "".
@@ -283,7 +283,7 @@ which is used if the path does not exist or is not a mount point. Defaults to ""
 Expands the given path to a pidfile and checks if the process ID found inside
 is valid (that is, if the process is running). You can use this to check if
 a specific application, such as a VPN client or your DHCP client is running.
-There also is an option "format_down". You can hide the output with
+There also is an option +format_down+. You can hide the output with
 +format_down=""+.
 
 *Example order*: +run_watch DHCP+
@@ -294,7 +294,7 @@ There also is an option "format_down". You can hide the output with
 
 Checks if the given path exists in the filesystem. You can use this to check if
 something is active, like for example a VPN tunnel managed by NetworkManager.
-There also is an option "format_down". You can hide the output with
+There also is an option +format_down+. You can hide the output with
 +format_down=""+.
 
 *Example order*: +path_exists VPN+
@@ -358,14 +358,15 @@ If you want the battery percentage to be shown in another format, use
 +format_percentage = "%.00f%s"+
 
 If your battery is represented in a non-standard path in /sys, be sure to
-modify the "path" property accordingly, i.e. pointing to the uevent file on
+modify the +path+ property accordingly, i.e. pointing to the uevent file on
 your system. The first occurrence of %d gets replaced with the battery number,
 but you can just hard-code a path as well.
 
 It is possible to define a low_threshold that causes the battery text to be
-colored red. The low_threshold type can be of threshold_type "time" or
-"percentage". So, if you configure low_threshold to 10 and threshold_type to
-"time", and your battery lasts another 9 minutes, it will be colored red.
+colored +color_bad+. The +low_threshold+ type can be of +threshold_type+ "time"
+or "percentage". So, if you configure +low_threshold+ to 10 and +threshold_type+
+to "time", and your battery lasts another 9 minutes, it will be colored
++color_bad+.
 
 To show an aggregate of all batteries in the system, use "all" as the number. In
 this case (for Linux), the /sys path must contain the "%d" sequence. Otherwise,
@@ -407,10 +408,10 @@ FULL) is used.
 === CPU-Temperature
 
 Gets the temperature of the given thermal zone. It is possible to
-define a max_threshold that will color the temperature red in case the
+define a +max_threshold+ that will color the temperature red in case the
 specified thermal zone is getting too hot. Defaults to 75 degrees C. The
-output format when above max_threshold can be customized with
-format_above_threshold.
+output format when above +max_threshold+ can be customized with
++format_above_threshold+.
 
 *Example order*: +cpu_temperature 0+
 
@@ -427,17 +428,17 @@ format_above_threshold.
 Gets the percentual CPU usage from +/proc/stat+ (Linux) or +sysctl(3)+
 (FreeBSD/OpenBSD).
 
-It is possible to define a max_threshold that will color the load
-value red in case the CPU average over the last interval is getting
+It is possible to define a +max_threshold+ that will color the load
+value with +color_bad+ in case the CPU average over the last interval is getting
 higher than the configured threshold. Defaults to 95. The output
-format when above max_threshold can be customized with
-format_above_threshold.
+format when above +max_threshold+ can be customized with
++format_above_threshold+.
 
-It is possible to define a degraded_threshold that will color the load
-value yellow in case the CPU average over the last interval is getting
-higher than the configured threshold. Defaults to 90. The output format
+It is possible to define a +degraded_threshold+ that will color the load
+value with +color_degraded+ in case the CPU average over the last interval is
+getting higher than the configured threshold. Defaults to 90. The output format
 when above degraded threshold can be customized with
-format_above_degraded_threshold.
++format_above_degraded_threshold+.
 
 For displaying the Nth CPU usage, you can use the %cpu<N> format string,
 starting from %cpu0. This feature is currently not supported in FreeBSD.
@@ -464,11 +465,11 @@ available. These will print human readable values. It's also possible to prefix
 the placeholders with +percentage_+ to get a value in percent.
 
 It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
-color the status bar output in yellow or red, if the available memory falls
-below the given threshold. Possible values of the threshold can be any integer,
-suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively, the integer
-can be suffixed by a percent sign, which then rets evaluated relatively to
-total memory.
+color the status bar output in +color_degraded+ or +color_bad+, if the available
+memory falls below the given threshold. Possible values of the threshold can be
+any integer, suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively,
+the integer can be suffixed by a percent sign, which then rets evaluated
+relatively to total memory.
 
 If the +format_degraded+ parameter is given and either the critical or the
 degraded threshold applies, +format_degraded+ will get used as format string.
@@ -510,10 +511,10 @@ methods to distinguish the actually used memory.
 
 Gets the system load (number of processes waiting for CPU time in the last
 1, 5 and 15 minutes). It is possible to define a max_threshold that will
-color the load value red in case the load average of the last minute is
+color the load value +color_bad+ in case the load average of the last minute is
 getting higher than the configured threshold. Defaults to 5. The output 
-format when above max_threshold can be customized with
-format_above_threshold.
+format when above +max_threshold+ can be customized with
++format_above_threshold+.
 
 *Example order*: +load+
 
@@ -645,9 +646,9 @@ volume master {
 Outputs the contents of the specified file. You can use this to check contents
 of files on your system, for example /proc/uptime. By default the function only
 reads the first 254 characters of the file, if you want to override this set 
-the Max_characters option. It will never read beyond the first 4095 characters.
-If the file is not found "no file" will be printed, if the file can't be read
-"error read" will be printed.
+the +Max_characters+ option. It will never read beyond the first 4095
+characters. If the file is not found "no file" will be printed, if the file
+can't be read "error read" will be printed.
 
 *Example order*: read_file UPTIME
 
@@ -682,7 +683,7 @@ separator::
 	A boolean value which specifies whether a separator line should be drawn
 	after this block. The default is true, meaning the separator line will be
 	drawn. Note that if you disable the separator line, there will still be a
-	gap after the block, unless you also use separator_block_width.
+	gap after the block, unless you also use +separator_block_width+.
 separator_block_width::
 	The amount of pixels to leave blank after the block. In the middle of this
 	gap, a separator symbol will be drawn unless separator is disabled. This is
