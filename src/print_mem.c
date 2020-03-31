@@ -7,6 +7,8 @@
 #include <yajl/yajl_version.h>
 #include "i3status.h"
 
+#define STRING_SIZE 10
+
 #define BINARY_BASE 1024UL
 
 #if defined(linux)
@@ -31,6 +33,10 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
         exponent += 1;
     }
     return sprintf(outwalk, "%.*f %s", decimals, base, iec_symbols[exponent]);
+}
+
+static int print_percentage(char *outwalk, float percent) {
+    return snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
 }
 #endif
 
@@ -157,56 +163,45 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
             selected_format = format_degraded;
     }
 
-    for (walk = selected_format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_ram_total[STRING_SIZE];
+    char string_ram_used[STRING_SIZE];
+    char string_ram_free[STRING_SIZE];
+    char string_ram_available[STRING_SIZE];
+    char string_ram_shared[STRING_SIZE];
+    char string_percentage_free[STRING_SIZE];
+    char string_percentage_available[STRING_SIZE];
+    char string_percentage_used[STRING_SIZE];
+    char string_percentage_shared[STRING_SIZE];
 
-        } else if (BEGINS_WITH(walk + 1, "total")) {
-            outwalk += print_bytes_human(outwalk, ram_total, unit, decimals);
-            walk += strlen("total");
+    print_bytes_human(string_ram_total, ram_total, unit, decimals);
+    print_bytes_human(string_ram_used, ram_used, unit, decimals);
+    print_bytes_human(string_ram_free, ram_free, unit, decimals);
+    print_bytes_human(string_ram_available, ram_available, unit, decimals);
+    print_bytes_human(string_ram_shared, ram_shared, unit, decimals);
+    print_percentage(string_percentage_free, 100.0 * ram_free / ram_total);
+    print_percentage(string_percentage_available, 100.0 * ram_available / ram_total);
+    print_percentage(string_percentage_used, 100.0 * ram_used / ram_total);
+    print_percentage(string_percentage_shared, 100.0 * ram_shared / ram_total);
 
-        } else if (BEGINS_WITH(walk + 1, "used")) {
-            outwalk += print_bytes_human(outwalk, ram_used, unit, decimals);
-            walk += strlen("used");
+    placeholder_t placeholders[] = {
+        {.name = "%total", .value = string_ram_total},
+        {.name = "%used", .value = string_ram_used},
+        {.name = "%free", .value = string_ram_free},
+        {.name = "%available", .value = string_ram_available},
+        {.name = "%shared", .value = string_ram_shared},
+        {.name = "%percentage_free", .value = string_percentage_free},
+        {.name = "%percentage_available", .value = string_percentage_available},
+        {.name = "%percentage_used", .value = string_percentage_used},
+        {.name = "%percentage_shared", .value = string_percentage_shared}};
 
-        } else if (BEGINS_WITH(walk + 1, "free")) {
-            outwalk += print_bytes_human(outwalk, ram_free, unit, decimals);
-            walk += strlen("free");
-
-        } else if (BEGINS_WITH(walk + 1, "available")) {
-            outwalk += print_bytes_human(outwalk, ram_available, unit, decimals);
-            walk += strlen("available");
-
-        } else if (BEGINS_WITH(walk + 1, "shared")) {
-            outwalk += print_bytes_human(outwalk, ram_shared, unit, decimals);
-            walk += strlen("shared");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_free")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_free / ram_total, pct_mark);
-            walk += strlen("percentage_free");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_available")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_available / ram_total, pct_mark);
-            walk += strlen("percentage_available");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_used")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_used / ram_total, pct_mark);
-            walk += strlen("percentage_used");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage_shared")) {
-            outwalk += sprintf(outwalk, "%.01f%s", 100.0 * ram_shared / ram_total, pct_mark);
-            walk += strlen("percentage_shared");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(selected_format, &placeholders[0], num);
 
     if (output_color)
         END_COLOR;
 
-    *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 
     return;
 error:
