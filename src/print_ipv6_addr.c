@@ -118,7 +118,6 @@ static char *get_ipv6_addr(void) {
 }
 
 void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down) {
-    const char *walk;
     char *addr_string = get_ipv6_addr();
     char *outwalk = buffer;
 
@@ -131,18 +130,13 @@ void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, con
     }
 
     START_COLOR("color_good");
-    for (walk = format_up; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
 
-        } else if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", addr_string);
-            walk += strlen("ip");
+    placeholder_t placeholders[] = {
+        {.name = "%ip", .value = addr_string}};
 
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(format_up, &placeholders[0], num);
     END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }
