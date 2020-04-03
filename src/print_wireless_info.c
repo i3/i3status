@@ -519,7 +519,12 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         if (ipv6_address == NULL) {
             START_COLOR("color_bad");
             outwalk += sprintf(outwalk, "%s", format_down);
-            goto out;
+
+            END_COLOR;
+            free(ipv4_address);
+            free(ipv6_address);
+            OUTPUT_FULL_TEXT(buffer);
+            return;
         } else {
             prefer_ipv4 = false;
         }
@@ -611,7 +616,6 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     buffer = format_placeholders(walk, &placeholders[0], num);
 
-out:
     END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
