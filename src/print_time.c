@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 50
+
 static bool local_timezone_init = false;
 static const char *local_timezone = NULL;
 static const char *current_timezone = NULL;
@@ -36,10 +38,8 @@ void set_timezone(const char *tz) {
 }
 
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t) {
-    const char *walk;
     char *outwalk = buffer;
     struct tm local_tm, tm;
-    char timebuf[1024];
 
     if (title != NULL)
         INSTANCE(title);
@@ -61,23 +61,18 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
         setlocale(LC_ALL, locale);
     }
 
+    char string_time[STRING_SIZE];
+
     if (format_time == NULL) {
-        strftime(timebuf, sizeof(timebuf), format, &tm);
-        maybe_escape_markup(timebuf, &outwalk);
+        strftime(string_time, sizeof(string_time), format, &tm);
+        maybe_escape_markup(string_time, &outwalk);
     } else {
-        for (walk = format; *walk != '\0'; walk++) {
-            if (*walk != '%') {
-                *(outwalk++) = *walk;
+        strftime(string_time, sizeof(string_time), format_time, &tm);
+        placeholder_t placeholders[] = {
+            {.name = "%time", .value = string_time}};
 
-            } else if (BEGINS_WITH(walk + 1, "time")) {
-                strftime(timebuf, sizeof(timebuf), format_time, &tm);
-                maybe_escape_markup(timebuf, &outwalk);
-                walk += strlen("time");
-
-            } else {
-                *(outwalk++) = '%';
-            }
-        }
+        const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+        buffer = format_placeholders(format_time, &placeholders[0], num);
     }
 
     if (locale != NULL) {
