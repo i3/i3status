@@ -31,6 +31,8 @@
 #include "i3status.h"
 #include "queue.h"
 
+#define STRING_SIZE 10
+
 #define ALSA_VOLUME(channel)                                                    \
     err = snd_mixer_selem_get_##channel##_dB_range(elem, &min, &max) ||         \
           snd_mixer_selem_get_##channel##_dB(elem, 0, &val);                    \
@@ -48,30 +50,20 @@
         fmt = fmt_muted;                                                                 \
     }
 
-static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume, const char *devicename) {
-    const char *walk = fmt;
+static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, const char *devicename) {
+    char string_volume[STRING_SIZE];
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    snprintf(string_volume, STRING_SIZE, "%d%s", ivolume, pct_mark);
 
-        } else if (BEGINS_WITH(walk + 1, "%")) {
-            outwalk += sprintf(outwalk, "%s", pct_mark);
-            walk += strlen("%");
+    placeholder_t placeholders[] = {
+        {.name = "%%", .value = pct_mark},
+        {.name = "%volume", .value = string_volume},
+        {.name = "%devicename", .value = devicename}};
 
-        } else if (BEGINS_WITH(walk + 1, "volume")) {
-            outwalk += sprintf(outwalk, "%d%s", ivolume, pct_mark);
-            walk += strlen("volume");
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(fmt, &placeholders[0], num);
 
-        } else if (BEGINS_WITH(walk + 1, "devicename")) {
-            outwalk += sprintf(outwalk, "%s", devicename);
-            walk += strlen("devicename");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
-    return outwalk;
+    return buffer;
 }
 
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
@@ -119,10 +111,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         /* negative result means error, stick to 0 */
         if (ivolume < 0)
             ivolume = 0;
-        outwalk = apply_volume_format(muted ? fmt_muted : fmt,
-                                      outwalk,
-                                      ivolume,
-                                      description);
+        buffer = apply_volume_format(muted ? fmt_muted : fmt,
+                                     buffer,
+                                     ivolume,
+                                     description);
         goto out;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
@@ -136,10 +128,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 START_COLOR("color_degraded");
                 pbval = 0;
             }
-            outwalk = apply_volume_format(muted ? fmt_muted : fmt,
-                                          outwalk,
-                                          ivolume,
-                                          description);
+            buffer = apply_volume_format(muted ? fmt_muted : fmt,
+                                         buffer,
+                                         ivolume,
+                                         description);
             goto out;
         }
         /* negative result or NULL description means error, fail PulseAudio attempt */
@@ -356,12 +348,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
 #endif
-    outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f, devicename);
+    buffer = apply_volume_format(fmt, buffer, vol & 0x7f, devicename);
     close(mixfd);
 #endif
 
 out:
-    *outwalk = '\0';
     if (!pbval)
         END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
