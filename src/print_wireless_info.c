@@ -590,7 +590,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
         } else if (BEGINS_WITH(walk + 1, "frequency")) {
             if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
-                outwalk += sprintf(outwalk, "%1.1f GHz", info.frequency / 1e9);
+                outwalk += sprintf(outwalk, "%1.0f MHz", info.frequency / 1e6);
             else
                 *(outwalk++) = '?';
             walk += strlen("frequency");
