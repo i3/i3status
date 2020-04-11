@@ -605,8 +605,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     snprintf(string_ip, STRING_SIZE, "%s", ip_address);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-    char br_buffer[128];
-    print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate, format_bitrate);
+    print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate, format_bitrate);
 #endif
 
     placeholder_t placeholders[] = {
