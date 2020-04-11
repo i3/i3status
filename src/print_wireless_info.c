@@ -97,7 +97,7 @@ typedef struct {
     double frequency;
 } wireless_info_t;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 // Like iw_print_bitrate, but without the dependency on libiw.
 static void print_bitrate(char *buffer, int buflen, int bitrate, const char *format_bitrate) {
     const int kilo = 1e3;
@@ -120,7 +120,9 @@ static void print_bitrate(char *buffer, int buflen, int bitrate, const char *for
     }
     snprintf(buffer, buflen, format_bitrate, rate / divisor, scale);
 }
+#endif
 
+#ifdef __linux__
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
 static uint32_t nl80211_xbm_to_percent(int32_t xbm, int32_t divisor) {
 #define NOISE_FLOOR_DBM -90
@@ -408,6 +410,9 @@ error1:
         info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
         info->noise_level = u.req.info[0].isi_noise;
         info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
+        // isi_txmbps is specified in units of 500 Kbit/s
+        // Convert them to bit/s
+        info->bitrate = u.req.info[0].isi_txmbps * 500 * 1000;
     }
 
     return 1;
@@ -599,7 +604,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     snprintf(string_ip, STRING_SIZE, "%s", ip_address);
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
     char br_buffer[128];
     print_bitrate(br_buffer, sizeof(br_buffer), info.bitrate, format_bitrate);
 #endif
