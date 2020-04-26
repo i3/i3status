@@ -115,7 +115,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                                      buffer,
                                      ivolume,
                                      description);
-        goto out;
+        goto out_with_format;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
         char description[MAX_SINK_DESCRIPTION_LEN];
@@ -132,7 +132,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                                          buffer,
                                          ivolume,
                                          description);
-            goto out;
+            goto out_with_format;
         }
         /* negative result or NULL description means error, fail PulseAudio attempt */
     }
@@ -234,10 +234,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         ALSA_MUTE_SWITCH(capture)
     }
 
-    outwalk = apply_volume_format(fmt, outwalk, avg, mixer_name);
+    buffer = apply_volume_format(fmt, buffer, avg, mixer_name);
 
     snd_mixer_close(m);
     snd_mixer_selem_id_free(sid);
+    goto out_with_format;
 
 #endif
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
@@ -350,10 +351,18 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 #endif
     buffer = apply_volume_format(fmt, buffer, vol & 0x7f, devicename);
     close(mixfd);
+    goto out_with_format;
 #endif
 
 out:
     if (!pbval)
         END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
+    return;
+
+out_with_format:
+    if (!pbval)
+        END_COLOR;
+    OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }
