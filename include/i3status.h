@@ -31,6 +31,7 @@ extern char *pct_mark;
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(x, y) ((x) < (y) ? (x) : (y))
 
 #define DEFAULT_SINK_INDEX UINT32_MAX
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
