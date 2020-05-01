@@ -6,10 +6,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <glob.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 
 #include "i3status.h"
+
+#define exit_if_null(pointer, ...) \
+    {                              \
+        if (pointer == NULL)       \
+            die(__VA_ARGS__);      \
+    }
+
 
 /*
  * Reads size bytes into the destination buffer from filename.
@@ -31,6 +39,54 @@ bool slurp(const char *filename, char *destination, int size) {
     (void)close(fd);
 
     return n != -1;
+}
+
+/*
+ * This function resolves ~ in pathnames.
+ * It may resolve wildcards in the first part of the path, but if no match
+ * or multiple matches are found, it just returns a copy of path as given.
+ *
+ */
+char *resolve_tilde(const char *path) {
+    static glob_t globbuf;
+    char *head, *tail, *result = NULL;
+
+    tail = strchr(path, '/');
+    head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
+
+    int res = glob(head, GLOB_TILDE, NULL, &globbuf);
+    free(head);
+    /* no match, or many wildcard matches are bad */
+    if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
+        result = sstrdup(path);
+    else if (res != 0) {
+        die("glob() failed");
+    } else {
+        head = globbuf.gl_pathv[0];
+        result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
+        strcpy(result, head);
+        if (tail) {
+            strcat(result, tail);
+        }
+    }
+    globfree(&globbuf);
+
+    return result;
+}
+
+char *sstrdup(const char *str) {
+    if (str == NULL) {
+        return NULL;
+    }
+    char *result = strdup(str);
+    exit_if_null(result, "Error: out of memory (strdup())\n");
+    return result;
+}
+
+void *scalloc(size_t size) {
+    void *result = calloc(size, 1);
+    exit_if_null(result, "Error: out of memory (calloc(%zu))\n", size);
+    return result;
 }
 
 /*

@@ -14,14 +14,6 @@
 
 #define STRING_SIZE 10
 
-static void *scalloc(size_t size) {
-    void *result = calloc(size, 1);
-    if (result == NULL) {
-        die("Error: out of memory (calloc(%zu))\n", size);
-    }
-    return result;
-}
-
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars) {
     const char *walk = format;
     char *outwalk = buffer;
