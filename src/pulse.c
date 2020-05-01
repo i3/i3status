@@ -281,6 +281,7 @@ bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffe
         buffer[sizeof(entry->description) - 1] = '\0';
         return true;
     }
+
     pthread_mutex_unlock(&pulse_mutex);
     /* first time requires a prime callback call because we only get updates
      * when the description or volume actually changes, but we need it to be
@@ -288,9 +289,8 @@ bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffe
     pa_threaded_mainloop_lock(main_loop);
     get_sink_info(context, sink_idx, sink_name);
     pa_threaded_mainloop_unlock(main_loop);
-    /* show empty string while we don't have this information */
-    buffer[0] = '\0';
-    return true;
+
+    return false;
 }
 
 /*
