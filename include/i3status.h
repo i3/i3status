@@ -206,9 +206,9 @@ char *trim(const char *s);
 /* src/format_placeholders.c */
 typedef struct {
     /* The placeholder to be replaced, e.g., "%title". */
-    char *name;
+    const char *name;
     /* The value this placeholder should be replaced with. */
-    char *value;
+    const char *value;
 } placeholder_t;
 char *format_placeholders(const char *format, placeholder_t *placeholders, int num);
 

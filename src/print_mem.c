@@ -23,7 +23,7 @@ static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
  */
 static int print_bytes_human(char *outwalk, unsigned long bytes, const char *unit, const int decimals) {
     double base = bytes;
-    int exponent = 0;
+    size_t exponent = 0;
     while (base >= BINARY_BASE && exponent < MAX_EXPONENT) {
         if (strcasecmp(unit, iec_symbols[exponent]) == 0) {
             break;
@@ -86,7 +86,6 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
 
 #if defined(linux)
     const char *selected_format = format;
-    const char *walk;
     const char *output_color = NULL;
 
     int unread_fields = 6;
@@ -140,6 +139,8 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
         ram_used = ram_total - ram_available;
     } else if (BEGINS_WITH(memory_used_method, "classical")) {
         ram_used = ram_total - ram_free - ram_buffers - ram_cached;
+    } else {
+        die("Unexpected value: memory_used_method = %s", memory_used_method);
     }
 
     if (threshold_degraded) {

@@ -1,6 +1,7 @@
 // vim:ts=4:sw=4:expandtab
 #include <config.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
