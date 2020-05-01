@@ -164,11 +164,11 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
     struct nlattr *sinfo[NL80211_STA_INFO_MAX + 1];
     struct nlattr *rinfo[NL80211_RATE_INFO_MAX + 1];
     static struct nla_policy stats_policy[NL80211_STA_INFO_MAX + 1] = {
-            [NL80211_STA_INFO_RX_BITRATE] = {.type = NLA_NESTED},
+        [NL80211_STA_INFO_RX_BITRATE] = {.type = NLA_NESTED},
     };
 
     static struct nla_policy rate_policy[NL80211_RATE_INFO_MAX + 1] = {
-            [NL80211_RATE_INFO_BITRATE] = {.type = NLA_U16},
+        [NL80211_RATE_INFO_BITRATE] = {.type = NLA_U16},
     };
 
     if (nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0), genlmsg_attrlen(gnlh, 0), NULL) < 0)
@@ -212,12 +212,12 @@ static int gwi_scan_cb(struct nl_msg *msg, void *data) {
     struct nlattr *tb[NL80211_ATTR_MAX + 1];
     struct nlattr *bss[NL80211_BSS_MAX + 1];
     struct nla_policy bss_policy[NL80211_BSS_MAX + 1] = {
-            [NL80211_BSS_FREQUENCY] = {.type = NLA_U32},
-            [NL80211_BSS_BSSID] = {.type = NLA_UNSPEC},
-            [NL80211_BSS_INFORMATION_ELEMENTS] = {.type = NLA_UNSPEC},
-            [NL80211_BSS_SIGNAL_MBM] = {.type = NLA_U32},
-            [NL80211_BSS_SIGNAL_UNSPEC] = {.type = NLA_U8},
-            [NL80211_BSS_STATUS] = {.type = NLA_U32},
+        [NL80211_BSS_FREQUENCY] = {.type = NLA_U32},
+        [NL80211_BSS_BSSID] = {.type = NLA_UNSPEC},
+        [NL80211_BSS_INFORMATION_ELEMENTS] = {.type = NLA_UNSPEC},
+        [NL80211_BSS_SIGNAL_MBM] = {.type = NLA_U32},
+        [NL80211_BSS_SIGNAL_UNSPEC] = {.type = NLA_U8},
+        [NL80211_BSS_STATUS] = {.type = NLA_U32},
     };
 
     if (nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0), genlmsg_attrlen(gnlh, 0), NULL) < 0)
