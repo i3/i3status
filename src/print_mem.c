@@ -62,12 +62,15 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
         case 'T':
         case 't':
             amount *= BINARY_BASE;
+            /* fall-through */
         case 'G':
         case 'g':
             amount *= BINARY_BASE;
+            /* fall-through */
         case 'M':
         case 'm':
             amount *= BINARY_BASE;
+            /* fall-through */
         case 'K':
         case 'k':
             amount *= BINARY_BASE;
