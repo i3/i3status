@@ -35,7 +35,6 @@ addons:
     - libcap2-bin
     - pulseaudio
 script:
-  # TODO: re-enable sanitizers once issues are fixed
-  - autoreconf -fi && mkdir -p build && cd build && (../configure --disable-sanitizers || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
-  - make clean && (../configure --disable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
+  - autoreconf -fi && mkdir -p build && cd build && (../configure || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
+  - make clean && (../configure --enable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
   - make -j 8 check V=1 || (cat test-suite.log; false)
