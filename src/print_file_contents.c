@@ -19,11 +19,13 @@ void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, con
     char *outwalk = buffer;
     char *buf = scalloc(max_chars * sizeof(char) + 1);
 
-    int n = -1;
-    int fd = open(path, O_RDONLY);
+    char *abs_path = resolve_tilde(path);
+    int fd = open(abs_path, O_RDONLY);
+    free(abs_path);
 
     INSTANCE(path);
 
+    int n = -1;
     if (fd > -1) {
         n = read(fd, buf, max_chars);
         if (n != -1) {

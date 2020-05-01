@@ -18,7 +18,6 @@
             die(__VA_ARGS__);      \
     }
 
-
 /*
  * Reads size bytes into the destination buffer from filename.
  *
