@@ -23,7 +23,6 @@
 #include <getopt.h>
 #include <signal.h>
 #include <confuse.h>
-#include <glob.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -34,12 +33,6 @@
 #include <yajl/yajl_version.h>
 
 #include "i3status.h"
-
-#define exit_if_null(pointer, ...) \
-    {                              \
-        if (pointer == NULL)       \
-            die(__VA_ARGS__);      \
-    }
 
 #define CFG_CUSTOM_ALIGN_OPT \
     CFG_STR_CB("align", NULL, CFGF_NONE, parse_align)
@@ -104,21 +97,6 @@ void sigusr1(int signum) {
 static bool path_exists(const char *path) {
     struct stat buf;
     return (stat(path, &buf) == 0);
-}
-
-static void *scalloc(size_t size) {
-    void *result = calloc(size, 1);
-    exit_if_null(result, "Error: out of memory (calloc(%zu))\n", size);
-    return result;
-}
-
-char *sstrdup(const char *str) {
-    if (str == NULL) {
-        return NULL;
-    }
-    char *result = strdup(str);
-    exit_if_null(result, "Error: out of memory (strdup())\n");
-    return result;
 }
 
 /*
@@ -203,39 +181,6 @@ static int valid_color(const char *value) {
         return 0;
     }
     return 1;
-}
-
-/*
- * This function resolves ~ in pathnames.
- * It may resolve wildcards in the first part of the path, but if no match
- * or multiple matches are found, it just returns a copy of path as given.
- *
- */
-static char *resolve_tilde(const char *path) {
-    static glob_t globbuf;
-    char *head, *tail, *result = NULL;
-
-    tail = strchr(path, '/');
-    head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
-
-    int res = glob(head, GLOB_TILDE, NULL, &globbuf);
-    free(head);
-    /* no match, or many wildcard matches are bad */
-    if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
-        result = sstrdup(path);
-    else if (res != 0) {
-        die("glob() failed");
-    } else {
-        head = globbuf.gl_pathv[0];
-        result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
-        strcpy(result, head);
-        if (tail) {
-            strcat(result, tail);
-        }
-    }
-    globfree(&globbuf);
-
-    return result;
 }
 
 static char *get_config_path(void) {
