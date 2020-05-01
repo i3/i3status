@@ -82,4 +82,7 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
 out:
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(buffer);
+    if (format_time != NULL) {
+        free(buffer);
+    }
 }

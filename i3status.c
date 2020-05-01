@@ -207,6 +207,7 @@ static char *get_config_path(void) {
     config_path = resolve_tilde("~/.i3status.conf");
     if (path_exists(config_path))
         return config_path;
+    free(config_path);
     char *buf = strdup(xdg_config_dirs);
     char *tok = strtok(buf, ":");
     while (tok != NULL) {
@@ -230,7 +231,6 @@ static char *get_config_path(void) {
 
     die("Unable to find the configuration file (looked at "
         "~/.i3status.conf, $XDG_CONFIG_HOME/i3status/config, " SYSCONFDIR "/i3status.conf and $XDG_CONFIG_DIRS/i3status/config)");
-    return NULL;
 }
 
 /*
@@ -807,4 +807,6 @@ int main(int argc, char *argv[]) {
         struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
         nanosleep(&ts, NULL);
     }
+
+    yajl_gen_free(json_gen);
 }

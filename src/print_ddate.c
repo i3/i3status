@@ -173,4 +173,5 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     buffer = format_placeholders(format, &placeholders[0], num);
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }
