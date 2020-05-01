@@ -1,9 +1,25 @@
-sudo: required
-dist: trusty
+os: linux
 language: c
-compiler:
-  - gcc
-  - clang
+
+jobs:
+  include:
+    - name: "clang-format check"
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - clang-format-6.0
+      script:
+        - clang-format-6.0 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+    - dist: xenial
+      compiler: gcc
+    - dist: xenial
+      compiler: clang
+    - dist: bionic
+      compiler: gcc
+    - dist: bionic
+      compiler: clang
+
 addons:
   # See http://docs.travis-ci.com/user/apt/
   apt:
@@ -17,11 +33,8 @@ addons:
     # xmlto pulls in a2x which we need for generating manpages from asciidoc.
     - xmlto
     - libcap2-bin
-    - clang-format-3.8
-    - libllvm3.5
     - pulseaudio
 script:
-  - clang-format-3.8 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
   # TODO: re-enable sanitizers once issues are fixed
   - autoreconf -fi && mkdir -p build && cd build && (../configure --disable-sanitizers || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
   - make clean && (../configure --disable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true

@@ -577,7 +577,7 @@ int main(int argc, char *argv[]) {
 #else
                        "Built without pulseaudio support\n"
 #endif
-                       );
+                );
                 return 0;
                 break;
             case 0:
