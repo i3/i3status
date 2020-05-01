@@ -12,24 +12,20 @@
 #include <errno.h>
 #include "i3status.h"
 
-static void *scalloc(size_t size) {
-    void *result = calloc(size, 1);
-    if (result == NULL) {
-        die("Error: out of memory (calloc(%zu))\n", size);
-    }
-    return result;
-}
+#define STRING_SIZE 10
 
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars) {
     const char *walk = format;
     char *outwalk = buffer;
     char *buf = scalloc(max_chars * sizeof(char) + 1);
 
-    int n = -1;
-    int fd = open(path, O_RDONLY);
+    char *abs_path = resolve_tilde(path);
+    int fd = open(abs_path, O_RDONLY);
+    free(abs_path);
 
     INSTANCE(path);
 
+    int n = -1;
     if (fd > -1) {
         n = read(fd, buf, max_chars);
         if (n != -1) {
@@ -42,32 +38,32 @@ void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, con
         START_COLOR("color_bad");
     }
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-        } else if (BEGINS_WITH(walk + 1, "title")) {
-            outwalk += sprintf(outwalk, "%s", title);
-            walk += strlen("title");
-        } else if (BEGINS_WITH(walk + 1, "content")) {
-            for (char *s = buf; *s != '\0' && n > 0; s++, n--) {
-                if (*s != '\n') {
-                    *(outwalk++) = *s;
-                }
-            }
-            walk += strlen("content");
-        } else if (BEGINS_WITH(walk + 1, "errno")) {
-            outwalk += sprintf(outwalk, "%d", errno);
-            walk += strlen("errno");
-        } else if (BEGINS_WITH(walk + 1, "error")) {
-            outwalk += sprintf(outwalk, "%s", strerror(errno));
-            walk += strlen("error");
-        } else {
-            *(outwalk++) = '%';
+    // remove newline chars
+    char *src, *dst;
+    for (src = dst = buf; *src != '\0'; src++) {
+        *dst = *src;
+        if (*dst != '\n') {
+            dst++;
         }
     }
+    *dst = '\0';
+
+    char string_errno[STRING_SIZE];
+
+    sprintf(string_errno, "%d", errno);
+
+    placeholder_t placeholders[] = {
+        {.name = "%title", .value = title},
+        {.name = "%content", .value = buf},
+        {.name = "%errno", .value = string_errno},
+        {.name = "%error", .value = strerror(errno)}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(walk, &placeholders[0], num);
 
     free(buf);
 
     END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }

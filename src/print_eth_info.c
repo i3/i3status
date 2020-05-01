@@ -15,6 +15,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 #if defined(__linux__)
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
@@ -137,8 +139,8 @@ static int print_eth_speed(char *outwalk, const char *interface) {
 void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down) {
     const char *format = format_down;  // default format
 
-    const char *walk;
     char *outwalk = buffer;
+    size_t num = 0;
 
     INSTANCE(interface);
 
@@ -177,29 +179,24 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
         START_COLOR("color_good");
     }
 
+    char string_ip[STRING_SIZE];
+    char string_speed[STRING_SIZE];
+    char string_interface[STRING_SIZE];
+    snprintf(string_ip, STRING_SIZE, "%s", ip_address);
+    print_eth_speed(string_speed, interface);
+    snprintf(string_interface, STRING_SIZE, "%s", interface);
+    placeholder_t placeholders[] = {
+        {.name = "%ip", .value = string_ip},
+        {.name = "%speed", .value = string_speed},
+        {.name = "%interface", .value = string_interface}};
+    num = sizeof(placeholders) / sizeof(placeholder_t);
+
 out:
-    for (walk = format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    buffer = format_placeholders(format, &placeholders[0], num);
 
-        } else if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", ip_address);
-            walk += strlen("ip");
-
-        } else if (BEGINS_WITH(walk + 1, "speed")) {
-            outwalk += print_eth_speed(outwalk, interface);
-            walk += strlen("speed");
-
-        } else if (BEGINS_WITH(walk + 1, "interface")) {
-            outwalk += sprintf(outwalk, "%s", interface);
-            walk += strlen("interface");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
     END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
 }

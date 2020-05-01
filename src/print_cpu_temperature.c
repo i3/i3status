@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 20
+
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <err.h>
 #include <sys/types.h>
@@ -213,7 +215,6 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     char *outwalk = buffer;
 #ifdef THERMAL_ZONE
     const char *selected_format = format;
-    const char *walk;
     bool colorful_output = false;
     char *thermal_zone;
     temperature_t temperature;
@@ -248,18 +249,13 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
             selected_format = format_above_threshold;
     }
 
-    for (walk = selected_format; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_degrees[STRING_SIZE];
+    snprintf(string_degrees, STRING_SIZE, "%s", temperature.formatted_value);
+    placeholder_t placeholders[] = {
+        {.name = "%degrees", .value = string_degrees}};
 
-        } else if (BEGINS_WITH(walk + 1, "degrees")) {
-            outwalk += sprintf(outwalk, "%s", temperature.formatted_value);
-            walk += strlen("degrees");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    buffer = format_placeholders(selected_format, &placeholders[0], num);
 
     if (colorful_output) {
         END_COLOR;
@@ -269,6 +265,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     free(thermal_zone);
 
     OUTPUT_FULL_TEXT(buffer);
+    free(buffer);
     return;
 error:
     free(thermal_zone);

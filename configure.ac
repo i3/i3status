@@ -101,7 +101,6 @@ case $host_os in
 	;;
 	netbsd*)
 	AC_SEARCH_LIBS([prop_string_create], [prop])
-	AC_SEARCH_LIBS([_oss_ioctl], [ossaudio])
 	;;
 esac
 

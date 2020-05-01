@@ -23,7 +23,6 @@
 #include <getopt.h>
 #include <signal.h>
 #include <confuse.h>
-#include <glob.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -34,12 +33,6 @@
 #include <yajl/yajl_version.h>
 
 #include "i3status.h"
-
-#define exit_if_null(pointer, ...) \
-    {                              \
-        if (pointer == NULL)       \
-            die(__VA_ARGS__);      \
-    }
 
 #define CFG_CUSTOM_ALIGN_OPT \
     CFG_STR_CB("align", NULL, CFGF_NONE, parse_align)
@@ -104,21 +97,6 @@ void sigusr1(int signum) {
 static bool path_exists(const char *path) {
     struct stat buf;
     return (stat(path, &buf) == 0);
-}
-
-static void *scalloc(size_t size) {
-    void *result = calloc(size, 1);
-    exit_if_null(result, "Error: out of memory (calloc(%zu))\n", size);
-    return result;
-}
-
-char *sstrdup(const char *str) {
-    if (str == NULL) {
-        return NULL;
-    }
-    char *result = strdup(str);
-    exit_if_null(result, "Error: out of memory (strdup())\n");
-    return result;
 }
 
 /*
@@ -205,39 +183,6 @@ static int valid_color(const char *value) {
     return 1;
 }
 
-/*
- * This function resolves ~ in pathnames.
- * It may resolve wildcards in the first part of the path, but if no match
- * or multiple matches are found, it just returns a copy of path as given.
- *
- */
-static char *resolve_tilde(const char *path) {
-    static glob_t globbuf;
-    char *head, *tail, *result = NULL;
-
-    tail = strchr(path, '/');
-    head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
-
-    int res = glob(head, GLOB_TILDE, NULL, &globbuf);
-    free(head);
-    /* no match, or many wildcard matches are bad */
-    if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
-        result = sstrdup(path);
-    else if (res != 0) {
-        die("glob() failed");
-    } else {
-        head = globbuf.gl_pathv[0];
-        result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);
-        strcpy(result, head);
-        if (tail) {
-            strcat(result, tail);
-        }
-    }
-    globfree(&globbuf);
-
-    return result;
-}
-
 static char *get_config_path(void) {
     char *xdg_config_home, *xdg_config_dirs, *config_path;
 
@@ -262,6 +207,7 @@ static char *get_config_path(void) {
     config_path = resolve_tilde("~/.i3status.conf");
     if (path_exists(config_path))
         return config_path;
+    free(config_path);
     char *buf = strdup(xdg_config_dirs);
     char *tok = strtok(buf, ":");
     while (tok != NULL) {
@@ -285,7 +231,6 @@ static char *get_config_path(void) {
 
     die("Unable to find the configuration file (looked at "
         "~/.i3status.conf, $XDG_CONFIG_HOME/i3status/config, " SYSCONFDIR "/i3status.conf and $XDG_CONFIG_DIRS/i3status/config)");
-    return NULL;
 }
 
 /*
@@ -338,7 +283,10 @@ int main(int argc, char *argv[]) {
     cfg_opt_t wireless_opts[] = {
         CFG_STR("format_up", "W: (%quality at %essid, %bitrate) %ip", CFGF_NONE),
         CFG_STR("format_down", "W: down", CFGF_NONE),
+        CFG_STR("format_bitrate", "%g %cb/s", CFGF_NONE),
+        CFG_STR("format_noise", "%3d%s", CFGF_NONE),
         CFG_STR("format_quality", "%3d%s", CFGF_NONE),
+        CFG_STR("format_signal", "%3d%s", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -574,7 +522,7 @@ int main(int argc, char *argv[]) {
 #else
                        "Built without pulseaudio support\n"
 #endif
-                       );
+                );
                 return 0;
                 break;
             case 0:
@@ -732,7 +680,7 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_WIRELESS);
                 if (interface == NULL)
                     interface = title;
-                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_quality"));
+                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_bitrate"), cfg_getstr(sec, "format_noise"), cfg_getstr(sec, "format_quality"), cfg_getstr(sec, "format_signal"));
                 SEC_CLOSE_MAP;
             }
 
@@ -859,4 +807,6 @@ int main(int argc, char *argv[]) {
         struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
         nanosleep(&ts, NULL);
     }
+
+    yajl_gen_free(json_gen);
 }

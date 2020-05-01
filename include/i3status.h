@@ -183,13 +183,14 @@ struct min_width {
     const char *str;
 };
 
-char *sstrdup(const char *str);
-
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 
 void die(const char *fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 bool slurp(const char *filename, char *destination, int size);
+char *resolve_tilde(const char *path);
+void *scalloc(size_t size);
+char *sstrdup(const char *str);
 
 /* src/output.c */
 void print_separator(const char *separator);
@@ -197,6 +198,20 @@ char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
 void maybe_escape_markup(char *text, char **buffer);
+
+char *rtrim(const char *s);
+char *ltrim(const char *s);
+char *trim(const char *s);
+
+// copied from  i3:libi3/format_placeholders.c
+/* src/format_placeholders.c */
+typedef struct {
+    /* The placeholder to be replaced, e.g., "%title". */
+    const char *name;
+    /* The value this placeholder should be replaced with. */
+    const char *value;
+} placeholder_t;
+char *format_placeholders(const char *format, placeholder_t *placeholders, int num);
 
 /* src/auto_detect_format.c */
 char *auto_detect_format();
@@ -218,7 +233,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t);
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr(const char *interface, int family);
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *quality_min_lenght);
+void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_bitrate, const char *format_noise, const char *format_quality, const char *format_signal);
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down);
 void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);
