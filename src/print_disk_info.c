@@ -84,12 +84,15 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
             case 'T':
             case 't':
                 factor *= base;
+                /* fall-through */
             case 'G':
             case 'g':
                 factor *= base;
+                /* fall-through */
             case 'M':
             case 'm':
                 factor *= base;
+                /* fall-through */
             case 'K':
             case 'k':
                 factor *= base;
