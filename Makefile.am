@@ -5,6 +5,7 @@ echo-version:
 
 bin_PROGRAMS = i3status
 
+if BUILD_MANS
 dist_man1_MANS = \
 	$(asciidoc_MANS)
 
@@ -17,6 +18,9 @@ $(asciidoc_MANS): man/%.1: man/%.xml man/$(dirstamp)
 
 man/%.xml: man/%.man man/asciidoc.conf man/$(dirstamp)
 	$(AM_V_GEN) @PATH_ASCIIDOC@ -d manpage -b docbook -f $(top_builddir)/man/asciidoc.conf -o $@ $<
+else
+asciidoc_MANS =
+endif
 
 AM_CPPFLAGS = \
 	-DSYSCONFDIR="\"$(sysconfdir)\"" \
