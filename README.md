@@ -40,6 +40,6 @@ If you absolutely have to build from source, use:
   mkdir build
   cd build
   ../configure --disable-sanitizers
-  make -j$(nproc) #let the system decice how many cores are there than any preassumed cores
+  make -j$(nproc)
   sudo make install
 ```
