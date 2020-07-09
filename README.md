@@ -40,6 +40,6 @@ If you absolutely have to build from source, use:
   mkdir build
   cd build
   ../configure --disable-sanitizers
-  make -j8
+  make -j$(nproc)
   sudo make install
 ```
