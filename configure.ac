@@ -50,7 +50,7 @@ dnl is_release must be lowercase because AX_CHECK_ENABLE_DEBUG calls m4_tolower
 dnl on its fourth argument.
 AX_CHECK_ENABLE_DEBUG([yes], , [UNUSED_NDEBUG], [$is_release])
 
-AC_PROG_CC_C99
+AC_PROG_CXX
 
 # For strnlen() and vasprintf().
 AC_USE_SYSTEM_EXTENSIONS

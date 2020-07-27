@@ -454,6 +454,15 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t kbd_opts[] = {
+        CFG_STR("format", "%l", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -473,6 +482,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("memory", memory_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_SEC("read_file", read_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("kbd_layout", kbd_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -655,6 +665,7 @@ int main(int argc, char *argv[]) {
         }
         struct timeval tv;
         gettimeofday(&tv, NULL);
+        bool kbd_layout_enabled = false;
         if (output_format == O_I3BAR)
             yajl_gen_array_open(json_gen);
         else if (output_format == O_TERM)
@@ -776,6 +787,13 @@ int main(int argc, char *argv[]) {
                 print_file_contents(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_bad"), cfg_getint(sec, "max_characters"));
                 SEC_CLOSE_MAP;
             }
+
+            CASE_SEC("kbd_layout") {
+                SEC_OPEN_MAP("kbd_layout");
+                print_kbd_layout(json_gen, buffer, cfg_getstr(sec, "format"));
+                kbd_layout_enabled = true;
+                SEC_CLOSE_MAP;
+            }
         }
         if (output_format == O_I3BAR) {
             yajl_gen_array_close(json_gen);
@@ -804,8 +822,20 @@ int main(int argc, char *argv[]) {
          * that we start with :00 on every new minute. */
         struct timeval current_timeval;
         gettimeofday(&current_timeval, NULL);
-        struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
-        nanosleep(&ts, NULL);
+        long total_wait_usec = (interval - 1) * 10e5 + (10e5 - current_timeval.tv_usec);
+        long wakeup_every_usec = interval * 10e5;
+        if (kbd_layout_enabled) {
+            /* Wake up every 100ms to check on keyboard layout status,
+             * for dislaying it early. */
+            wakeup_every_usec = 10e4;
+        }
+        while (total_wait_usec > 0) {
+            if (kbd_layout_enabled && kbd_layout_updated()) {
+                break;
+            }
+            usleep(min(total_wait_usec, wakeup_every_usec));
+            total_wait_usec -= wakeup_every_usec;
+        }
     }
 
     yajl_gen_free(json_gen);

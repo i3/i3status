@@ -46,12 +46,15 @@ i3status_LDADD = \
 	$(PULSE_LIBS) \
 	$(NLGENL_LIBS) \
 	$(ALSA_LIBS) \
-	$(PTHREAD_LIBS)
+	$(PTHREAD_LIBS) \
+	-lX11
 
 i3status_SOURCES = \
 	include/i3status.h \
 	include/queue.h \
+	include/XKeyboard.h \
 	i3status.c \
+	src/XKeyboard.cpp \
 	src/auto_detect_format.c \
 	src/first_network_device.c \
 	src/format_placeholders.c \
@@ -65,6 +68,7 @@ i3status_SOURCES = \
 	src/print_eth_info.c \
 	src/print_ip_addr.c \
 	src/print_ipv6_addr.c \
+	src/print_kbd_layout.cc \
 	src/print_load.c \
 	src/print_mem.c \
 	src/print_path_exists.c \

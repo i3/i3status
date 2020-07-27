@@ -1,6 +1,10 @@
 #ifndef _I3STATUS_H
 #define _I3STATUS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     O_DZEN2,
     O_XMOBAR,
@@ -31,6 +35,7 @@ extern char *pct_mark;
 
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define DEFAULT_SINK_INDEX UINT32_MAX
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
@@ -247,6 +252,8 @@ int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
 void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
+bool kbd_layout_updated();
+void print_kbd_layout(yajl_gen json_gen, char *buffer, const char *format);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
@@ -256,4 +263,9 @@ extern cfg_t *cfg, *cfg_general, *cfg_section;
 extern void **cur_instance;
 
 extern pthread_t main_thread;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
