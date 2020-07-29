@@ -7,7 +7,8 @@
 #include <yajl/yajl_version.h>
 #include "i3status.h"
 
-#define STRING_SIZE 10
+#define MAX_DECIMALS 4
+#define STRING_SIZE ((sizeof "1023. TiB") + MAX_DECIMALS)
 
 #define BINARY_BASE 1024UL
 
@@ -32,7 +33,8 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
         base /= BINARY_BASE;
         exponent += 1;
     }
-    return sprintf(outwalk, "%.*f %s", decimals, base, iec_symbols[exponent]);
+    const int prec = decimals > MAX_DECIMALS ? MAX_DECIMALS : decimals;
+    return sprintf(outwalk, "%.*f %s", prec, base, iec_symbols[exponent]);
 }
 
 static int print_percentage(char *outwalk, float percent) {
