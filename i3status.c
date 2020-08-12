@@ -454,6 +454,15 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t layout_opts[] = {
+        CFG_INT("max_characters", 20, CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t opts[] = {
         CFG_STR_LIST("order", "{}", CFGF_NONE),
         CFG_SEC("general", general_opts, CFGF_NONE),
@@ -473,6 +482,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("memory", memory_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_SEC("read_file", read_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("keyboard_layout", layout_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -774,6 +784,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC_TITLE("read_file") {
                 SEC_OPEN_MAP("read_file");
                 print_file_contents(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_bad"), cfg_getint(sec, "max_characters"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("keyboard_layout") {
+                SEC_OPEN_MAP("keyboard_layout");
+                print_keyboard_layout(json_gen, buffer);
                 SEC_CLOSE_MAP;
             }
         }

@@ -30,6 +30,8 @@ AM_CPPFLAGS = \
 i3status_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(CONFUSE_CFLAGS) \
+	$(X11_CFLAGS) \
+	$(XKBFILE_CFLAGS) \
 	$(YAJL_CFLAGS) \
 	$(PULSE_CFLAGS) \
 	$(NLGENL_CFLAGS) \
@@ -42,6 +44,8 @@ i3status_CPPFLAGS = \
 
 i3status_LDADD = \
 	$(CONFUSE_LIBS) \
+	$(X11_LIBS) \
+	$(XKBFILE_LIBS) \
 	$(YAJL_LIBS) \
 	$(PULSE_LIBS) \
 	$(NLGENL_LIBS) \
@@ -73,6 +77,7 @@ i3status_SOURCES = \
 	src/print_volume.c \
 	src/print_wireless_info.c \
 	src/print_file_contents.c \
+	src/print_keyboard_layout.c \
 	src/process_runs.c
 
 if PULSE
