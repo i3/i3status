@@ -64,8 +64,7 @@ void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *
     char string_time[STRING_SIZE];
 
     if (format_time == NULL) {
-        strftime(string_time, sizeof(string_time), format, &tm);
-        maybe_escape_markup(string_time, &outwalk);
+        outwalk += strftime(buffer, 4096, format, &tm);
     } else {
         strftime(string_time, sizeof(string_time), format_time, &tm);
         placeholder_t placeholders[] = {
