@@ -258,6 +258,15 @@ int main(int argc, char *argv[]) {
         CFG_STR("markup", "none", CFGF_NONE),
         CFG_END()};
 
+    cfg_opt_t keyboard_opts[] = {
+        CFG_STR("format", "%C,%N", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t run_watch_opts[] = {
         CFG_STR("pidfile", NULL, CFGF_NONE),
         CFG_STR("format", "%title: %status", CFGF_NONE),
@@ -473,6 +482,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("memory", memory_opts, CFGF_NONE),
         CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
         CFG_SEC("read_file", read_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("keyboard_status", keyboard_opts, CFGF_NONE),
         CFG_END()};
 
     char *configfile = NULL;
@@ -670,6 +680,12 @@ int main(int argc, char *argv[]) {
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
                 print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC("keyboard_status") {
+                SEC_OPEN_MAP("keyboard_status");
+                print_keyboard_status(json_gen, buffer, cfg_getstr(sec, "format"));
                 SEC_CLOSE_MAP;
             }
 
