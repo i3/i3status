@@ -195,14 +195,13 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     /* Get the volume range to convert the volume later */
     snd_mixer_handle_events(m);
-    if (!strncasecmp(mixer, "capture", strlen("capture"))) {
+    ALSA_VOLUME(playback)
+    if (err != 0) {
         ALSA_VOLUME(capture)
-    } else {
-        ALSA_VOLUME(playback)
     }
 
     if (err != 0) {
-        fprintf(stderr, "i3status: ALSA: Cannot get playback volume.\n");
+        fprintf(stderr, "i3status: ALSA: Cannot get volume.\n");
         goto out;
     }
 
