@@ -192,6 +192,7 @@ char *resolve_tilde(const char *path);
 void *scalloc(size_t size);
 char *sstrdup(const char *str);
 
+void print_keyboard_status(yajl_gen json_gen, char *buffer, const char *format);
 /* src/output.c */
 void print_separator(const char *separator);
 char *color(const char *colorstr);

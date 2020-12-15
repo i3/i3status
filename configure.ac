@@ -78,6 +78,8 @@ AC_SEARCH_LIBS([shm_open], [rt])
 AC_CANONICAL_HOST
 
 PKG_CHECK_MODULES([CONFUSE], [libconfuse])
+PKG_CHECK_MODULES([X11], [x11])
+PKG_CHECK_MODULES([XKBFILE], [xkbfile])
 PKG_CHECK_MODULES([YAJL], [yajl])
 
 AC_ARG_ENABLE(pulseaudio,
