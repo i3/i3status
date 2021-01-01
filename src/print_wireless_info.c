@@ -97,7 +97,7 @@ typedef struct {
     double frequency;
 } wireless_info_t;
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 // Like iw_print_bitrate, but without the dependency on libiw.
 static void print_bitrate(char *buffer, int buflen, int bitrate, const char *format_bitrate) {
     const int kilo = 1e3;
@@ -473,6 +473,7 @@ error1:
                     info->signal_level_max = nr.nr_max_rssi;
 
                 info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
+                info->bitrate = (nr.nr_rates[nr.nr_txrate] & IEEE80211_RATE_VAL) / 2 * 1000 * 1000;
             }
         }
     }
@@ -604,7 +605,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     snprintf(string_ip, STRING_SIZE, "%s", ip_address);
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate, format_bitrate);
 #endif
 
