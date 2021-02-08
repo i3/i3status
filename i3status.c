@@ -510,13 +510,13 @@ int main(int argc, char *argv[]) {
                 configfile = optarg;
                 break;
             case 'h':
-                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
+                printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
                        "Syntax: %s [-c <configfile>] [-h] [-v]\n",
                        argv[0]);
                 return 0;
                 break;
             case 'v':
-                printf("i3status " VERSION " © 2008 Michael Stapelberg and contributors\n"
+                printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
 #if HAS_PULSEAUDIO
                        "Built with pulseaudio support\n"
 #else
