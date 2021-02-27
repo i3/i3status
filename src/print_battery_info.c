@@ -242,7 +242,9 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             default:
                 batt_info->status = CS_UNKNOWN;
         }
+    } else {
         OUTPUT_FULL_TEXT(format_down);
+        return false;
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     int state;
