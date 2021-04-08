@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#if defined(__FreeBSD__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 #include "i3status.h"
 
 #define MAX_DECIMALS 4
@@ -12,12 +16,9 @@
 
 #define BINARY_BASE 1024UL
 
-#if defined(linux)
 static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 #define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
-#endif
 
-#if defined(linux)
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -40,9 +41,7 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
 static int print_percentage(char *outwalk, float percent) {
     return snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
 }
-#endif
 
-#if defined(linux)
 /*
  * Convert a string to its absolute representation based on the total
  * memory of `mem_total`.
@@ -84,12 +83,10 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 
     return amount;
 }
-#endif
 
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals) {
     char *outwalk = buffer;
 
-#if defined(linux)
     const char *selected_format = format;
     const char *output_color = NULL;
 
@@ -101,6 +98,7 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     unsigned long ram_cached;
     unsigned long ram_shared;
 
+#if defined(linux)
     FILE *file = fopen("/proc/meminfo", "r");
     if (!file) {
         goto error;
@@ -138,6 +136,40 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     ram_buffers *= 1024UL;
     ram_cached *= 1024UL;
     ram_shared *= 1024UL;
+#elif defined(__FreeBSD__)
+    size_t size;
+
+    uint32_t page_size;
+    size = sizeof(page_size);
+    if (sysctlbyname("hw.pagesize", &page_size, &size, NULL, 0) != 0) {
+        goto error;
+    }
+
+    unsigned long _ram_total;
+    size = sizeof(_ram_total);
+    if (sysctlbyname("hw.physmem", &_ram_total, &size, NULL, 0) == 0) {
+        ram_total = (long)_ram_total;
+    } else {
+        goto error;
+    }
+
+    uint32_t _ram_free;
+    size = sizeof(_ram_free);
+    if (sysctlbyname("vm.stats.vm.v_free_count", &_ram_free, &size, NULL, 0) == 0) {
+        ram_free = (long)_ram_free * (long)page_size;
+    } else {
+        goto error;
+    }
+
+    ram_available = 0;
+    ram_buffers = 0;
+    ram_cached = 0;
+    ram_shared = 0;
+#else
+    OUTPUT_FULL_TEXT("");
+    fputs("i3status: Memory status information is not supported on this system\n", stderr);
+    return;
+#endif
 
     unsigned long ram_used;
     if (BEGINS_WITH(memory_used_method, "memavailable")) {
@@ -212,9 +244,5 @@ void print_memory(yajl_gen json_gen, char *buffer, const char *format, const cha
     return;
 error:
     OUTPUT_FULL_TEXT("can't read memory");
-    fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
-#else
-    OUTPUT_FULL_TEXT("");
-    fputs("i3status: Memory status information is not supported on this system\n", stderr);
-#endif
+    fputs("i3status: Cannot read system memory\n", stderr);
 }
