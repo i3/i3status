@@ -161,27 +161,33 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
         if (*walk != '=')
             continue;
 
-        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=")) {
+        if (BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_NOW=") ||
+            BEGINS_WITH(last, "POWER_SUPPLY_ENERGY_AVG=")) {
             watt_as_unit = true;
             batt_info->remaining = atoi(walk + 1);
             batt_info->percentage_remaining = -1;
-        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW=")) {
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_NOW=") ||
+                   BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_AVG=")) {
             watt_as_unit = false;
             batt_info->remaining = atoi(walk + 1);
             batt_info->percentage_remaining = -1;
         } else if (BEGINS_WITH(last, "POWER_SUPPLY_CAPACITY=") && batt_info->remaining == -1) {
             batt_info->percentage_remaining = atoi(walk + 1);
-        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW="))
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_NOW=") ||
+                   BEGINS_WITH(last, "POWER_SUPPLY_CURRENT_AVG="))
             batt_info->present_rate = abs(atoi(walk + 1));
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW="))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW=") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_AVG="))
             voltage = abs(atoi(walk + 1));
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_NOW="))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_NOW=") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_AVG="))
             batt_info->seconds_remaining = abs(atoi(walk + 1)) * 60;
         /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
          * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
          * unit instead of μAh. We will calculate it as we need it
          * later. */
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW="))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_POWER_NOW=") ||
+                 BEGINS_WITH(last, "POWER_SUPPLY_POWER_AVG="))
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Charging"))
             batt_info->status = CS_CHARGING;
