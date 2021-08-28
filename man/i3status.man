@@ -468,7 +468,7 @@ It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
 color the status bar output in +color_degraded+ or +color_bad+, if the available
 memory falls below the given threshold. Possible values of the threshold can be
 any integer, suffixed with an iec symbol (+T+, +G+, +M+, +K+). Alternatively,
-the integer can be suffixed by a percent sign, which then rets evaluated
+the integer can be suffixed by a percent sign, which then gets evaluated
 relatively to total memory.
 
 If the +format_degraded+ parameter is given and either the critical or the
