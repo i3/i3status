@@ -457,12 +457,13 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 
 === Memory
 
-Gets the memory usage from system on a Linux system from +/proc/meminfo+. Other
-systems are currently not supported.
+Gets memory statistics from +/proc/meminfo+ (Linux) or +sysctl(3)+ (FreeBSD).
+Other systems are currently not supported.
 
 As format placeholders, +total+, +used+, +free+, +available+ and +shared+ are
 available. These will print human readable values. It's also possible to prefix
-the placeholders with +percentage_+ to get a value in percent.
+the placeholders with +percentage_+ to get a value in percent. Some systems do
+not support all of these indicators; i3status will report 0 for missing values.
 
 It's possible to define a +threshold_degraded+ and a +threshold_critical+ to
 color the status bar output in +color_degraded+ or +color_bad+, if the available
@@ -484,12 +485,14 @@ As the converted format placeholder will be a decimal number, the number of
 decimals can be configured via the +decimals+ option. If no such option is
 given the converted format placeholder will have one decimal.
 
-As Linux' meminfo doesn't expose the overall memory in use, there are multiple
-methods to distinguish the actually used memory. 
+Since most operating systems do not directly report memory in use, i3status
+calculates this in one of two ways:
 
-*Example memory_used_method*: +memavailable+ ("total memory" - "MemAvailable", matches +free+ command)
+*memory_used_method*: +memavailable+
+    (used = total - available, matches Linux +free+ command)
 
-*Example memory_used_method*: +classical+ ("total memory" - "free" - "buffers" - "cache", matches gnome system monitor)
+*memory_used_method*: +classical+
+    (used = total - free - buffers - cache, matches gnome system monitor)
 
 *Example order*: +memory+
 
