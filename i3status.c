@@ -476,9 +476,11 @@ int main(int argc, char *argv[]) {
         CFG_END()};
 
     char *configfile = NULL;
+    char *force_output_format = NULL;
     int opt, option_index = 0;
     struct option long_options[] = {
         {"config", required_argument, 0, 'c'},
+        {"output_format", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {"run-once", no_argument, 0, 0},
@@ -504,14 +506,17 @@ int main(int argc, char *argv[]) {
     if (setlocale(LC_ALL, "") == NULL)
         die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.");
 
-    while ((opt = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:f:hv", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'c':
                 configfile = optarg;
                 break;
+            case 'f':
+                force_output_format = optarg;
+                break;
             case 'h':
                 printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
-                       "Syntax: %s [-c <configfile>] [-h] [-v]\n",
+                       "Syntax: %s [-c <configfile>] [-f <output_format>] [-h] [-v]\n",
                        argv[0]);
                 return 0;
                 break;
@@ -547,7 +552,12 @@ int main(int argc, char *argv[]) {
     if (cfg_general == NULL)
         die("Could not get section \"general\"\n");
 
-    char *output_str = cfg_getstr(cfg_general, "output_format");
+    char *output_str;
+    if (force_output_format != NULL)
+        output_str = force_output_format;
+    else
+        output_str = cfg_getstr(cfg_general, "output_format");
+
     if (strcasecmp(output_str, "auto") == 0) {
         fprintf(stderr, "i3status: trying to auto-detect output_format setting\n");
         output_str = auto_detect_format();
