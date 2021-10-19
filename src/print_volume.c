@@ -66,6 +66,25 @@ static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, con
     return buffer;
 }
 
+#if HAS_PULSEAUDIO
+static bool description_pulseaudio_wait(uint32_t sink_idx,
+                                        const char *sink_name,
+                                        char buffer[MAX_SINK_DESCRIPTION_LEN]) {
+    static bool pulse_wait = true;
+    bool success = description_pulseaudio(sink_idx, sink_name, buffer);
+    if (success || !pulse_wait) {
+        return success;
+    }
+
+    pulse_wait = false;
+    for (int try = 0; try < 50 && !success; try ++) {
+        usleep(2000); /* Total maximum wait of 0.1 seconds */
+        success = description_pulseaudio(sink_idx, sink_name, buffer);
+    }
+    return success;
+}
+#endif
+
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
     char *outwalk = buffer;
     int pbval = 1;
@@ -85,20 +104,22 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
     if (!strncasecmp(device, "pulse", strlen("pulse"))) {
+        if (!pulse_initialize()) {
+            /* Explicit pulseaudio device but initialization failure means we
+             * give up instead of fall-backs. */
+            goto out;
+        }
+
         uint32_t sink_idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
         const char *sink_name = device[strlen("pulse")] == ':' &&
                                         !isdigit(device[strlen("pulse:")])
                                     ? device + strlen("pulse:")
                                     : NULL;
-        int cvolume = 0;
         char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
-
-        if (pulse_initialize()) {
-            cvolume = volume_pulseaudio(sink_idx, sink_name);
-            /* false result means error, stick to empty-string */
-            if (!description_pulseaudio(sink_idx, sink_name, description)) {
-                description[0] = '\0';
-            }
+        bool success = description_pulseaudio_wait(sink_idx, sink_name, description);
+        int cvolume = volume_pulseaudio(sink_idx, sink_name);
+        if (!success || cvolume < 0) {
+            goto out;
         }
 
         int ivolume = DECOMPOSE_VOLUME(cvolume);
@@ -108,9 +129,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
             pbval = 0;
         }
 
-        /* negative result means error, stick to 0 */
-        if (ivolume < 0)
-            ivolume = 0;
         buffer = apply_volume_format(muted ? fmt_muted : fmt,
                                      buffer,
                                      ivolume,
@@ -118,8 +136,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out_with_format;
     } else if (!strcasecmp(device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
-        char description[MAX_SINK_DESCRIPTION_LEN];
-        bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
+        char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
+        bool success = description_pulseaudio_wait(DEFAULT_SINK_INDEX, NULL, description);
         int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
