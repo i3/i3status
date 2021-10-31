@@ -15,7 +15,7 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const char 
     char *outwalk = buffer;
     /* Get load */
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__linux__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun) || defined(__DragonFly__)
     double loadavg[3];
     const char *selected_format = format;
     bool colorful_output = false;

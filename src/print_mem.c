@@ -12,12 +12,12 @@
 
 #define BINARY_BASE 1024UL
 
-#if defined(linux)
+#if defined(__linux__)
 static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 #define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
 #endif
 
-#if defined(linux)
+#if defined(__linux__)
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -42,7 +42,7 @@ static int print_percentage(char *outwalk, float percent) {
 }
 #endif
 
-#if defined(linux)
+#if defined(__linux__)
 /*
  * Convert a string to its absolute representation based on the total
  * memory of `mem_total`.
@@ -89,7 +89,7 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals) {
     char *outwalk = buffer;
 
-#if defined(linux)
+#if defined(__linux__)
     const char *selected_format = format;
     const char *output_color = NULL;
 
