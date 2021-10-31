@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build and test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install build dependencies
+      run: sudo apt update && sudo apt install clang-format-6.0 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio
+
+    - name: Ensure all files were formatted as per clang-format
+      run: |
+        clang-format-6.0 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+
+    - name: build
+      run: |
+        autoreconf -fi && mkdir -p build && cd build && (../configure || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
+        make clean && (../configure --enable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
+
+    - name: run tests
+      # percentliteral-volume fails on GitHub Actions because the environment
+      # has no ALSA master device.
+      run: rm -rf testcases/020-percentliteral-volume && cd build && make -j 8 check V=1 || (cat test-suite.log; false)
