@@ -46,6 +46,10 @@ endif
 cdata.set('HAVE_STRNDUP', cc.has_function('strndup'))
 cdata.set('HAVE_MKDIRP', cc.has_function('mkdirp'))
 
+if get_option('pulseaudio')
+  cdata.set('HAS_PULSEAUDIO', 1)
+endif
+
 # Instead of generating config.h directly, make vcs_tag generate it so that
 # @VCS_TAG@ is replaced.
 config_h_in = configure_file(
