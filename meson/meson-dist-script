@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -eu
+
+cd "${MESON_DIST_ROOT}"
+
+# Delete everything we do not want to have in the release tarballs:
+rm -rf \
+   .clang-format \
+   .editorconfig \
+   .travis.yml
+
+mkdir build
+cd build
+meson .. -Dprefix=/usr -Dmans=true
+ninja
+cp *.1 ../man/
+cd ..
+rm -rf build

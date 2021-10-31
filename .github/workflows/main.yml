@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: install build dependencies
-      run: sudo apt update && sudo apt install clang-format-6.0 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio
+      run: sudo apt update && sudo apt install clang-format-6.0 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio meson
 
     - name: Ensure all files were formatted as per clang-format
       run: |
@@ -27,10 +27,10 @@ jobs:
 
     - name: build
       run: |
-        autoreconf -fi && mkdir -p build && cd build && (../configure || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
-        make clean && (../configure --enable-sanitizers --disable-pulseaudio || (cat config.log; false)) && make -j 8 V=1 && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
+        mkdir -p build && cd build && meson -Dmans=true .. && ninja -v && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
+        ninja clean && meson -Dmans=true -Dpulseaudio=false -Db_sanitize=address .. && ninja -v && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
 
     - name: run tests
       # percentliteral-volume fails on GitHub Actions because the environment
       # has no ALSA master device.
-      run: rm -rf testcases/020-percentliteral-volume && cd build && make -j 8 check V=1 || (cat test-suite.log; false)
+      run: rm -rf testcases/020-percentliteral-volume && cd build && ninja -v test || (cat meson-logs/testlog.txt; false)
