@@ -59,11 +59,12 @@ void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, con
         {.name = "%error", .value = strerror(errno)}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(walk, &placeholders[0], num);
-
+    char *formatted = format_placeholders(walk, &placeholders[0], num);
+    strcpy(outwalk, formatted);
+    outwalk += strlen(formatted);
+    free(formatted);
     free(buf);
 
     END_COLOR;
     OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
 }
