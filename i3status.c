@@ -625,8 +625,14 @@ int main(int argc, char *argv[]) {
             cfg_general->name, cfg_general->line, interval);
     }
 
-    cfg_section = cfg_getsec(cfg, "battery");
-    if (cfg_section != NULL) {
+    for (int j = 0; j < cfg_size(cfg, "order"); j++) {
+        const char *current = cfg_getnstr(cfg, "order", j);
+        const char *name = "battery";
+        if (!BEGINS_WITH(current, name)) {
+            continue;
+        }
+        const char *title = current + strlen(name) + 1;
+        cfg_section = cfg_gettsec(cfg, name, title);
         bool integer_battery_capacity = cfg_getbool(cfg_section, "integer_battery_capacity");
         char *format_percentage = cfg_getstr(cfg_section, "format_percentage");
         if (integer_battery_capacity) {
