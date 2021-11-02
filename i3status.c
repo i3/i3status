@@ -769,7 +769,16 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("path_exists") {
                 SEC_OPEN_MAP("path_exists");
-                print_path_exists(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
+                path_exists_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_path_exists(&ctx);
                 SEC_CLOSE_MAP;
             }
 

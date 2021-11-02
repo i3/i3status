@@ -10,19 +10,20 @@
 
 #define STRING_SIZE 5
 
-void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down) {
+void print_path_exists(path_exists_ctx_t *ctx) {
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
     struct stat st;
-    const bool exists = (stat(path, &st) == 0);
+    const bool exists = (stat(ctx->path, &st) == 0);
+#define json_gen ctx->json_gen
 
-    if (exists || format_down == NULL) {
-        walk = format;
+    if (exists || ctx->format_down == NULL) {
+        walk = ctx->format;
     } else {
-        walk = format_down;
+        walk = ctx->format_down;
     }
 
-    INSTANCE(path);
+    INSTANCE(ctx->path);
 
     START_COLOR((exists ? "color_good" : "color_bad"));
 
@@ -31,13 +32,14 @@ void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const
     snprintf(string_status, STRING_SIZE, "%s", (exists ? "yes" : "no"));
 
     placeholder_t placeholders[] = {
-        {.name = "%title", .value = title},
+        {.name = "%title", .value = ctx->title},
         {.name = "%status", .value = string_status}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(walk, &placeholders[0], num);
+    char *formatted = format_placeholders(walk, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }
