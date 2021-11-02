@@ -245,11 +245,47 @@ typedef struct {
 void print_ipv6_info(ipv6_info_ctx_t *ctx);
 
 void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, const char *format_percentage, bool hide_seconds);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    int number;
+    const char *path;
+    const char *format;
+    const char *format_down;
+    const char *status_chr;
+    const char *status_bat;
+    const char *status_unk;
+    const char *status_full;
+    int low_threshold;
+    char *threshold_type;
+    bool last_full_capacity;
+    const char *format_percentage;
+    bool hide_seconds;
+} battery_info_ctx_t;
+
+void print_battery_info(battery_info_ctx_t *ctx);
+
 void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t);
 void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
 const char *get_ip_addr(const char *interface, int family);
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_bitrate, const char *format_noise, const char *format_quality, const char *format_signal);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *interface;
+    const char *format_up;
+    const char *format_down;
+    const char *format_bitrate;
+    const char *format_noise;
+    const char *format_quality;
+    const char *format_signal;
+} wireless_info_ctx_t;
+
+void print_wireless_info(wireless_info_ctx_t *ctx);
+
 void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down);
 void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);

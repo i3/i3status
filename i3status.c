@@ -718,7 +718,25 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("battery") {
                 SEC_OPEN_MAP("battery");
-                print_battery_info(json_gen, buffer, (strcasecmp(title, "all") == 0 ? -1 : atoi(title)), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "status_chr"), cfg_getstr(sec, "status_bat"), cfg_getstr(sec, "status_unk"), cfg_getstr(sec, "status_full"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getstr(sec, "format_percentage"), cfg_getbool(sec, "hide_seconds"));
+                battery_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .number = (strcasecmp(title, "all") == 0 ? -1 : atoi(title)),
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                    .status_chr = cfg_getstr(sec, "status_chr"),
+                    .status_bat = cfg_getstr(sec, "status_bat"),
+                    .status_unk = cfg_getstr(sec, "status_unk"),
+                    .status_full = cfg_getstr(sec, "status_full"),
+                    .low_threshold = cfg_getint(sec, "low_threshold"),
+                    .threshold_type = cfg_getstr(sec, "threshold_type"),
+                    .last_full_capacity = cfg_getbool(sec, "last_full_capacity"),
+                    .format_percentage = cfg_getstr(sec, "format_percentage"),
+                    .hide_seconds = cfg_getbool(sec, "hide_seconds"),
+                };
+                print_battery_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
