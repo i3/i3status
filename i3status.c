@@ -816,7 +816,19 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("memory") {
                 SEC_OPEN_MAP("memory");
-                print_memory(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_degraded"), cfg_getstr(sec, "threshold_degraded"), cfg_getstr(sec, "threshold_critical"), cfg_getstr(sec, "memory_used_method"), cfg_getstr(sec, "unit"), cfg_getint(sec, "decimals"));
+                memory_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_degraded = cfg_getstr(sec, "format_degraded"),
+                    .threshold_degraded = cfg_getstr(sec, "threshold_degraded"),
+                    .threshold_critical = cfg_getstr(sec, "threshold_critical"),
+                    .memory_used_method = cfg_getstr(sec, "memory_used_method"),
+                    .unit = cfg_getstr(sec, "unit"),
+                    .decimals = cfg_getint(sec, "decimals"),
+                };
+                print_memory(&ctx);
                 SEC_CLOSE_MAP;
             }
 

@@ -361,7 +361,20 @@ typedef struct {
 
 void print_load(load_ctx_t *ctx);
 
-void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    const char *format_degraded;
+    const char *threshold_degraded;
+    const char *threshold_critical;
+    const char *memory_used_method;
+    const char *unit;
+    const int decimals;
+} memory_ctx_t;
+
+void print_memory(memory_ctx_t *ctx);
 
 typedef struct {
     yajl_gen json_gen;
