@@ -175,6 +175,13 @@ extern char *pct_mark;
         }                                                                                     \
     } while (0)
 
+#define OUTPUT_FORMATTED                                             \
+    do {                                                             \
+        const size_t remaining = ctx->buflen - (outwalk - ctx->buf); \
+        strncpy(outwalk, formatted, remaining);                      \
+        outwalk += strlen(formatted);                                \
+    } while (0)
+
 /*
  * The "min_width" module option may either be defined as a string or a number.
  */
@@ -246,7 +253,19 @@ bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
-void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    size_t buflen;
+    const char *title;
+    const char *path;
+    const char *format;
+    const char *format_bad;
+    const int max_chars;
+} file_contents_ctx_t;
+
+void print_file_contents(file_contents_ctx_t *ctx);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;

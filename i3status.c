@@ -779,7 +779,17 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("read_file") {
                 SEC_OPEN_MAP("read_file");
-                print_file_contents(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_bad"), cfg_getint(sec, "max_characters"));
+                file_contents_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_bad = cfg_getstr(sec, "format_bad"),
+                    .max_chars = cfg_getint(sec, "max_characters"),
+                };
+                print_file_contents(&ctx);
                 SEC_CLOSE_MAP;
             }
         }
