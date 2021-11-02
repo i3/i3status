@@ -704,7 +704,15 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_ETHERNET);
                 if (interface == NULL)
                     interface = title;
-                print_eth_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                eth_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .interface = interface,
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_eth_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 

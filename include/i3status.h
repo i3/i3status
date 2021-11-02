@@ -254,7 +254,18 @@ void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const c
 void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
 void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);
 void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold);
-void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *interface;
+    const char *format_up;
+    const char *format_down;
+} eth_info_ctx_t;
+
+void print_eth_info(eth_info_ctx_t *ctx);
+
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold);
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
