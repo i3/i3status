@@ -675,7 +675,14 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
-                print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                ipv6_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_ipv6_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
