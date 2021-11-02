@@ -9,18 +9,19 @@
 
 #define STRING_SIZE 5
 
-void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down) {
-    bool running = process_runs(pidfile);
+void print_run_watch(run_watch_ctx_t *ctx) {
+    bool running = process_runs(ctx->pidfile);
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
+#define json_gen ctx->json_gen
 
-    if (running || format_down == NULL) {
-        walk = format;
+    if (running || ctx->format_down == NULL) {
+        walk = ctx->format;
     } else {
-        walk = format_down;
+        walk = ctx->format_down;
     }
 
-    INSTANCE(pidfile);
+    INSTANCE(ctx->pidfile);
 
     START_COLOR((running ? "color_good" : "color_bad"));
 
@@ -28,13 +29,12 @@ void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const c
     snprintf(string_status, STRING_SIZE, "%s", (running ? "yes" : "no"));
 
     placeholder_t placeholders[] = {
-        {.name = "%title", .value = title},
+        {.name = "%title", .value = ctx->title},
         {.name = "%status", .value = string_status}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(walk, &placeholders[0], num);
-
+    char *formatted = format_placeholders(walk, &placeholders[0], num);
+    OUTPUT_FORMATTED;
     END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

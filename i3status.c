@@ -754,7 +754,16 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("run_watch") {
                 SEC_OPEN_MAP("run_watch");
-                print_run_watch(json_gen, buffer, title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
+                run_watch_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .pidfile = cfg_getstr(sec, "pidfile"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_run_watch(&ctx);
                 SEC_CLOSE_MAP;
             }
 
