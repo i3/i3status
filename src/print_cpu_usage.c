@@ -58,13 +58,14 @@ static struct cpu_usage *curr_cpus = NULL;
  * percentage.
  *
  */
-void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold) {
-    const char *selected_format = format;
+void print_cpu_usage(cpu_usage_ctx_t *ctx) {
+    const char *selected_format = ctx->format;
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
     int diff_idle, diff_total, diff_usage;
     bool colorful_output = false;
+#define json_gen ctx->json_gen
 
 #if defined(__linux__)
 
@@ -79,9 +80,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(ctx->path, "r");
     if (f == NULL) {
-        fprintf(stderr, "i3status: open %s: %s\n", path, strerror(errno));
+        fprintf(stderr, "i3status: open %s: %s\n", ctx->path, strerror(errno));
         goto error;
     }
     curr_cpu_count = get_nprocs();
@@ -160,16 +161,16 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     goto error;
 #endif
 
-    if (diff_usage >= max_threshold) {
+    if (diff_usage >= ctx->max_threshold) {
         START_COLOR("color_bad");
         colorful_output = true;
-        if (format_above_threshold != NULL)
-            selected_format = format_above_threshold;
-    } else if (diff_usage >= degraded_threshold) {
+        if (ctx->format_above_threshold != NULL)
+            selected_format = ctx->format_above_threshold;
+    } else if (diff_usage >= ctx->degraded_threshold) {
         START_COLOR("color_degraded");
         colorful_output = true;
-        if (format_above_degraded_threshold != NULL)
-            selected_format = format_above_degraded_threshold;
+        if (ctx->format_above_degraded_threshold != NULL)
+            selected_format = ctx->format_above_degraded_threshold;
     }
 
     for (walk = selected_format; *walk != '\0'; walk++) {
@@ -210,7 +211,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     if (colorful_output)
         END_COLOR;
 
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
     return;
 error:
     OUTPUT_FULL_TEXT("cant read cpu usage");

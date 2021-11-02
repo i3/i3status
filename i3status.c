@@ -854,7 +854,18 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("cpu_usage") {
                 SEC_OPEN_MAP("cpu_usage");
-                print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getstr(sec, "path"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
+                cpu_usage_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .format_above_degraded_threshold = cfg_getstr(sec, "format_above_degraded_threshold"),
+                    .path = cfg_getstr(sec, "path"),
+                    .max_threshold = cfg_getfloat(sec, "max_threshold"),
+                    .degraded_threshold = cfg_getfloat(sec, "degraded_threshold"),
+                };
+                print_cpu_usage(&ctx);
                 SEC_CLOSE_MAP;
             }
 
