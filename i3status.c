@@ -693,7 +693,19 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_WIRELESS);
                 if (interface == NULL)
                     interface = title;
-                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_bitrate"), cfg_getstr(sec, "format_noise"), cfg_getstr(sec, "format_quality"), cfg_getstr(sec, "format_signal"));
+                wireless_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .interface = interface,
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                    .format_bitrate = cfg_getstr(sec, "format_bitrate"),
+                    .format_noise = cfg_getstr(sec, "format_noise"),
+                    .format_quality = cfg_getstr(sec, "format_quality"),
+                    .format_signal = cfg_getstr(sec, "format_signal"),
+                };
+                print_wireless_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 

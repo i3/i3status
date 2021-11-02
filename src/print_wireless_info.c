@@ -498,15 +498,16 @@ error1:
  * | 127.0.0.1    | no IP        | IPv4      | ok                |
  * | 127.0.0.1    | ::1/128      | IPv4      | ok                |
  */
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *format_bitrate, const char *format_noise, const char *format_quality, const char *format_signal) {
+void print_wireless_info(wireless_info_ctx_t *ctx) {
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
     wireless_info_t info;
+#define json_gen ctx->json_gen
 
-    INSTANCE(interface);
+    INSTANCE(ctx->interface);
 
-    char *ipv4_address = sstrdup(get_ip_addr(interface, AF_INET));
-    char *ipv6_address = sstrdup(get_ip_addr(interface, AF_INET6));
+    char *ipv4_address = sstrdup(get_ip_addr(ctx->interface, AF_INET));
+    char *ipv6_address = sstrdup(get_ip_addr(ctx->interface, AF_INET6));
 
     /*
      * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
@@ -523,12 +524,12 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     if (ipv4_address == NULL) {
         if (ipv6_address == NULL) {
             START_COLOR("color_bad");
-            outwalk += sprintf(outwalk, "%s", format_down);
+            outwalk += sprintf(outwalk, "%s", ctx->format_down);
 
             END_COLOR;
             free(ipv4_address);
             free(ipv6_address);
-            OUTPUT_FULL_TEXT(buffer);
+            OUTPUT_FULL_TEXT(ctx->buf);
             return;
         } else {
             prefer_ipv4 = false;
@@ -538,11 +539,11 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     }
 
     const char *ip_address = (prefer_ipv4) ? ipv4_address : ipv6_address;
-    if (!get_wireless_info(interface, &info)) {
-        walk = format_down;
+    if (!get_wireless_info(ctx->interface, &info)) {
+        walk = ctx->format_down;
         START_COLOR("color_bad");
     } else {
-        walk = format_up;
+        walk = ctx->format_up;
         if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY)
             START_COLOR((info.quality < info.quality_average ? "color_degraded" : "color_good"));
         else {
@@ -564,7 +565,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
         if (info.quality_max)
-            snprintf(string_quality, STRING_SIZE, format_quality, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
+            snprintf(string_quality, STRING_SIZE, ctx->format_quality, PERCENT_VALUE(info.quality, info.quality_max), pct_mark);
         else
             snprintf(string_quality, STRING_SIZE, "%d", info.quality);
     } else {
@@ -573,7 +574,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_SIGNAL) {
         if (info.signal_level_max)
-            snprintf(string_signal, STRING_SIZE, format_signal, PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
+            snprintf(string_signal, STRING_SIZE, ctx->format_signal, PERCENT_VALUE(info.signal_level, info.signal_level_max), pct_mark);
         else
             snprintf(string_signal, STRING_SIZE, "%d dBm", info.signal_level);
     } else {
@@ -582,7 +583,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_NOISE) {
         if (info.noise_level_max)
-            snprintf(string_noise, STRING_SIZE, format_noise, PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
+            snprintf(string_noise, STRING_SIZE, ctx->format_noise, PERCENT_VALUE(info.noise_level, info.noise_level_max), pct_mark);
         else
             snprintf(string_noise, STRING_SIZE, "%d dBm", info.noise_level);
     } else {
@@ -605,7 +606,7 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
     snprintf(string_ip, STRING_SIZE, "%s", ip_address);
 
 #if defined(__linux__) || defined(__FreeBSD__)
-    print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate, format_bitrate);
+    print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate, ctx->format_bitrate);
 #endif
 
     placeholder_t placeholders[] = {
@@ -618,11 +619,12 @@ void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface,
         {.name = "%bitrate", .value = string_bitrate}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(walk, &placeholders[0], num);
+    char *formatted = format_placeholders(walk, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     END_COLOR;
     free(ipv4_address);
     free(ipv6_address);
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

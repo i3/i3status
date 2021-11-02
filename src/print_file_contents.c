@@ -61,9 +61,7 @@ void print_file_contents(file_contents_ctx_t *ctx) {
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     char *formatted = format_placeholders(walk, &placeholders[0], num);
-
     OUTPUT_FORMATTED;
-
     free(formatted);
     free(buf);
 
