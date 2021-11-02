@@ -135,7 +135,7 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
 }
 #endif
 
-static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
+static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
 
 #if defined(__linux__)
@@ -516,7 +516,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
  * Populate batt_info with aggregate information about all batteries.
  * Returns false on error, and an error message will have been written.
  */
-static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
+static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
 #if defined(__linux__)
     char *outwalk = buffer;
     bool is_found = false;
@@ -545,7 +545,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
                 .present_rate = 0,
                 .status = CS_UNKNOWN,
             };
-            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
+            if (!slurp_battery_info(ctx, &batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
                 globfree(&globbuf);
                 free(globpath);
                 return false;
@@ -568,7 +568,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
     /* FreeBSD and OpenBSD only report aggregates. NetBSD always
      * iterates through all batteries, so it's more efficient to
      * aggregate in slurp_battery_info. */
-    return slurp_battery_info(batt_info, json_gen, buffer, -1, path, format_down);
+    return slurp_battery_info(ctx, batt_info, json_gen, buffer, -1, path, format_down);
 #endif
 
     return true;
@@ -586,7 +586,6 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         .status = CS_UNKNOWN,
     };
     bool colorful_output = false;
-#define json_gen ctx->json_gen
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
@@ -600,10 +599,10 @@ void print_battery_info(battery_info_ctx_t *ctx) {
 #endif
 
     if (ctx->number < 0) {
-        if (!slurp_all_batteries(&batt_info, json_gen, ctx->buf, ctx->path, ctx->format_down))
+        if (!slurp_all_batteries(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->path, ctx->format_down))
             return;
     } else {
-        if (!slurp_battery_info(&batt_info, json_gen, ctx->buf, ctx->number, ctx->path, ctx->format_down))
+        if (!slurp_battery_info(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->number, ctx->path, ctx->format_down))
             return;
     }
 

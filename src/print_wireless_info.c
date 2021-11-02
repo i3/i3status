@@ -502,7 +502,6 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     const char *walk;
     char *outwalk = ctx->buf;
     wireless_info_t info;
-#define json_gen ctx->json_gen
 
     INSTANCE(ctx->interface);
 

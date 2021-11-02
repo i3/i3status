@@ -65,7 +65,6 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
     int diff_idle, diff_total, diff_usage;
     bool colorful_output = false;
-#define json_gen ctx->json_gen
 
 #if defined(__linux__)
 

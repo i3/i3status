@@ -67,7 +67,6 @@ static char *apply_volume_format(const char *fmt, int ivolume, const char *devic
 void print_volume(volume_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     int pbval = 1;
-#define json_gen ctx->json_gen
 
     /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {

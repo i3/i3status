@@ -82,20 +82,20 @@ extern char *pct_mark;
 
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
-#define OUTPUT_FULL_TEXT(text)                                                                  \
-    do {                                                                                        \
-        /* Terminate the output buffer here in any case, so that it’s                         \
-         * not forgotten in the module */                                                       \
-        *outwalk = '\0';                                                                        \
-        if (output_format == O_I3BAR) {                                                         \
-            char *_markup = cfg_getstr(cfg_general, "markup");                                  \
-            yajl_gen_string(json_gen, (const unsigned char *)"markup", strlen("markup"));       \
-            yajl_gen_string(json_gen, (const unsigned char *)_markup, strlen(_markup));         \
-            yajl_gen_string(json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
-            yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text));               \
-        } else {                                                                                \
-            printf("%s", text);                                                                 \
-        }                                                                                       \
+#define OUTPUT_FULL_TEXT(text)                                                                       \
+    do {                                                                                             \
+        /* Terminate the output buffer here in any case, so that it’s                              \
+         * not forgotten in the module */                                                            \
+        *outwalk = '\0';                                                                             \
+        if (output_format == O_I3BAR) {                                                              \
+            char *_markup = cfg_getstr(cfg_general, "markup");                                       \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"markup", strlen("markup"));       \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)_markup, strlen(_markup));         \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)text, strlen(text));               \
+        } else {                                                                                     \
+            printf("%s", text);                                                                      \
+        }                                                                                            \
     } while (0)
 
 #define SEC_OPEN_MAP(name)                                                            \
@@ -143,21 +143,21 @@ extern char *pct_mark;
         }                                                                                                                   \
     } while (0)
 
-#define START_COLOR(colorstr)                                                               \
-    do {                                                                                    \
-        if (cfg_getbool(cfg_general, "colors")) {                                           \
-            const char *_val = NULL;                                                        \
-            if (cfg_section)                                                                \
-                _val = cfg_getstr(cfg_section, colorstr);                                   \
-            if (!_val)                                                                      \
-                _val = cfg_getstr(cfg_general, colorstr);                                   \
-            if (output_format == O_I3BAR) {                                                 \
-                yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
-                yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val));       \
-            } else {                                                                        \
-                outwalk += sprintf(outwalk, "%s", color(colorstr));                         \
-            }                                                                               \
-        }                                                                                   \
+#define START_COLOR(colorstr)                                                                    \
+    do {                                                                                         \
+        if (cfg_getbool(cfg_general, "colors")) {                                                \
+            const char *_val = NULL;                                                             \
+            if (cfg_section)                                                                     \
+                _val = cfg_getstr(cfg_section, colorstr);                                        \
+            if (!_val)                                                                           \
+                _val = cfg_getstr(cfg_general, colorstr);                                        \
+            if (output_format == O_I3BAR) {                                                      \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)"color", strlen("color")); \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)_val, strlen(_val));       \
+            } else {                                                                             \
+                outwalk += sprintf(outwalk, "%s", color(colorstr));                              \
+            }                                                                                    \
+        }                                                                                        \
     } while (0)
 
 #define END_COLOR                                                             \
@@ -167,12 +167,12 @@ extern char *pct_mark;
         }                                                                     \
     } while (0)
 
-#define INSTANCE(instance)                                                                    \
-    do {                                                                                      \
-        if (output_format == O_I3BAR) {                                                       \
-            yajl_gen_string(json_gen, (const unsigned char *)"instance", strlen("instance")); \
-            yajl_gen_string(json_gen, (const unsigned char *)instance, strlen(instance));     \
-        }                                                                                     \
+#define INSTANCE(instance)                                                                         \
+    do {                                                                                           \
+        if (output_format == O_I3BAR) {                                                            \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"instance", strlen("instance")); \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)instance, strlen(instance));     \
+        }                                                                                          \
     } while (0)
 
 #define OUTPUT_FORMATTED                                             \
@@ -280,8 +280,31 @@ typedef struct {
 
 void print_battery_info(battery_info_ctx_t *ctx);
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t);
-void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
+    const char *format;
+    const char *tz;
+    const char *locale;
+    const char *format_time;
+    bool hide_if_equals_localtime;
+    time_t t;
+} time_ctx_t;
+
+void print_time(time_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    time_t t;
+} ddate_ctx_t;
+
+void print_ddate(ddate_ctx_t *ctx);
+
 const char *get_ip_addr(const char *interface, int family);
 
 typedef struct {

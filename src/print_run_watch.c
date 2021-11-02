@@ -13,7 +13,6 @@ void print_run_watch(run_watch_ctx_t *ctx) {
     bool running = process_runs(ctx->pidfile);
     const char *walk;
     char *outwalk = ctx->buf;
-#define json_gen ctx->json_gen
 
     if (running || ctx->format_down == NULL) {
         walk = ctx->format;

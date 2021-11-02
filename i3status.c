@@ -834,19 +834,50 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("time") {
                 SEC_OPEN_MAP("time");
-                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, NULL, NULL, false, tv.tv_sec);
+                time_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = NULL,
+                    .format = cfg_getstr(sec, "format"),
+                    .tz = NULL,
+                    .locale = NULL,
+                    .format_time = NULL,
+                    .hide_if_equals_localtime = false,
+                    .t = tv.tv_sec,
+                };
+                print_time(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("tztime") {
                 SEC_OPEN_MAP("tztime");
-                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), cfg_getstr(sec, "locale"), cfg_getstr(sec, "format_time"), cfg_getbool(sec, "hide_if_equals_localtime"), tv.tv_sec);
+                time_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .format = cfg_getstr(sec, "format"),
+                    .tz = cfg_getstr(sec, "timezone"),
+                    .locale = cfg_getstr(sec, "locale"),
+                    .format_time = cfg_getstr(sec, "format_time"),
+                    .hide_if_equals_localtime = cfg_getbool(sec, "hide_if_equals_localtime"),
+                    .t = tv.tv_sec,
+                };
+                print_time(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("ddate") {
                 SEC_OPEN_MAP("ddate");
-                print_ddate(json_gen, buffer, cfg_getstr(sec, "format"), tv.tv_sec);
+                ddate_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .t = tv.tv_sec,
+                };
+                print_ddate(&ctx);
                 SEC_CLOSE_MAP;
             }
 

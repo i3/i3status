@@ -121,7 +121,6 @@ void print_ipv6_info(ipv6_info_ctx_t *ctx) {
     char *addr_string = get_ipv6_addr();
     char *outwalk = ctx->buf;
 
-#define json_gen ctx->json_gen
     if (addr_string == NULL) {
         START_COLOR("color_bad");
         outwalk += sprintf(outwalk, "%s", ctx->format_down);

@@ -220,7 +220,6 @@ void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx) {
     temperature_t temperature;
     temperature.raw_value = 0;
     sprintf(temperature.formatted_value, "%.2f", 0.0);
-#define json_gen ctx->json_gen
 
     if (ctx->path == NULL)
         asprintf(&thermal_zone, THERMAL_ZONE, ctx->zone);

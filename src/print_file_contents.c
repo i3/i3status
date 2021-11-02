@@ -23,7 +23,6 @@ void print_file_contents(file_contents_ctx_t *ctx) {
     int fd = open(abs_path, O_RDONLY);
     free(abs_path);
 
-#define json_gen ctx->json_gen
     INSTANCE(ctx->path);
 
     int n = -1;

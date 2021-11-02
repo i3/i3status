@@ -15,7 +15,6 @@ void print_path_exists(path_exists_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     struct stat st;
     const bool exists = (stat(ctx->path, &st) == 0);
-#define json_gen ctx->json_gen
 
     if (exists || ctx->format_down == NULL) {
         walk = ctx->format;

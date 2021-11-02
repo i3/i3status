@@ -13,8 +13,7 @@
 
 void print_load(load_ctx_t *ctx) {
     char *outwalk = ctx->buf;
-/* Get load */
-#define json_gen ctx->json_gen
+    /* Get load */
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__linux__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__) || defined(sun) || defined(__DragonFly__)
     double loadavg[3];

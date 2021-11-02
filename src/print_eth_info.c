@@ -138,7 +138,6 @@ static int print_eth_speed(char *outwalk, const char *interface) {
  */
 void print_eth_info(eth_info_ctx_t *ctx) {
     const char *format = ctx->format_down;  // default format
-#define json_gen ctx->json_gen
 
     char *outwalk = ctx->buf;
     size_t num = 0;

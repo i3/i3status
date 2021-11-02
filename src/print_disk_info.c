@@ -121,7 +121,6 @@ void print_disk_info(disk_info_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     bool colorful_output = false;
     bool mounted = false;
-#define json_gen ctx->json_gen
 
     INSTANCE(ctx->path);
 

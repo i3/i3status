@@ -88,7 +88,6 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 
 void print_memory(memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
-#define json_gen ctx->json_gen
 
 #if defined(__linux__)
     const char *selected_format = ctx->format;
