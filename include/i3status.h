@@ -244,7 +244,20 @@ typedef struct {
 
 void print_ipv6_info(ipv6_info_ctx_t *ctx);
 
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *path;
+    const char *format;
+    const char *format_below_threshold;
+    const char *format_not_mounted;
+    const char *prefix_type;
+    const char *threshold_type;
+    const double low_threshold;
+} disk_info_ctx_t;
+
+void print_disk_info(disk_info_ctx_t *ctx);
 
 typedef struct {
     yajl_gen json_gen;

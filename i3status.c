@@ -784,7 +784,19 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("disk") {
                 SEC_OPEN_MAP("disk_info");
-                print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_below_threshold"), cfg_getstr(sec, "format_not_mounted"), cfg_getstr(sec, "prefix_type"), cfg_getstr(sec, "threshold_type"), cfg_getfloat(sec, "low_threshold"));
+                disk_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .path = title,
+                    .format = cfg_getstr(sec, "format"),
+                    .format_below_threshold = cfg_getstr(sec, "format_below_threshold"),
+                    .format_not_mounted = cfg_getstr(sec, "format_not_mounted"),
+                    .prefix_type = cfg_getstr(sec, "prefix_type"),
+                    .threshold_type = cfg_getstr(sec, "threshold_type"),
+                    .low_threshold = cfg_getfloat(sec, "low_threshold"),
+                };
+                print_disk_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
