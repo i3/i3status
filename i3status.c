@@ -868,7 +868,17 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("cpu_temperature") {
                 SEC_OPEN_MAP("cpu_temperature");
-                print_cpu_temperature_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getint(sec, "max_threshold"));
+                cpu_temperature_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .zone = atoi(title),
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .max_threshold = cfg_getint(sec, "max_threshold"),
+                };
+                print_cpu_temperature_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 

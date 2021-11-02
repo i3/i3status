@@ -323,7 +323,18 @@ typedef struct {
 
 void print_path_exists(path_exists_ctx_t *ctx);
 
-void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    int zone;
+    const char *path;
+    const char *format;
+    const char *format_above_threshold;
+    int max_threshold;
+} cpu_temperature_ctx_t;
+
+void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx);
 
 typedef struct {
     yajl_gen json_gen;

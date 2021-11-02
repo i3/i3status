@@ -211,25 +211,26 @@ error_netbsd1:
  * the user provided path) and returns the temperature in degree celsius.
  *
  */
-void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int max_threshold) {
-    char *outwalk = buffer;
+void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
 #ifdef THERMAL_ZONE
-    const char *selected_format = format;
+    const char *selected_format = ctx->format;
     bool colorful_output = false;
     char *thermal_zone;
     temperature_t temperature;
     temperature.raw_value = 0;
     sprintf(temperature.formatted_value, "%.2f", 0.0);
+#define json_gen ctx->json_gen
 
-    if (path == NULL)
-        asprintf(&thermal_zone, THERMAL_ZONE, zone);
+    if (ctx->path == NULL)
+        asprintf(&thermal_zone, THERMAL_ZONE, ctx->zone);
     else {
         static glob_t globbuf;
-        if (glob(path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
+        if (glob(ctx->path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
             die("glob() failed\n");
         if (globbuf.gl_pathc == 0) {
             /* No glob matches, the specified path does not contain a wildcard. */
-            asprintf(&thermal_zone, path, zone);
+            asprintf(&thermal_zone, ctx->path, ctx->zone);
         } else {
             /* glob matched, we take the first match and ignore the others */
             asprintf(&thermal_zone, "%s", globbuf.gl_pathv[0]);
@@ -242,11 +243,11 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
     if (read_temperature(thermal_zone, &temperature) != 0)
         goto error;
 
-    if (temperature.raw_value >= max_threshold) {
+    if (temperature.raw_value >= ctx->max_threshold) {
         START_COLOR("color_bad");
         colorful_output = true;
-        if (format_above_threshold != NULL)
-            selected_format = format_above_threshold;
+        if (ctx->format_above_threshold != NULL)
+            selected_format = ctx->format_above_threshold;
     }
 
     char string_degrees[STRING_SIZE];
@@ -255,7 +256,9 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
         {.name = "%degrees", .value = string_degrees}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(selected_format, &placeholders[0], num);
+    char *formatted = format_placeholders(selected_format, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     if (colorful_output) {
         END_COLOR;
@@ -264,8 +267,7 @@ void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const
 
     free(thermal_zone);
 
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
     return;
 error:
     free(thermal_zone);
