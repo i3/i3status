@@ -820,11 +820,17 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC_TITLE("volume") {
                 SEC_OPEN_MAP("volume");
-                print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
-                             cfg_getstr(sec, "format_muted"),
-                             cfg_getstr(sec, "device"),
-                             cfg_getstr(sec, "mixer"),
-                             cfg_getint(sec, "mixer_idx"));
+                volume_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .fmt = cfg_getstr(sec, "format"),
+                    .fmt_muted = cfg_getstr(sec, "format_muted"),
+                    .device = cfg_getstr(sec, "device"),
+                    .mixer = cfg_getstr(sec, "mixer"),
+                    .mixer_idx = cfg_getint(sec, "mixer_idx"),
+                };
+                print_volume(&ctx);
                 SEC_CLOSE_MAP;
             }
 
