@@ -802,7 +802,15 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("load") {
                 SEC_OPEN_MAP("load");
-                print_load(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getfloat(sec, "max_threshold"));
+                load_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .max_threshold = cfg_getfloat(sec, "max_threshold"),
+                };
+                print_load(&ctx);
                 SEC_CLOSE_MAP;
             }
 

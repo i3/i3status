@@ -350,7 +350,17 @@ typedef struct {
 
 void print_eth_info(eth_info_ctx_t *ctx);
 
-void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    const char *format_above_threshold;
+    const float max_threshold;
+} load_ctx_t;
+
+void print_load(load_ctx_t *ctx);
+
 void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method, const char *unit, const int decimals);
 
 typedef struct {
