@@ -42,3 +42,5 @@ If you absolutely have to build from source, use:
   ninja
   sudo ninja install
 ```
+
+If you like to build inside of a Docker container, see [these instructions](./docker).
