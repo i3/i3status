@@ -1,3 +1,28 @@
+2021-11-09 i3status 2.14
+
+ • switch to meson build system
+ • battery: OpenBSD: If acpibat watts value is not available, try current
+ • make pulseaudio an optional dependency
+ • print_cpu_usage: use buffered file API
+ • fix memory leak in slurp()
+ • NetBSD: native audio support
+ • wireless: Linux: update %signal and %quality based on station info
+ • memory: introduce unit and decimals options
+ • battery: introduce format_percentage option
+ • memory: fix overflow on 32-bit systems
+ • use format_placeholder
+ • wireless: introduce format_bitrate, format_noise and format_signal
+ • cpu: fix out of bounds read after invalid %cpu conversion
+ • file system: use f_frsize for correct block size
+ • wireless: FreeBSD: support connection bitrate
+ • volume: fix memory leak
+ • print_file_contents: resolve tilde
+ • add build option to disable manual pages
+ • pulseaudio: use port name instead of sink name
+ • battery: add support for POWER_SUPPLY_TIME_TO_EMPTY (e.g. pinebook pro)
+ • tztime: allow selective pango markup
+ • wireless: fix memory corruption
+
 2019-06-30 i3status 2.13
 
  • add memory module
