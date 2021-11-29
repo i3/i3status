@@ -342,6 +342,13 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
+        
+    cfg_opt_t uptime_opts[] = {
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
 
     cfg_opt_t tztime_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S %Z", CFGF_NONE),
@@ -467,6 +474,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("volume", volume_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ipv6", ipv6_opts, CFGF_NONE),
         CFG_SEC("time", time_opts, CFGF_NONE),
+        CFG_SEC("uptime", uptime_opts, CFGF_NONE),
         CFG_SEC("tztime", tztime_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ddate", ddate_opts, CFGF_NONE),
         CFG_SEC("load", load_opts, CFGF_NONE),
@@ -847,6 +855,17 @@ int main(int argc, char *argv[]) {
                     .t = tv.tv_sec,
                 };
                 print_time(&ctx);
+                SEC_CLOSE_MAP;
+            }
+            
+            CASE_SEC("uptime") {
+                SEC_OPEN_MAP("uptime");
+                uptime_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                };
+                print_uptime(&ctx);
                 SEC_CLOSE_MAP;
             }
 

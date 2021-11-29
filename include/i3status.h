@@ -86,7 +86,7 @@ extern char *pct_mark;
     do {                                                                                             \
         /* Terminate the output buffer here in any case, so that it’s                              \
          * not forgotten in the module */                                                            \
-        *outwalk = '\0';                                                                             \
+        /**outwalk = '\0';*/                                                                             \
         if (output_format == O_I3BAR) {                                                              \
             char *_markup = cfg_getstr(cfg_general, "markup");                                       \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)"markup", strlen("markup"));       \
@@ -439,7 +439,13 @@ typedef struct {
     const int max_chars;
 } file_contents_ctx_t;
 
-void print_file_contents(file_contents_ctx_t *ctx);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+} uptime_ctx_t;
+
+void print_uptime(uptime_ctx_t *ctx);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
