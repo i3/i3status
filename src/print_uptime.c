@@ -48,7 +48,7 @@ void print_uptime(uptime_ctx_t *ctx) {
      
      OUTPUT_FULL_TEXT(ctx->buf);
      
-     return;
+     fclose(file);
 #else
     OUTPUT_FULL_TEXT("");
     fputs("i3status: Uptime status information is not supported on this system\n", stderr);
