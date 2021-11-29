@@ -86,7 +86,7 @@ extern char *pct_mark;
     do {                                                                                             \
         /* Terminate the output buffer here in any case, so that it’s                              \
          * not forgotten in the module */                                                            \
-        /**outwalk = '\0';*/                                                                             \
+        outwalk = '\0';                                                                             \
         if (output_format == O_I3BAR) {                                                              \
             char *_markup = cfg_getstr(cfg_general, "markup");                                       \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)"markup", strlen("markup"));       \
