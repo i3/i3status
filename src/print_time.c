@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 50
+
 static bool local_timezone_init = false;
 static const char *local_timezone = NULL;
 static const char *current_timezone = NULL;
@@ -35,56 +37,50 @@ void set_timezone(const char *tz) {
     tzset();
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t) {
-    const char *walk;
-    char *outwalk = buffer;
+void print_time(time_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     struct tm local_tm, tm;
-    char timebuf[1024];
 
-    if (title != NULL)
-        INSTANCE(title);
+    if (ctx->title != NULL)
+        INSTANCE(ctx->title);
 
     set_timezone(NULL);
-    localtime_r(&t, &local_tm);
+    localtime_r(&ctx->t, &local_tm);
 
-    set_timezone(tz);
-    localtime_r(&t, &tm);
+    set_timezone(ctx->tz);
+    localtime_r(&ctx->t, &tm);
 
     // When hide_if_equals_localtime is true, compare local and target time to display only if different
     time_t local_t = mktime(&local_tm);
-    double diff = difftime(local_t, t);
-    if (hide_if_equals_localtime && diff == 0.0) {
+    double diff = difftime(local_t, ctx->t);
+    if (ctx->hide_if_equals_localtime && diff == 0.0) {
         goto out;
     }
 
-    if (locale != NULL) {
-        setlocale(LC_ALL, locale);
+    if (ctx->locale != NULL) {
+        setlocale(LC_ALL, ctx->locale);
     }
 
-    if (format_time == NULL) {
-        strftime(timebuf, sizeof(timebuf), format, &tm);
-        maybe_escape_markup(timebuf, &outwalk);
+    char string_time[STRING_SIZE];
+
+    if (ctx->format_time == NULL) {
+        outwalk += strftime(ctx->buf, 4096, ctx->format, &tm);
     } else {
-        for (walk = format; *walk != '\0'; walk++) {
-            if (*walk != '%') {
-                *(outwalk++) = *walk;
+        strftime(string_time, sizeof(string_time), ctx->format_time, &tm);
+        placeholder_t placeholders[] = {
+            {.name = "%time", .value = string_time}};
 
-            } else if (BEGINS_WITH(walk + 1, "time")) {
-                strftime(timebuf, sizeof(timebuf), format_time, &tm);
-                maybe_escape_markup(timebuf, &outwalk);
-                walk += strlen("time");
-
-            } else {
-                *(outwalk++) = '%';
-            }
-        }
+        const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+        char *formatted = format_placeholders(ctx->format_time, &placeholders[0], num);
+        OUTPUT_FORMATTED;
+        free(formatted);
     }
 
-    if (locale != NULL) {
+    if (ctx->locale != NULL) {
         setlocale(LC_ALL, "");
     }
 
 out:
     *outwalk = '\0';
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

@@ -117,32 +117,28 @@ static char *get_ipv6_addr(void) {
     return NULL;
 }
 
-void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down) {
-    const char *walk;
+void print_ipv6_info(ipv6_info_ctx_t *ctx) {
     char *addr_string = get_ipv6_addr();
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
 
     if (addr_string == NULL) {
         START_COLOR("color_bad");
-        outwalk += sprintf(outwalk, "%s", format_down);
+        outwalk += sprintf(outwalk, "%s", ctx->format_down);
         END_COLOR;
-        OUTPUT_FULL_TEXT(buffer);
+        OUTPUT_FULL_TEXT(ctx->buf);
         return;
     }
 
     START_COLOR("color_good");
-    for (walk = format_up; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
 
-        } else if (BEGINS_WITH(walk + 1, "ip")) {
-            outwalk += sprintf(outwalk, "%s", addr_string);
-            walk += strlen("ip");
+    placeholder_t placeholders[] = {
+        {.name = "%ip", .value = addr_string}};
 
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    char *formatted = format_placeholders(ctx->format_up, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
+
     END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <errno.h>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
@@ -45,7 +46,9 @@ struct cpu_usage {
     int total;
 };
 
+#if defined(__linux__)
 static int cpu_count = 0;
+#endif
 static struct cpu_usage prev_all = {0, 0, 0, 0, 0};
 static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;
@@ -55,10 +58,10 @@ static struct cpu_usage *curr_cpus = NULL;
  * percentage.
  *
  */
-void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold) {
-    const char *selected_format = format;
+void print_cpu_usage(cpu_usage_ctx_t *ctx) {
+    const char *selected_format = ctx->format;
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
     int diff_idle, diff_total, diff_usage;
     bool colorful_output = false;
@@ -76,28 +79,41 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
-    char buf[4096];
+    FILE *f = fopen(ctx->path, "r");
+    if (f == NULL) {
+        fprintf(stderr, "i3status: open %s: %s\n", ctx->path, strerror(errno));
+        goto error;
+    }
     curr_cpu_count = get_nprocs();
-    if (!slurp(path, buf, sizeof(buf)))
-        goto error;
-    // Parsing all cpu values using strtok
-    if (strtok(buf, "\n") == NULL)
-        goto error;
-    char *buf_itr = NULL;
+    char line[4096];
+
+    /* Discard first line (cpu ), start at second line (cpu0) */
+    if (fgets(line, sizeof(line), f) == NULL) {
+        fclose(f);
+        goto error; /* unexpected EOF or read error */
+    }
+
     for (int idx = 0; idx < curr_cpu_count; ++idx) {
-        buf_itr = strtok(NULL, "\n");
+        if (fgets(line, sizeof(line), f) == NULL) {
+            fclose(f);
+            goto error; /* unexpected EOF or read error */
+        }
         int cpu_idx, user, nice, system, idle;
-        if (!buf_itr || sscanf(buf_itr, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
+        if (sscanf(line, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
+            fclose(f);
             goto error;
         }
-        if (cpu_idx < 0 || cpu_idx >= cpu_count)
+        if (cpu_idx < 0 || cpu_idx >= cpu_count) {
+            fclose(f);
             goto error;
+        }
         curr_cpus[cpu_idx].user = user;
         curr_cpus[cpu_idx].nice = nice;
         curr_cpus[cpu_idx].system = system;
         curr_cpus[cpu_idx].idle = idle;
         curr_cpus[cpu_idx].total = user + nice + system + idle;
     }
+    fclose(f);
     for (int cpu_idx = 0; cpu_idx < cpu_count; cpu_idx++) {
         curr_all.user += curr_cpus[cpu_idx].user;
         curr_all.nice += curr_cpus[cpu_idx].nice;
@@ -144,16 +160,16 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     goto error;
 #endif
 
-    if (diff_usage >= max_threshold) {
+    if (diff_usage >= ctx->max_threshold) {
         START_COLOR("color_bad");
         colorful_output = true;
-        if (format_above_threshold != NULL)
-            selected_format = format_above_threshold;
-    } else if (diff_usage >= degraded_threshold) {
+        if (ctx->format_above_threshold != NULL)
+            selected_format = ctx->format_above_threshold;
+    } else if (diff_usage >= ctx->degraded_threshold) {
         START_COLOR("color_degraded");
         colorful_output = true;
-        if (format_above_degraded_threshold != NULL)
-            selected_format = format_above_degraded_threshold;
+        if (ctx->format_above_degraded_threshold != NULL)
+            selected_format = ctx->format_above_degraded_threshold;
     }
 
     for (walk = selected_format; *walk != '\0'; walk++) {
@@ -167,7 +183,8 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
 #if defined(__linux__)
         else if (BEGINS_WITH(walk + 1, "cpu")) {
             int number = -1;
-            sscanf(walk + 1, "cpu%d", &number);
+            int length = strlen("cpu");
+            sscanf(walk + 1, "cpu%d%n", &number, &length);
             if (number == -1) {
                 fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
             } else if (number >= cpu_count) {
@@ -178,13 +195,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
                 outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
             }
-            int padding = 1;
-            int step = 10;
-            while (step <= number) {
-                step *= 10;
-                padding++;
-            }
-            walk += strlen("cpu") + padding;
+            walk += length;
         }
 #endif
         else {
@@ -199,7 +210,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     if (colorful_output)
         END_COLOR;
 
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
     return;
 error:
     OUTPUT_FULL_TEXT("cant read cpu usage");

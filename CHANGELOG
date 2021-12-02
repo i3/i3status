@@ -1,3 +1,57 @@
+2021-11-09 i3status 2.14
+
+ • switch to meson build system
+ • battery: OpenBSD: If acpibat watts value is not available, try current
+ • make pulseaudio an optional dependency
+ • print_cpu_usage: use buffered file API
+ • fix memory leak in slurp()
+ • NetBSD: native audio support
+ • wireless: Linux: update %signal and %quality based on station info
+ • memory: introduce unit and decimals options
+ • battery: introduce format_percentage option
+ • memory: fix overflow on 32-bit systems
+ • use format_placeholder
+ • wireless: introduce format_bitrate, format_noise and format_signal
+ • cpu: fix out of bounds read after invalid %cpu conversion
+ • file system: use f_frsize for correct block size
+ • wireless: FreeBSD: support connection bitrate
+ • volume: fix memory leak
+ • print_file_contents: resolve tilde
+ • add build option to disable manual pages
+ • pulseaudio: use port name instead of sink name
+ • battery: add support for POWER_SUPPLY_TIME_TO_EMPTY (e.g. pinebook pro)
+ • tztime: allow selective pango markup
+ • wireless: fix memory corruption
+
+2019-06-30 i3status 2.13
+
+ • add memory module
+ • add read_file module
+ • drop CAP_NET_ADMIN (not needed on Linux ≥ 2.6.37)
+ • switch to autotools 
+ • battery: hide seconds by default
+ • wireless: add format_quality
+ • doc: clarify min_width not being supported with dzen2/xmobar
+ • battery: read multiple batteries on DragonFlyBSD
+ • make: don’t use pulseaudio on DragonFlyBSD
+ • wireless: detect interface type on DragonFlyBSD
+ • cpu usage: fix: correctly print usage for cpu 10
+ • cpu usage: fix: correctly print for invalid %cpu placeholder
+ • cpu usage: support non-consecutive CPUs
+ • time: add only_when_tz_different option
+ • ethernet: add %interface
+ • ethernet: fix speed display for 100 Gbit/s cards
+ • battery: handle POWER_SUPPLY_STATUS=Not charging
+ • volume: provide more natural volume percentage with ALSA
+ • volume: fix ALSA capture device monitoring
+ • volume: implement %devicename for PulseAudio and ALSA
+ • config: re-arrange disk after network interfaces
+ • fix: include sys/socket.h on macOS
+ • fix: strip network interface labels
+ • fix glob(3) error handling
+ • various testsuite improvements
+ • switch to clang-format-3.8
+ 
 2018-05-11 i3status 2.12
 
  • fix NULL value on OpenBSD when there is no acpitz0

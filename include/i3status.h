@@ -82,20 +82,20 @@ extern char *pct_mark;
 
 /* Macro which any plugin can use to output the full_text part (when the output
  * format is JSON) or just output to stdout (any other output format). */
-#define OUTPUT_FULL_TEXT(text)                                                                  \
-    do {                                                                                        \
-        /* Terminate the output buffer here in any case, so that it’s                         \
-         * not forgotten in the module */                                                       \
-        *outwalk = '\0';                                                                        \
-        if (output_format == O_I3BAR) {                                                         \
-            char *_markup = cfg_getstr(cfg_general, "markup");                                  \
-            yajl_gen_string(json_gen, (const unsigned char *)"markup", strlen("markup"));       \
-            yajl_gen_string(json_gen, (const unsigned char *)_markup, strlen(_markup));         \
-            yajl_gen_string(json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
-            yajl_gen_string(json_gen, (const unsigned char *)text, strlen(text));               \
-        } else {                                                                                \
-            printf("%s", text);                                                                 \
-        }                                                                                       \
+#define OUTPUT_FULL_TEXT(text)                                                                       \
+    do {                                                                                             \
+        /* Terminate the output buffer here in any case, so that it’s                              \
+         * not forgotten in the module */                                                            \
+        *outwalk = '\0';                                                                             \
+        if (output_format == O_I3BAR) {                                                              \
+            char *_markup = cfg_getstr(cfg_general, "markup");                                       \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"markup", strlen("markup"));       \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)_markup, strlen(_markup));         \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)text, strlen(text));               \
+        } else {                                                                                     \
+            printf("%s", text);                                                                      \
+        }                                                                                            \
     } while (0)
 
 #define SEC_OPEN_MAP(name)                                                            \
@@ -143,21 +143,21 @@ extern char *pct_mark;
         }                                                                                                                   \
     } while (0)
 
-#define START_COLOR(colorstr)                                                               \
-    do {                                                                                    \
-        if (cfg_getbool(cfg_general, "colors")) {                                           \
-            const char *_val = NULL;                                                        \
-            if (cfg_section)                                                                \
-                _val = cfg_getstr(cfg_section, colorstr);                                   \
-            if (!_val)                                                                      \
-                _val = cfg_getstr(cfg_general, colorstr);                                   \
-            if (output_format == O_I3BAR) {                                                 \
-                yajl_gen_string(json_gen, (const unsigned char *)"color", strlen("color")); \
-                yajl_gen_string(json_gen, (const unsigned char *)_val, strlen(_val));       \
-            } else {                                                                        \
-                outwalk += sprintf(outwalk, "%s", color(colorstr));                         \
-            }                                                                               \
-        }                                                                                   \
+#define START_COLOR(colorstr)                                                                    \
+    do {                                                                                         \
+        if (cfg_getbool(cfg_general, "colors")) {                                                \
+            const char *_val = NULL;                                                             \
+            if (cfg_section)                                                                     \
+                _val = cfg_getstr(cfg_section, colorstr);                                        \
+            if (!_val)                                                                           \
+                _val = cfg_getstr(cfg_general, colorstr);                                        \
+            if (output_format == O_I3BAR) {                                                      \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)"color", strlen("color")); \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)_val, strlen(_val));       \
+            } else {                                                                             \
+                outwalk += sprintf(outwalk, "%s", color(colorstr));                              \
+            }                                                                                    \
+        }                                                                                        \
     } while (0)
 
 #define END_COLOR                                                             \
@@ -167,12 +167,19 @@ extern char *pct_mark;
         }                                                                     \
     } while (0)
 
-#define INSTANCE(instance)                                                                    \
-    do {                                                                                      \
-        if (output_format == O_I3BAR) {                                                       \
-            yajl_gen_string(json_gen, (const unsigned char *)"instance", strlen("instance")); \
-            yajl_gen_string(json_gen, (const unsigned char *)instance, strlen(instance));     \
-        }                                                                                     \
+#define INSTANCE(instance)                                                                         \
+    do {                                                                                           \
+        if (output_format == O_I3BAR) {                                                            \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)"instance", strlen("instance")); \
+            yajl_gen_string(ctx->json_gen, (const unsigned char *)instance, strlen(instance));     \
+        }                                                                                          \
+    } while (0)
+
+#define OUTPUT_FORMATTED                                             \
+    do {                                                             \
+        const size_t remaining = ctx->buflen - (outwalk - ctx->buf); \
+        strncpy(outwalk, formatted, remaining);                      \
+        outwalk += strlen(formatted);                                \
     } while (0)
 
 /*
@@ -183,13 +190,14 @@ struct min_width {
     const char *str;
 };
 
-char *sstrdup(const char *str);
-
 /* src/general.c */
 char *skip_character(char *input, char character, int amount);
 
 void die(const char *fmt, ...) __attribute__((format(printf, 1, 2), noreturn));
 bool slurp(const char *filename, char *destination, int size);
+char *resolve_tilde(const char *path);
+void *scalloc(size_t size);
+char *sstrdup(const char *str);
 
 /* src/output.c */
 void print_separator(const char *separator);
@@ -197,6 +205,20 @@ char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
 void maybe_escape_markup(char *text, char **buffer);
+
+char *rtrim(const char *s);
+char *ltrim(const char *s);
+char *trim(const char *s);
+
+// copied from  i3:libi3/format_placeholders.c
+/* src/format_placeholders.c */
+typedef struct {
+    /* The placeholder to be replaced, e.g., "%title". */
+    const char *name;
+    /* The value this placeholder should be replaced with. */
+    const char *value;
+} placeholder_t;
+char *format_placeholders(const char *format, placeholder_t *placeholders, int num);
 
 /* src/auto_detect_format.c */
 char *auto_detect_format();
@@ -212,26 +234,212 @@ typedef enum {
 } net_type_t;
 const char *first_eth_interface(const net_type_t type);
 
-void print_ipv6_info(yajl_gen json_gen, char *buffer, const char *format_up, const char *format_down);
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold);
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds);
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t);
-void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t);
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format_up;
+    const char *format_down;
+} ipv6_info_ctx_t;
+
+void print_ipv6_info(ipv6_info_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *path;
+    const char *format;
+    const char *format_below_threshold;
+    const char *format_not_mounted;
+    const char *prefix_type;
+    const char *threshold_type;
+    const double low_threshold;
+} disk_info_ctx_t;
+
+void print_disk_info(disk_info_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    int number;
+    const char *path;
+    const char *format;
+    const char *format_down;
+    const char *status_chr;
+    const char *status_bat;
+    const char *status_unk;
+    const char *status_full;
+    int low_threshold;
+    char *threshold_type;
+    bool last_full_capacity;
+    const char *format_percentage;
+    bool hide_seconds;
+} battery_info_ctx_t;
+
+void print_battery_info(battery_info_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
+    const char *format;
+    const char *tz;
+    const char *locale;
+    const char *format_time;
+    bool hide_if_equals_localtime;
+    time_t t;
+} time_ctx_t;
+
+void print_time(time_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    time_t t;
+} ddate_ctx_t;
+
+void print_ddate(ddate_ctx_t *ctx);
+
 const char *get_ip_addr(const char *interface, int family);
-void print_wireless_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down, const char *quality_min_lenght);
-void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down);
-void print_path_exists(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_down);
-void print_cpu_temperature_info(yajl_gen json_gen, char *buffer, int zone, const char *path, const char *format, const char *format_above_threshold, int);
-void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold);
-void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, const char *format_up, const char *format_down);
-void print_load(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const float max_threshold);
-void print_memory(yajl_gen json_gen, char *buffer, const char *format, const char *format_degraded, const char *threshold_degraded, const char *threshold_critical, const char *memory_used_method);
-void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *interface;
+    const char *format_up;
+    const char *format_down;
+    const char *format_bitrate;
+    const char *format_noise;
+    const char *format_quality;
+    const char *format_signal;
+} wireless_info_ctx_t;
+
+void print_wireless_info(wireless_info_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
+    const char *pidfile;
+    const char *format;
+    const char *format_down;
+} run_watch_ctx_t;
+
+void print_run_watch(run_watch_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
+    const char *path;
+    const char *format;
+    const char *format_down;
+} path_exists_ctx_t;
+
+void print_path_exists(path_exists_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    int zone;
+    const char *path;
+    const char *format;
+    const char *format_above_threshold;
+    int max_threshold;
+} cpu_temperature_ctx_t;
+
+void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    const char *format_above_threshold;
+    const char *format_above_degraded_threshold;
+    const char *path;
+    const float max_threshold;
+    const float degraded_threshold;
+} cpu_usage_ctx_t;
+
+void print_cpu_usage(cpu_usage_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *interface;
+    const char *format_up;
+    const char *format_down;
+} eth_info_ctx_t;
+
+void print_eth_info(eth_info_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    const char *format_above_threshold;
+    const float max_threshold;
+} load_ctx_t;
+
+void print_load(load_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *format;
+    const char *format_degraded;
+    const char *threshold_degraded;
+    const char *threshold_critical;
+    const char *memory_used_method;
+    const char *unit;
+    const int decimals;
+} memory_ctx_t;
+
+void print_memory(memory_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *fmt;
+    const char *fmt_muted;
+    const char *device;
+    const char *mixer;
+    int mixer_idx;
+} volume_ctx_t;
+
+void print_volume(volume_ctx_t *ctx);
+
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
-void print_file_contents(yajl_gen json_gen, char *buffer, const char *title, const char *path, const char *format, const char *format_bad, const int max_chars);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
+    const char *path;
+    const char *format;
+    const char *format_bad;
+    const int max_chars;
+} file_contents_ctx_t;
+
+void print_file_contents(file_contents_ctx_t *ctx);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;

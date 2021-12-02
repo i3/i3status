@@ -1,1 +1,1 @@
-contents | NONEXISTANT - 2: No such file or directory
+contents | con | NONEXISTANT - 2: No such file or directory

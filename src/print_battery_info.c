@@ -10,6 +10,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 10
+
 #if defined(__linux__)
 #include <errno.h>
 #include <glob.h>
@@ -31,6 +33,9 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/sensors.h>
+#include <sys/sysctl.h>
 #endif
 
 #if defined(__NetBSD__)
@@ -130,7 +135,7 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
 }
 #endif
 
-static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
+static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
 
 #if defined(__linux__)
@@ -170,6 +175,8 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW="))
             voltage = abs(atoi(walk + 1));
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_NOW="))
+            batt_info->seconds_remaining = abs(atoi(walk + 1)) * 60;
         /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
          * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
          * unit instead of μAh. We will calculate it as we need it
@@ -269,11 +276,16 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
 #elif defined(__OpenBSD__)
     /*
 	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
-	 * the generic interface on macppc/sparc64/zaurus, instead of using sysctl(3) and
-	 * probing acpi(4) devices.
+	 * the generic interface on macppc/sparc64/zaurus.  Machines that have ACPI
+	 * battery sensors gain some extra information.
 	 */
     struct apm_power_info apm_info;
+    struct sensordev sensordev;
+    struct sensor sensor;
+    size_t sdlen, slen;
     int apm_fd;
+    int dev, mib[5] = {CTL_HW, HW_SENSORS, 0, 0, 0};
+    int volts = 0;
 
     apm_fd = open("/dev/apm", O_RDONLY);
     if (apm_fd < 0) {
@@ -310,6 +322,41 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
     /* Can't give a meaningful value for remaining minutes if we're charging. */
     if (batt_info->status != CS_CHARGING) {
         batt_info->seconds_remaining = apm_info.minutes_left * 60;
+    }
+
+    /* If acpibat* are present, check sensors for data not present via APM. */
+    batt_info->present_rate = 0;
+    sdlen = sizeof(sensordev);
+    slen = sizeof(sensor);
+
+    for (dev = 0;; dev++) {
+        mib[2] = dev;
+        if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
+            break;
+        }
+        /* 'path' is the node within the full path */
+        if (BEGINS_WITH(sensordev.xname, "acpibat")) {
+            /* power0 */
+            mib[3] = SENSOR_WATTS;
+            mib[4] = 0;
+            if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+                /* try current0 */
+                mib[3] = SENSOR_AMPS;
+                if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1)
+                    continue;
+                volts = sensor.value;
+
+                /* we also need current voltage to convert amps to watts */
+                mib[3] = SENSOR_VOLTS_DC;
+                mib[4] = 1;
+                if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1)
+                    continue;
+
+                batt_info->present_rate += (((float)volts / 1000.0) * ((float)sensor.value / 1000.0));
+            } else {
+                batt_info->present_rate += sensor.value;
+            }
+        }
     }
 #elif defined(__NetBSD__)
     /*
@@ -469,7 +516,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
  * Populate batt_info with aggregate information about all batteries.
  * Returns false on error, and an error message will have been written.
  */
-static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
+static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
 #if defined(__linux__)
     char *outwalk = buffer;
     bool is_found = false;
@@ -498,7 +545,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
                 .present_rate = 0,
                 .status = CS_UNKNOWN,
             };
-            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
+            if (!slurp_battery_info(ctx, &batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
                 globfree(&globbuf);
                 free(globpath);
                 return false;
@@ -521,15 +568,14 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
     /* FreeBSD and OpenBSD only report aggregates. NetBSD always
      * iterates through all batteries, so it's more efficient to
      * aggregate in slurp_battery_info. */
-    return slurp_battery_info(batt_info, json_gen, buffer, -1, path, format_down);
+    return slurp_battery_info(ctx, batt_info, json_gen, buffer, -1, path, format_down);
 #endif
 
     return true;
 }
 
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity, bool hide_seconds) {
-    const char *walk;
-    char *outwalk = buffer;
+void print_battery_info(battery_info_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     struct battery_info batt_info = {
         .full_design = -1,
         .full_last = -1,
@@ -543,18 +589,20 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
-    integer_battery_capacity = true;
+    if (strcmp("%.02f%s", ctx->format_percentage) == 0) {
+        ctx->format_percentage = "%.00f%s";
+    }
 #endif
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery time in minutes. */
-    hide_seconds = true;
+    ctx->hide_seconds = true;
 #endif
 
-    if (number < 0) {
-        if (!slurp_all_batteries(&batt_info, json_gen, buffer, path, format_down))
+    if (ctx->number < 0) {
+        if (!slurp_all_batteries(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->path, ctx->format_down))
             return;
     } else {
-        if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down))
+        if (!slurp_battery_info(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->number, ctx->path, ctx->format_down))
             return;
     }
 
@@ -567,13 +615,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     // If we don't have either then both full_design and full_last <= 0,
     // which implies full <= 0, which bails out on the following line.
     int full = batt_info.full_design;
-    if (full <= 0 || (last_full_capacity && batt_info.full_last > 0)) {
+    if (full <= 0 || (ctx->last_full_capacity && batt_info.full_last > 0)) {
         full = batt_info.full_last;
     }
     if (full <= 0 && batt_info.remaining < 0 && batt_info.percentage_remaining < 0) {
         /* We have no physical measurements and no estimates. Nothing
          * much we can report, then. */
-        OUTPUT_FULL_TEXT(format_down);
+        OUTPUT_FULL_TEXT(ctx->format_down);
         return;
     }
 
@@ -584,7 +632,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
          * the percentage calculated based on the last full capacity, we clamp the
          * value to 100%, as that makes more sense.
          * See http://bugs.debian.org/785398 */
-        if (last_full_capacity && batt_info.percentage_remaining > 100) {
+        if (ctx->last_full_capacity && batt_info.percentage_remaining > 100) {
             batt_info.percentage_remaining = 100;
         }
     }
@@ -598,108 +646,82 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             batt_info.seconds_remaining = 0;
     }
 
-    if (batt_info.status == CS_DISCHARGING && low_threshold > 0) {
-        if (batt_info.percentage_remaining >= 0 && strcasecmp(threshold_type, "percentage") == 0 && batt_info.percentage_remaining < low_threshold) {
+    if (batt_info.status == CS_DISCHARGING && ctx->low_threshold > 0) {
+        if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
-        } else if (batt_info.seconds_remaining >= 0 && strcasecmp(threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * low_threshold) {
+        } else if (batt_info.seconds_remaining >= 0 && strcasecmp(ctx->threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
         }
     }
 
-#define EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT()                   \
-    do {                                                       \
-        if (outwalk == prevoutwalk) {                          \
-            if (outwalk > buffer && isspace((int)outwalk[-1])) \
-                outwalk--;                                     \
-            else if (isspace((int)*(walk + 1)))                \
-                walk++;                                        \
-        }                                                      \
-    } while (0)
+    char string_status[STRING_SIZE];
+    char string_percentage[STRING_SIZE];
+    // following variables are not alwasy set. If they are not set they should be empty.
+    char string_remaining[STRING_SIZE] = "";
+    char string_emptytime[STRING_SIZE] = "";
+    char string_consumption[STRING_SIZE] = "";
 
-    for (walk = format; *walk != '\0'; walk++) {
-        char *prevoutwalk = outwalk;
+    const char *statusstr;
+    switch (batt_info.status) {
+        case CS_CHARGING:
+            statusstr = ctx->status_chr;
+            break;
+        case CS_DISCHARGING:
+            statusstr = ctx->status_bat;
+            break;
+        case CS_FULL:
+            statusstr = ctx->status_full;
+            break;
+        default:
+            statusstr = ctx->status_unk;
+    }
+    snprintf(string_status, STRING_SIZE, "%s", statusstr);
+    snprintf(string_percentage, STRING_SIZE, ctx->format_percentage, batt_info.percentage_remaining, pct_mark);
 
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
-
-        } else if (BEGINS_WITH(walk + 1, "status")) {
-            const char *statusstr;
-            switch (batt_info.status) {
-                case CS_CHARGING:
-                    statusstr = status_chr;
-                    break;
-                case CS_DISCHARGING:
-                    statusstr = status_bat;
-                    break;
-                case CS_FULL:
-                    statusstr = status_full;
-                    break;
-                default:
-                    statusstr = status_unk;
-            }
-
-            outwalk += sprintf(outwalk, "%s", statusstr);
-            walk += strlen("status");
-
-        } else if (BEGINS_WITH(walk + 1, "percentage")) {
-            if (integer_battery_capacity) {
-                outwalk += sprintf(outwalk, "%.00f%s", batt_info.percentage_remaining, pct_mark);
-            } else {
-                outwalk += sprintf(outwalk, "%.02f%s", batt_info.percentage_remaining, pct_mark);
-            }
-            walk += strlen("percentage");
-
-        } else if (BEGINS_WITH(walk + 1, "remaining")) {
-            if (batt_info.seconds_remaining >= 0) {
-                int seconds, hours, minutes;
-
-                hours = batt_info.seconds_remaining / 3600;
-                seconds = batt_info.seconds_remaining - (hours * 3600);
-                minutes = seconds / 60;
-                seconds -= (minutes * 60);
-
-                if (hide_seconds)
-                    outwalk += sprintf(outwalk, "%02d:%02d",
-                                       max(hours, 0), max(minutes, 0));
-                else
-                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
-                                       max(hours, 0), max(minutes, 0), max(seconds, 0));
-            }
-            walk += strlen("remaining");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else if (BEGINS_WITH(walk + 1, "emptytime")) {
-            if (batt_info.seconds_remaining >= 0) {
-                time_t empty_time = time(NULL) + batt_info.seconds_remaining;
-                set_timezone(NULL); /* Use local time. */
-                struct tm *empty_tm = localtime(&empty_time);
-
-                if (hide_seconds)
-                    outwalk += sprintf(outwalk, "%02d:%02d",
-                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
-                else
-                    outwalk += sprintf(outwalk, "%02d:%02d:%02d",
-                                       max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
-            }
-            walk += strlen("emptytime");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else if (BEGINS_WITH(walk + 1, "consumption")) {
-            if (batt_info.present_rate >= 0)
-                outwalk += sprintf(outwalk, "%1.2fW", batt_info.present_rate / 1e6);
-
-            walk += strlen("consumption");
-            EAT_SPACE_FROM_OUTPUT_IF_NO_OUTPUT();
-
-        } else {
-            *(outwalk++) = '%';
-        }
+    if (batt_info.seconds_remaining >= 0) {
+        int seconds, hours, minutes;
+        hours = batt_info.seconds_remaining / 3600;
+        seconds = batt_info.seconds_remaining - (hours * 3600);
+        minutes = seconds / 60;
+        seconds -= (minutes * 60);
+        if (ctx->hide_seconds)
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d", max(hours, 0), max(minutes, 0));
+        else
+            snprintf(string_remaining, STRING_SIZE, "%02d:%02d:%02d", max(hours, 0), max(minutes, 0), max(seconds, 0));
     }
 
-    if (colorful_output)
+    if (batt_info.seconds_remaining >= 0) {
+        time_t empty_time = time(NULL) + batt_info.seconds_remaining;
+        set_timezone(NULL); /* Use local time. */
+        struct tm *empty_tm = localtime(&empty_time);
+        if (ctx->hide_seconds)
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
+        else
+            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+    }
+
+    if (batt_info.present_rate >= 0)
+        snprintf(string_consumption, STRING_SIZE, "%1.2fW", batt_info.present_rate / 1e6);
+
+    placeholder_t placeholders[] = {
+        {.name = "%status", .value = string_status},
+        {.name = "%percentage", .value = string_percentage},
+        {.name = "%remaining", .value = string_remaining},
+        {.name = "%emptytime", .value = string_emptytime},
+        {.name = "%consumption", .value = string_consumption}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    char *untrimmed = format_placeholders(ctx->format, &placeholders[0], num);
+    char *formatted = trim(untrimmed);
+    OUTPUT_FORMATTED;
+    free(formatted);
+    free(untrimmed);
+
+    if (colorful_output) {
         END_COLOR;
+    }
 
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

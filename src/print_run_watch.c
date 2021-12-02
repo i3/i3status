@@ -1,43 +1,39 @@
 // vim:ts=4:sw=4:expandtab
 #include <config.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 #include "i3status.h"
 
-void print_run_watch(yajl_gen json_gen, char *buffer, const char *title, const char *pidfile, const char *format, const char *format_down) {
-    bool running = process_runs(pidfile);
-    const char *walk;
-    char *outwalk = buffer;
+#define STRING_SIZE 5
 
-    if (running || format_down == NULL) {
-        walk = format;
+void print_run_watch(run_watch_ctx_t *ctx) {
+    bool running = process_runs(ctx->pidfile);
+    const char *walk;
+    char *outwalk = ctx->buf;
+
+    if (running || ctx->format_down == NULL) {
+        walk = ctx->format;
     } else {
-        walk = format_down;
+        walk = ctx->format_down;
     }
 
-    INSTANCE(pidfile);
+    INSTANCE(ctx->pidfile);
 
     START_COLOR((running ? "color_good" : "color_bad"));
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    char string_status[STRING_SIZE];
+    snprintf(string_status, STRING_SIZE, "%s", (running ? "yes" : "no"));
 
-        } else if (BEGINS_WITH(walk + 1, "title")) {
-            outwalk += sprintf(outwalk, "%s", title);
-            walk += strlen("title");
+    placeholder_t placeholders[] = {
+        {.name = "%title", .value = ctx->title},
+        {.name = "%status", .value = string_status}};
 
-        } else if (BEGINS_WITH(walk + 1, "status")) {
-            outwalk += sprintf(outwalk, "%s", (running ? "yes" : "no"));
-            walk += strlen("status");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
-
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    char *formatted = format_placeholders(walk, &placeholders[0], num);
+    OUTPUT_FORMATTED;
     END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

@@ -21,7 +21,7 @@
 #include <sys/soundcard.h>
 #endif
 
-#ifdef __OpenBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/audioio.h>
@@ -30,6 +30,8 @@
 
 #include "i3status.h"
 #include "queue.h"
+
+#define STRING_SIZE 10
 
 #define ALSA_VOLUME(channel)                                                    \
     err = snd_mixer_selem_get_##channel##_dB_range(elem, &min, &max) ||         \
@@ -45,58 +47,46 @@
         fprintf(stderr, "i3status: ALSA: " #channel "_switch: %s\n", snd_strerror(err)); \
     if (!pbval) {                                                                        \
         START_COLOR("color_degraded");                                                   \
-        fmt = fmt_muted;                                                                 \
+        ctx->fmt = ctx->fmt_muted;                                                       \
     }
 
-static char *apply_volume_format(const char *fmt, char *outwalk, int ivolume, const char *devicename) {
-    const char *walk = fmt;
+static char *apply_volume_format(const char *fmt, int ivolume, const char *devicename) {
+    char string_volume[STRING_SIZE];
 
-    for (; *walk != '\0'; walk++) {
-        if (*walk != '%') {
-            *(outwalk++) = *walk;
+    snprintf(string_volume, STRING_SIZE, "%d%s", ivolume, pct_mark);
 
-        } else if (BEGINS_WITH(walk + 1, "%")) {
-            outwalk += sprintf(outwalk, "%s", pct_mark);
-            walk += strlen("%");
+    placeholder_t placeholders[] = {
+        {.name = "%%", .value = pct_mark},
+        {.name = "%volume", .value = string_volume},
+        {.name = "%devicename", .value = devicename}};
 
-        } else if (BEGINS_WITH(walk + 1, "volume")) {
-            outwalk += sprintf(outwalk, "%d%s", ivolume, pct_mark);
-            walk += strlen("volume");
-
-        } else if (BEGINS_WITH(walk + 1, "devicename")) {
-            outwalk += sprintf(outwalk, "%s", devicename);
-            walk += strlen("devicename");
-
-        } else {
-            *(outwalk++) = '%';
-        }
-    }
-    return outwalk;
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    return format_placeholders(fmt, &placeholders[0], num);
 }
 
-void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
-    char *outwalk = buffer;
+void print_volume(volume_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     int pbval = 1;
 
     /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {
         char *instance;
-        asprintf(&instance, "%s.%s.%d", device, mixer, mixer_idx);
+        asprintf(&instance, "%s.%s.%d", ctx->device, ctx->mixer, ctx->mixer_idx);
         INSTANCE(instance);
         free(instance);
     }
 
-#if !defined(__DragonFly__) && !defined(__OpenBSD__)
+#if HAS_PULSEAUDIO
     /* Try PulseAudio first */
 
     /* If the device name has the format "pulse[:N]" where N is the
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
-    if (!strncasecmp(device, "pulse", strlen("pulse"))) {
-        uint32_t sink_idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
-        const char *sink_name = device[strlen("pulse")] == ':' &&
-                                        !isdigit(device[strlen("pulse:")])
-                                    ? device + strlen("pulse:")
+    if (!strncasecmp(ctx->device, "pulse", strlen("pulse"))) {
+        uint32_t sink_idx = ctx->device[strlen("pulse")] == ':' ? (uint32_t)atoi(ctx->device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
+        const char *sink_name = ctx->device[strlen("pulse")] == ':' &&
+                                        !isdigit(ctx->device[strlen("pulse:")])
+                                    ? ctx->device + strlen("pulse:")
                                     : NULL;
         int cvolume = 0;
         char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
@@ -119,12 +109,13 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         /* negative result means error, stick to 0 */
         if (ivolume < 0)
             ivolume = 0;
-        outwalk = apply_volume_format(muted ? fmt_muted : fmt,
-                                      outwalk,
-                                      ivolume,
-                                      description);
-        goto out;
-    } else if (!strcasecmp(device, "default") && pulse_initialize()) {
+        char *formatted = apply_volume_format(muted ? ctx->fmt_muted : ctx->fmt,
+                                              ivolume,
+                                              description);
+        OUTPUT_FORMATTED;
+        free(formatted);
+        goto out_with_format;
+    } else if (!strcasecmp(ctx->device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
         char description[MAX_SINK_DESCRIPTION_LEN];
         bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
@@ -136,11 +127,12 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 START_COLOR("color_degraded");
                 pbval = 0;
             }
-            outwalk = apply_volume_format(muted ? fmt_muted : fmt,
-                                          outwalk,
-                                          ivolume,
-                                          description);
-            goto out;
+            char *formatted = apply_volume_format(muted ? ctx->fmt_muted : ctx->fmt,
+                                                  ivolume,
+                                                  description);
+            OUTPUT_FORMATTED;
+            free(formatted);
+            goto out_with_format;
         }
         /* negative result or NULL description means error, fail PulseAudio attempt */
     }
@@ -165,7 +157,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Attach this mixer handle to the given device */
-    if ((err = snd_mixer_attach(m, device)) < 0) {
+    if ((err = snd_mixer_attach(m, ctx->device)) < 0) {
         fprintf(stderr, "i3status: ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
         snd_mixer_close(m);
         goto out;
@@ -191,8 +183,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Find the given mixer */
-    snd_mixer_selem_id_set_index(sid, mixer_idx);
-    snd_mixer_selem_id_set_name(sid, mixer);
+    snd_mixer_selem_id_set_index(sid, ctx->mixer_idx);
+    snd_mixer_selem_id_set_name(sid, ctx->mixer);
     if (!(elem = snd_mixer_find_selem(m, sid))) {
         fprintf(stderr, "i3status: ALSA: Cannot find mixer %s (index %u)\n",
                 snd_mixer_selem_id_get_name(sid), snd_mixer_selem_id_get_index(sid));
@@ -203,7 +195,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     /* Get the volume range to convert the volume later */
     snd_mixer_handle_events(m);
-    if (!strncasecmp(mixer, "capture", strlen("capture"))) {
+    if (!strncasecmp(ctx->mixer, "capture", strlen("capture"))) {
         ALSA_VOLUME(capture)
     } else {
         ALSA_VOLUME(playback)
@@ -242,26 +234,29 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         ALSA_MUTE_SWITCH(capture)
     }
 
-    outwalk = apply_volume_format(fmt, outwalk, avg, mixer_name);
+    char *formatted = apply_volume_format(ctx->fmt, avg, mixer_name);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     snd_mixer_close(m);
     snd_mixer_selem_id_free(sid);
+    goto out_with_format;
 
 #endif
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     char *mixerpath;
     char defaultmixer[] = "/dev/mixer";
     int mixfd, vol, devmask = 0;
     const char *devicename = "UNSUPPORTED"; /* TODO: implement support for this */
     pbval = 1;
 
-    if (mixer_idx > 0)
-        asprintf(&mixerpath, "/dev/mixer%d", mixer_idx);
+    if (ctx->mixer_idx > 0)
+        asprintf(&mixerpath, "/dev/mixer%d", ctx->mixer_idx);
     else
         mixerpath = defaultmixer;
 
     if ((mixfd = open(mixerpath, O_RDWR)) < 0) {
-#if defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
         warn("audioio: Cannot open mixer");
 #else
         warn("OSS: Cannot open mixer");
@@ -269,10 +264,10 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out;
     }
 
-    if (mixer_idx > 0)
+    if (ctx->mixer_idx > 0)
         free(mixerpath);
 
-#if defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     int oclass_idx = -1, master_idx = -1, master_mute_idx = -1;
     int master_next = AUDIO_MIXER_LAST;
     mixer_devinfo_t devinfo, devinfo2;
@@ -327,15 +322,17 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         vol = (int)vinfo.un.value.level[AUDIO_MIXER_LEVEL_MONO];
     }
 
-    vinfo.dev = master_mute_idx;
-    vinfo.type = AUDIO_MIXER_ENUM;
-    if (ioctl(mixfd, AUDIO_MIXER_READ, &vinfo) == -1)
-        goto out;
+    if (master_mute_idx != -1) {
+        vinfo.dev = master_mute_idx;
+        vinfo.type = AUDIO_MIXER_ENUM;
+        if (ioctl(mixfd, AUDIO_MIXER_READ, &vinfo) == -1)
+            goto out;
 
-    if (master_mute_idx != -1 && vinfo.un.ord) {
-        START_COLOR("color_degraded");
-        fmt = fmt_muted;
-        pbval = 0;
+        if (vinfo.un.ord) {
+            START_COLOR("color_degraded");
+            fmt = fmt_muted;
+            pbval = 0;
+        }
     }
 
 #else
@@ -354,13 +351,19 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
 #endif
-    outwalk = apply_volume_format(fmt, outwalk, vol & 0x7f, devicename);
+    ctx->buf = apply_volume_format(ctx->fmt, vol & 0x7f, devicename);
     close(mixfd);
+    goto out_with_format;
 #endif
 
 out:
-    *outwalk = '\0';
     if (!pbval)
         END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
+    return;
+
+out_with_format:
+    if (!pbval)
+        END_COLOR;
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

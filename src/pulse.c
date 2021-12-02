@@ -122,13 +122,14 @@ static void store_info_from_sink_cb(pa_context *c,
     int avg_vol = pa_cvolume_avg(&info->volume);
     int vol_perc = roundf((float)avg_vol * 100 / PA_VOLUME_NORM);
     int composed_volume = COMPOSE_VOLUME_MUTE(vol_perc, info->mute);
+    const char *desc = (info->active_port != NULL) ? info->active_port->description : info->description;
 
     /* if this is the default sink we must try to save it twice: once with
      * DEFAULT_SINK_INDEX as the index, and another with its proper value
      * (using bitwise OR to avoid early-out logic) */
     if ((info->index == default_sink_idx &&
-         save_info(DEFAULT_SINK_INDEX, composed_volume, info->description, NULL)) |
-        save_info(info->index, composed_volume, info->description, info->name)) {
+         save_info(DEFAULT_SINK_INDEX, composed_volume, desc, NULL)) |
+        save_info(info->index, composed_volume, desc, info->name)) {
         /* if the volume, mute flag or description changed, wake the main thread */
         pthread_kill(main_thread, SIGUSR1);
     }
