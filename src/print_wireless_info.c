@@ -478,7 +478,7 @@ error1:
                     else if (info->signal_level > -50)
                         info->quality = 100;
                     else
-                        info->quality = abs(2*(info->signal_level+100));
+                        info->quality = abs(2 * (info->signal_level + 100));
                 }
                 info->quality_max = 100;
                 info->quality_average = 50;
