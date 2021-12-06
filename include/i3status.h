@@ -425,6 +425,7 @@ void print_volume(volume_ctx_t *ctx);
 
 bool process_runs(const char *path);
 int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
+int volume_sndio(int *vol, int *muted);
 bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
 bool pulse_initialize(void);
 

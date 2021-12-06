@@ -21,7 +21,7 @@
 #include <sys/soundcard.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/audioio.h>
@@ -137,7 +137,26 @@ void print_volume(volume_ctx_t *ctx) {
         /* negative result or NULL description means error, fail PulseAudio attempt */
     }
 /* If some other device was specified or PulseAudio is not detected,
- * proceed to ALSA / OSS */
+ * proceed to sndio / ALSA / OSS */
+#endif
+
+#ifdef HAS_SNDIO
+    int vol, mute;
+
+	if (volume_sndio(&vol, &mute) == 0) {
+        if (mute) {
+                START_COLOR("color_degraded");
+                pbval = 0;
+        }
+        char *formatted = apply_volume_format(mute ? ctx->fmt_muted : ctx->fmt,
+                                              vol & 0x7f, "sndio");
+        OUTPUT_FORMATTED;
+        free(formatted);
+        goto out_with_format;
+    }
+
+    goto out;
+/* If sndio is not detected, proceed to ALSA / OSS */
 #endif
 
 #ifdef __linux__
@@ -243,7 +262,7 @@ void print_volume(volume_ctx_t *ctx) {
     goto out_with_format;
 
 #endif
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
     char *mixerpath;
     char defaultmixer[] = "/dev/mixer";
     int mixfd, vol, devmask = 0;
@@ -256,7 +275,7 @@ void print_volume(volume_ctx_t *ctx) {
         mixerpath = defaultmixer;
 
     if ((mixfd = open(mixerpath, O_RDWR)) < 0) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
         warn("audioio: Cannot open mixer");
 #else
         warn("OSS: Cannot open mixer");
@@ -267,7 +286,7 @@ void print_volume(volume_ctx_t *ctx) {
     if (ctx->mixer_idx > 0)
         free(mixerpath);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
     int oclass_idx = -1, master_idx = -1, master_mute_idx = -1;
     int master_next = AUDIO_MIXER_LAST;
     mixer_devinfo_t devinfo, devinfo2;
