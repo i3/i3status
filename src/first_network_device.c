@@ -25,6 +25,7 @@
 #define LOOPBACK_DEV "lo"
 #endif
 
+#if defined(__linux__)
 static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
     FILE *fp;
     char buf[1024];
@@ -54,6 +55,7 @@ static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
     fclose(fp);
     return true;
 }
+#endif
 
 static bool is_virtual(const char *ifname) {
     char path[1024];
@@ -131,7 +133,7 @@ static net_type_t iface_type(const char *ifname) {
         close(s);
         return NET_TYPE_ETHERNET;
     }
-#else
+#elif defined(__linux__)
     char devtype[32];
 
     if (!sysfs_devtype(devtype, sizeof(devtype), ifname))
