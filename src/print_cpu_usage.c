@@ -43,7 +43,7 @@ struct cpu_usage {
     int nice;
     int system;
     int idle;
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__)
     int spin;
 #endif
     int total;
@@ -154,7 +154,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     curr_all.nice = cp_time[CP_NICE];
     curr_all.system = cp_time[CP_SYS];
     curr_all.idle = cp_time[CP_IDLE];
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__)
     curr_all.spin = cp_time[CP_SPIN];
     curr_all.total = curr_all.user + curr_all.nice + curr_all.system + curr_all.idle + curr_all.spin;
 #else
