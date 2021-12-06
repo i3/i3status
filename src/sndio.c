@@ -23,8 +23,7 @@ static struct pollfd *pfds;
 /*
  * new control registered or control changed
  */
-static void ondesc(void *unused, struct sioctl_desc *d, int val)
-{
+static void ondesc(void *unused, struct sioctl_desc *d, int val) {
     struct control *i, **pi;
 
     if (d == NULL)
@@ -50,14 +49,14 @@ static void ondesc(void *unused, struct sioctl_desc *d, int val)
         strcmp(d->func, "mute") == 0) {
         char name[32];
         snprintf(name, sizeof(name), "%s%d", d->node0.name, d->node0.unit);
-    	for (pi = &controls; (i = *pi) != NULL; pi = &i->next) {
+        for (pi = &controls; (i = *pi) != NULL; pi = &i->next) {
             if (strcmp(name, i->name) == 0) {
                 i->muted = val;
                 i->muteaddr = d->addr;
                 break;
             }
         }
-	return;
+        return;
     }
 
     /*
@@ -88,11 +87,10 @@ static void ondesc(void *unused, struct sioctl_desc *d, int val)
 /*
  * control value changed
  */
-static void onval(void *unused, unsigned int addr, unsigned int value)
-{
+static void onval(void *unused, unsigned int addr, unsigned int value) {
     struct control *c;
 
-    for (c = controls; ; c = c->next) {
+    for (c = controls;; c = c->next) {
         if (c == NULL)
             return;
         if (c->addr == addr) {
@@ -106,8 +104,7 @@ static void onval(void *unused, unsigned int addr, unsigned int value)
     }
 }
 
-static void cleanup(void)
-{
+static void cleanup(void) {
     struct control *c;
 
     if (hdl) {
@@ -124,8 +121,7 @@ static void cleanup(void)
     }
 }
 
-static int init(void)
-{
+static int init(void) {
     /* open device */
     hdl = sioctl_open(SIO_DEVANY, SIOCTL_READ, 0);
     if (hdl == NULL) {
@@ -157,8 +153,7 @@ failed:
     return 0;
 }
 
-int volume_sndio(int *vol, int *muted)
-{
+int volume_sndio(int *vol, int *muted) {
     struct control *c;
     int n, v;
 
@@ -193,7 +188,6 @@ int volume_sndio(int *vol, int *muted)
         if (v < *vol) {
             *vol = v;
             *muted = c->muted;
-
         }
     }
 

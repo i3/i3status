@@ -143,10 +143,10 @@ void print_volume(volume_ctx_t *ctx) {
 #ifdef HAS_SNDIO
     int vol, mute;
 
-	if (volume_sndio(&vol, &mute) == 0) {
+    if (volume_sndio(&vol, &mute) == 0) {
         if (mute) {
-                START_COLOR("color_degraded");
-                pbval = 0;
+            START_COLOR("color_degraded");
+            pbval = 0;
         }
         char *formatted = apply_volume_format(mute ? ctx->fmt_muted : ctx->fmt,
                                               vol & 0x7f, "sndio");
