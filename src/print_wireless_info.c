@@ -469,9 +469,21 @@ error1:
 
             if (ioctl(s, SIOCG80211NODE, &nr) == 0 && nr.nr_rssi) {
                 info->signal_level = nr.nr_rssi;
-                if (nr.nr_max_rssi)
+                if (nr.nr_max_rssi) {
                     info->signal_level_max = nr.nr_max_rssi;
+                    info->quality = IEEE80211_NODEREQ_RSSI(&nr);
+                } else {
+                    if (info->signal_level <= -100)
+                        info->quality = 0;
+                    else if (info->signal_level > -50)
+                        info->quality = 100;
+                    else
+                        info->quality = abs(2 * (info->signal_level + 100));
+                }
+                info->quality_max = 100;
+                info->quality_average = 50;
 
+                info->flags |= WIRELESS_INFO_FLAG_HAS_QUALITY;
                 info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
             }
         }
