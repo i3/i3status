@@ -26,8 +26,9 @@ static struct pollfd *pfds;
 static void ondesc(void *unused, struct sioctl_desc *d, int val) {
     struct control *i, **pi;
 
-    if (d == NULL)
+    if (d == NULL) {
         return;
+    }
 
     /*
      * delete existing control with the same address
@@ -90,9 +91,7 @@ static void ondesc(void *unused, struct sioctl_desc *d, int val) {
 static void onval(void *unused, unsigned int addr, unsigned int value) {
     struct control *c;
 
-    for (c = controls;; c = c->next) {
-        if (c == NULL)
-            return;
+    for (c = controls; c != NULL; c = c->next) {
         if (c->addr == addr) {
             c->value = value;
             return;
