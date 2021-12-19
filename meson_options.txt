@@ -12,5 +12,5 @@ option('docdir', type: 'string', value: '',
 option('pulseaudio', type: 'boolean', value: true,
        description: 'Build with pulseaudio support')
 
-option('sndio', type: 'boolean', value: true,
+option('sndio', type: 'boolean', value: false,
        description: 'Build with sndio support')
