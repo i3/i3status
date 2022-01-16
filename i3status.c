@@ -328,6 +328,7 @@ int main(int argc, char *argv[]) {
         CFG_BOOL("last_full_capacity", false, CFGF_NONE),
         CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
         CFG_BOOL("hide_seconds", true, CFGF_NONE),
+        CFG_STR("battery_full_emptytime", "", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -747,6 +748,7 @@ int main(int argc, char *argv[]) {
                     .last_full_capacity = cfg_getbool(sec, "last_full_capacity"),
                     .format_percentage = cfg_getstr(sec, "format_percentage"),
                     .hide_seconds = cfg_getbool(sec, "hide_seconds"),
+                    .battery_full_emptytime = cfg_getstr(sec, "battery_full_emptytime"),
                 };
                 print_battery_info(&ctx);
                 SEC_CLOSE_MAP;
