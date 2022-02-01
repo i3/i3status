@@ -575,6 +575,7 @@ static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *ba
 }
 
 void print_battery_info(battery_info_ctx_t *ctx) {
+    const char *selected_format = ctx->format;
     char *outwalk = ctx->buf;
     struct battery_info batt_info = {
         .full_design = -1,
@@ -650,9 +651,13 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
+            if (ctx->format_below_threshold != NULL)
+                selected_format = ctx->format_below_threshold;
         } else if (batt_info.seconds_remaining >= 0 && strcasecmp(ctx->threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
+            if (ctx->format_below_threshold != NULL)
+                selected_format = ctx->format_below_threshold;
         }
     }
 
@@ -713,7 +718,7 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         {.name = "%consumption", .value = string_consumption}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    char *untrimmed = format_placeholders(ctx->format, &placeholders[0], num);
+    char *untrimmed = format_placeholders(selected_format, &placeholders[0], num);
     char *formatted = trim(untrimmed);
     OUTPUT_FORMATTED;
     free(formatted);
