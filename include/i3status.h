@@ -339,6 +339,18 @@ typedef struct {
     char *buf;
     const size_t buflen;
     const char *title;
+    const char *format;
+    const char *brightness_path;
+    const char *max_brightness_path;
+} brightness_ctx_t;
+
+void print_brightness(brightness_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
+    const char *title;
     const char *path;
     const char *format;
     const char *format_down;

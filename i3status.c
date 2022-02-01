@@ -280,6 +280,17 @@ int main(int argc, char *argv[]) {
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
         CFG_END()};
 
+    cfg_opt_t brightness_opts[] = {
+        CFG_STR("format", "Brightness: %brightness%", CFGF_NONE),
+        CFG_STR("brightness_path", "/sys/class/backlight/intel_backlight/brightness", CFGF_NONE),
+        CFG_STR("max_brightness_path", "/sys/class/backlight/intel_backlight/max_brightness", CFGF_NONE),
+        CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
+        CFG_CUSTOM_MIN_WIDTH_OPT,
+        CFG_CUSTOM_SEPARATOR_OPT,
+        CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
+        CFG_END()};
+
     cfg_opt_t wireless_opts[] = {
         CFG_STR("format_up", "W: (%quality at %essid, %bitrate) %ip", CFGF_NONE),
         CFG_STR("format_down", "W: down", CFGF_NONE),
@@ -459,6 +470,7 @@ int main(int argc, char *argv[]) {
         CFG_SEC("general", general_opts, CFGF_NONE),
         CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("path_exists", path_exists_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("brightness", brightness_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("ethernet", ethernet_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("battery", battery_opts, CFGF_TITLE | CFGF_MULTI),
@@ -779,6 +791,21 @@ int main(int argc, char *argv[]) {
                     .format_down = cfg_getstr(sec, "format_down"),
                 };
                 print_path_exists(&ctx);
+                SEC_CLOSE_MAP;
+            }
+
+            CASE_SEC_TITLE("brightness") {
+                SEC_OPEN_MAP("brightness");
+                brightness_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .format = cfg_getstr(sec, "format"),
+                    .brightness_path = cfg_getstr(sec, "brightness_path"),
+                    .max_brightness_path = cfg_getstr(sec, "max_brightness_path"),
+                };
+                print_brightness(&ctx);
                 SEC_CLOSE_MAP;
             }
 

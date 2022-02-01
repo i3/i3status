@@ -167,6 +167,7 @@ i3status_srcs = [
   'src/print_mem.c',
   'src/print_path_exists.c',
   'src/print_run_watch.c',
+  'src/print_brightness.c',
   'src/print_time.c',
   'src/print_volume.c',
   'src/print_wireless_info.c',
