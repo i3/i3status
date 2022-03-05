@@ -567,6 +567,8 @@ int main(int argc, char *argv[]) {
         output_format = O_I3BAR;
     else if (strcasecmp(output_str, "lemonbar") == 0)
         output_format = O_LEMONBAR;
+    else if (strcasecmp(output_str, "tmux") == 0)
+        output_format = O_TMUX;
     else if (strcasecmp(output_str, "term") == 0)
         output_format = O_TERM;
     else if (strcasecmp(output_str, "none") == 0)
