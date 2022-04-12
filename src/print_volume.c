@@ -330,7 +330,7 @@ void print_volume(volume_ctx_t *ctx) {
 
         if (vinfo.un.ord) {
             START_COLOR("color_degraded");
-            fmt = fmt_muted;
+            ctx->fmt = ctx->fmt_muted;
             pbval = 0;
         }
     }
