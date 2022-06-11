@@ -19,6 +19,12 @@ void print_file_contents(file_contents_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     char *buf = scalloc(ctx->max_chars * sizeof(char) + 1);
 
+    if (ctx->path == NULL) {
+        OUTPUT_FULL_TEXT("error: path not configured");
+        free(buf);
+        return;
+    }
+
     char *abs_path = resolve_tilde(ctx->path);
     int fd = open(abs_path, O_RDONLY);
     free(abs_path);
