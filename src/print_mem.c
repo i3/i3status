@@ -197,6 +197,7 @@ error:
     handle_used_method(minfo, ctx);
     handle_threshold(minfo, ctx);
 #else
+    // For FreeBSD implementation see: https://bal0n.es/git/slstatus/file/components/ram.c.html
     OUTPUT_FULL_TEXT("");
     fputs("i3status: Memory status information is not supported on this system\n", stderr);
 #endif
