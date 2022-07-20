@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include "i3status.h"
 
 #define MAX_DECIMALS 4
@@ -12,12 +14,9 @@
 
 #define BINARY_BASE 1024UL
 
-#if defined(__linux__)
 static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 #define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
-#endif
 
-#if defined(__linux__)
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -40,7 +39,10 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
 static int print_percentage(char *outwalk, float percent) {
     return snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
 }
-#endif
+
+static unsigned long page2mbyte (unsigned pageCnt) {
+    return (pageCnt * getpagesize ()) >> 20;
+}
 
 #if defined(__linux__)
 /*
@@ -85,6 +87,70 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
     return amount;
 }
 #endif
+
+struct print_mem_info {
+    unsigned long ram_total;
+    unsigned long ram_free;
+    unsigned long ram_used;
+    unsigned long ram_available;
+    unsigned long ram_buffers;
+    unsigned long ram_cached;
+    unsigned long ram_shared;
+    char *output_color;
+};
+
+
+void print_formatted_memory(struct print_mem_info *minfo, memory_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
+    const char *selected_format = ctx->format;
+    char string_ram_total[STRING_SIZE];
+    char string_ram_used[STRING_SIZE];
+    char string_ram_free[STRING_SIZE];
+    char string_ram_available[STRING_SIZE];
+    char string_ram_shared[STRING_SIZE];
+    char string_percentage_free[STRING_SIZE];
+    char string_percentage_available[STRING_SIZE];
+    char string_percentage_used[STRING_SIZE];
+    char string_percentage_shared[STRING_SIZE];
+
+    if (minfo->output_color) {
+        START_COLOR(minfo->output_color);
+
+        if (ctx->format_degraded)
+            selected_format = ctx->format_degraded;
+    }
+
+    print_bytes_human(string_ram_total, minfo->ram_total, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_used, minfo->ram_used, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_free, minfo->ram_free, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_available, minfo->ram_available, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_shared, minfo->ram_shared, ctx->unit, ctx->decimals);
+    print_percentage(string_percentage_free, 100.0 * minfo->ram_free / minfo->ram_total);
+    print_percentage(string_percentage_available, 100.0 * minfo->ram_available / minfo->ram_total);
+    print_percentage(string_percentage_used, 100.0 * minfo->ram_used / minfo->ram_total);
+    print_percentage(string_percentage_shared, 100.0 * minfo->ram_shared / minfo->ram_total);
+
+    placeholder_t placeholders[] = {
+        {.name = "%total", .value = string_ram_total},
+        {.name = "%used", .value = string_ram_used},
+        {.name = "%free", .value = string_ram_free},
+        {.name = "%available", .value = string_ram_available},
+        {.name = "%shared", .value = string_ram_shared},
+        {.name = "%percentage_free", .value = string_percentage_free},
+        {.name = "%percentage_available", .value = string_percentage_available},
+        {.name = "%percentage_used", .value = string_percentage_used},
+        {.name = "%percentage_shared", .value = string_percentage_shared}};
+
+    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
+    char *formatted = format_placeholders(selected_format, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
+
+    if (minfo->output_color)
+        END_COLOR;
+
+    OUTPUT_FULL_TEXT(ctx->buf);
+}
 
 void print_memory(memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
@@ -214,6 +280,36 @@ void print_memory(memory_ctx_t *ctx) {
 error:
     OUTPUT_FULL_TEXT("can't read memory");
     fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
+
+#elif defined(__OpenBSD__)
+    struct print_mem_info minfo;
+
+    int mib [] = { CTL_VM, VM_UVMEXP };
+    struct uvmexp our_uvmexp;
+    size_t size = sizeof (our_uvmexp);
+
+    if (sysctl (mib, 2, &our_uvmexp, &size, NULL, 0) < 0) {
+        OUTPUT_FULL_TEXT("");
+        fputs("i3status: cannot get memory info!\n", stderr);
+        return;
+    }
+
+/*
+    OUTPUT_FULL_TEXT("");
+    fprintf(stderr, "i3status: used memory=%d\n", ((our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive) * getpagesize()) >> 20);
+*/
+
+    minfo.ram_total = page2mbyte(our_uvmexp.npages);
+    minfo.ram_free  = page2mbyte(our_uvmexp.free + our_uvmexp.inactive);
+    minfo.ram_used  = page2mbyte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
+    minfo.ram_available = minfo.ram_free;
+    minfo.ram_buffers = 0;
+    minfo.ram_cached = 0;
+    minfo.ram_shared = 0;
+    minfo.output_color = NULL;
+
+    print_formatted_memory(&minfo, ctx);
+
 #else
     OUTPUT_FULL_TEXT("");
     fputs("i3status: Memory status information is not supported on this system\n", stderr);
