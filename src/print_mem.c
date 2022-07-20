@@ -99,6 +99,101 @@ struct print_mem_info {
     char *output_color;
 };
 
+static void get_memory_info(struct print_mem_info *minfo, memory_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
+#if defined(__linux__)
+    int unread_fields = 6;
+
+    minfo->output_color = NULL
+
+    FILE *file = fopen("/proc/meminfo", "r");
+    if (!file) {
+        goto error;
+    }
+    for (char line[128]; fgets(line, sizeof line, file);) {
+        if (BEGINS_WITH(line, "MemTotal:")) {
+            minfo->ram_total = strtoul(line + strlen("MemTotal:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "MemFree:")) {
+            minfo->ram_free = strtoul(line + strlen("MemFree:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "MemAvailable:")) {
+            minfo->ram_available = strtoul(line + strlen("MemAvailable:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Buffers:")) {
+            minfo->ram_buffers = strtoul(line + strlen("Buffers:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Cached:")) {
+            minfo->ram_cached = strtoul(line + strlen("Cached:"), NULL, 10);
+        } else if (BEGINS_WITH(line, "Shmem:")) {
+            minfo->ram_shared = strtoul(line + strlen("Shmem:"), NULL, 10);
+        } else {
+            continue;
+        }
+        if (--unread_fields == 0) {
+            break;
+        }
+    }
+    fclose(file);
+
+    if (unread_fields > 0) {
+        goto error;
+    }
+
+    // Values are in kB, convert them to B.
+    minfo->ram_total *= 1024UL;
+    minfo->ram_free *= 1024UL;
+    minfo->ram_available *= 1024UL;
+    minfo->ram_buffers *= 1024UL;
+    minfo->ram_cached *= 1024UL;
+    minfo->ram_shared *= 1024UL;
+
+    unsigned long minfo->ram_used;
+    if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
+        minfo->ram_used = minfo->ram_total - minfo->ram_available;
+    } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
+        minfo->ram_used = minfo->ram_total - minfo->ram_free - minfo->ram_buffers - minfo->ram_cached;
+    } else {
+        die("Unexpected value: memory_used_method = %s", ctx->memory_used_method);
+    }
+
+    if (ctx->threshold_degraded) {
+        const unsigned long threshold = memory_absolute(ctx->threshold_degraded, minfo->ram_total);
+        if (minfo->ram_available < threshold) {
+            output_color = "color_degraded";
+        }
+    }
+
+    if (ctx->threshold_critical) {
+        const unsigned long threshold = memory_absolute(ctx->threshold_critical, minfo->ram_total);
+        if (minfo->ram_available < threshold) {
+            minfo->output_color = "color_bad";
+        }
+    }
+error:
+    OUTPUT_FULL_TEXT("can't read memory");
+    fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
+
+#elif defined(__OpenBSD__)
+    int mib [] = { CTL_VM, VM_UVMEXP };
+    struct uvmexp our_uvmexp;
+    size_t size = sizeof (our_uvmexp);
+
+    if (sysctl (mib, 2, &our_uvmexp, &size, NULL, 0) < 0) {
+        OUTPUT_FULL_TEXT("");
+        fputs("i3status: cannot get memory info!\n", stderr);
+        return;
+    }
+
+    minfo->ram_total = page2mbyte(our_uvmexp.npages);
+    minfo->ram_free  = page2mbyte(our_uvmexp.free + our_uvmexp.inactive);
+    minfo->ram_used  = page2mbyte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
+    minfo->ram_available = minfo->ram_free;
+    minfo->ram_buffers = 0;
+    minfo->ram_cached = 0;
+    minfo->ram_shared = 0;
+    minfo->output_color = NULL;
+#else
+    OUTPUT_FULL_TEXT("");
+    fputs("i3status: Memory status information is not supported on this system\n", stderr);
+#endif
+}
 
 void print_formatted_memory(struct print_mem_info *minfo, memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
@@ -153,165 +248,8 @@ void print_formatted_memory(struct print_mem_info *minfo, memory_ctx_t *ctx) {
 }
 
 void print_memory(memory_ctx_t *ctx) {
-    char *outwalk = ctx->buf;
-
-#if defined(__linux__)
-    const char *selected_format = ctx->format;
-    const char *output_color = NULL;
-
-    int unread_fields = 6;
-    unsigned long ram_total;
-    unsigned long ram_free;
-    unsigned long ram_available;
-    unsigned long ram_buffers;
-    unsigned long ram_cached;
-    unsigned long ram_shared;
-
-    FILE *file = fopen("/proc/meminfo", "r");
-    if (!file) {
-        goto error;
-    }
-    for (char line[128]; fgets(line, sizeof line, file);) {
-        if (BEGINS_WITH(line, "MemTotal:")) {
-            ram_total = strtoul(line + strlen("MemTotal:"), NULL, 10);
-        } else if (BEGINS_WITH(line, "MemFree:")) {
-            ram_free = strtoul(line + strlen("MemFree:"), NULL, 10);
-        } else if (BEGINS_WITH(line, "MemAvailable:")) {
-            ram_available = strtoul(line + strlen("MemAvailable:"), NULL, 10);
-        } else if (BEGINS_WITH(line, "Buffers:")) {
-            ram_buffers = strtoul(line + strlen("Buffers:"), NULL, 10);
-        } else if (BEGINS_WITH(line, "Cached:")) {
-            ram_cached = strtoul(line + strlen("Cached:"), NULL, 10);
-        } else if (BEGINS_WITH(line, "Shmem:")) {
-            ram_shared = strtoul(line + strlen("Shmem:"), NULL, 10);
-        } else {
-            continue;
-        }
-        if (--unread_fields == 0) {
-            break;
-        }
-    }
-    fclose(file);
-
-    if (unread_fields > 0) {
-        goto error;
-    }
-
-    // Values are in kB, convert them to B.
-    ram_total *= 1024UL;
-    ram_free *= 1024UL;
-    ram_available *= 1024UL;
-    ram_buffers *= 1024UL;
-    ram_cached *= 1024UL;
-    ram_shared *= 1024UL;
-
-    unsigned long ram_used;
-    if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
-        ram_used = ram_total - ram_available;
-    } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
-        ram_used = ram_total - ram_free - ram_buffers - ram_cached;
-    } else {
-        die("Unexpected value: memory_used_method = %s", ctx->memory_used_method);
-    }
-
-    if (ctx->threshold_degraded) {
-        const unsigned long threshold = memory_absolute(ctx->threshold_degraded, ram_total);
-        if (ram_available < threshold) {
-            output_color = "color_degraded";
-        }
-    }
-
-    if (ctx->threshold_critical) {
-        const unsigned long threshold = memory_absolute(ctx->threshold_critical, ram_total);
-        if (ram_available < threshold) {
-            output_color = "color_bad";
-        }
-    }
-
-    if (output_color) {
-        START_COLOR(output_color);
-
-        if (ctx->format_degraded)
-            selected_format = ctx->format_degraded;
-    }
-
-    char string_ram_total[STRING_SIZE];
-    char string_ram_used[STRING_SIZE];
-    char string_ram_free[STRING_SIZE];
-    char string_ram_available[STRING_SIZE];
-    char string_ram_shared[STRING_SIZE];
-    char string_percentage_free[STRING_SIZE];
-    char string_percentage_available[STRING_SIZE];
-    char string_percentage_used[STRING_SIZE];
-    char string_percentage_shared[STRING_SIZE];
-
-    print_bytes_human(string_ram_total, ram_total, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_used, ram_used, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_free, ram_free, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_available, ram_available, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_shared, ram_shared, ctx->unit, ctx->decimals);
-    print_percentage(string_percentage_free, 100.0 * ram_free / ram_total);
-    print_percentage(string_percentage_available, 100.0 * ram_available / ram_total);
-    print_percentage(string_percentage_used, 100.0 * ram_used / ram_total);
-    print_percentage(string_percentage_shared, 100.0 * ram_shared / ram_total);
-
-    placeholder_t placeholders[] = {
-        {.name = "%total", .value = string_ram_total},
-        {.name = "%used", .value = string_ram_used},
-        {.name = "%free", .value = string_ram_free},
-        {.name = "%available", .value = string_ram_available},
-        {.name = "%shared", .value = string_ram_shared},
-        {.name = "%percentage_free", .value = string_percentage_free},
-        {.name = "%percentage_available", .value = string_percentage_available},
-        {.name = "%percentage_used", .value = string_percentage_used},
-        {.name = "%percentage_shared", .value = string_percentage_shared}};
-
-    const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    char *formatted = format_placeholders(selected_format, &placeholders[0], num);
-    OUTPUT_FORMATTED;
-    free(formatted);
-
-    if (output_color)
-        END_COLOR;
-
-    OUTPUT_FULL_TEXT(ctx->buf);
-
-    return;
-error:
-    OUTPUT_FULL_TEXT("can't read memory");
-    fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
-
-#elif defined(__OpenBSD__)
     struct print_mem_info minfo;
 
-    int mib [] = { CTL_VM, VM_UVMEXP };
-    struct uvmexp our_uvmexp;
-    size_t size = sizeof (our_uvmexp);
-
-    if (sysctl (mib, 2, &our_uvmexp, &size, NULL, 0) < 0) {
-        OUTPUT_FULL_TEXT("");
-        fputs("i3status: cannot get memory info!\n", stderr);
-        return;
-    }
-
-/*
-    OUTPUT_FULL_TEXT("");
-    fprintf(stderr, "i3status: used memory=%d\n", ((our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive) * getpagesize()) >> 20);
-*/
-
-    minfo.ram_total = page2mbyte(our_uvmexp.npages);
-    minfo.ram_free  = page2mbyte(our_uvmexp.free + our_uvmexp.inactive);
-    minfo.ram_used  = page2mbyte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
-    minfo.ram_available = minfo.ram_free;
-    minfo.ram_buffers = 0;
-    minfo.ram_cached = 0;
-    minfo.ram_shared = 0;
-    minfo.output_color = NULL;
-
+    get_memory_info(&minfo, ctx);
     print_formatted_memory(&minfo, ctx);
-
-#else
-    OUTPUT_FULL_TEXT("");
-    fputs("i3status: Memory status information is not supported on this system\n", stderr);
-#endif
 }
