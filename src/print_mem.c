@@ -17,6 +17,17 @@
 static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 #define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
 
+struct print_mem_info {
+    unsigned long ram_total;
+    unsigned long ram_free;
+    unsigned long ram_used;
+    unsigned long ram_available;
+    unsigned long ram_buffers;
+    unsigned long ram_cached;
+    unsigned long ram_shared;
+    char *output_color;
+};
+
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -44,7 +55,6 @@ static unsigned long page2byte (unsigned pageCnt) {
     return pageCnt * getpagesize ();
 }
 
-#if defined(__linux__)
 /*
  * Convert a string to its absolute representation based on the total
  * memory of `mem_total`.
@@ -86,18 +96,32 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 
     return amount;
 }
-#endif
 
-struct print_mem_info {
-    unsigned long ram_total;
-    unsigned long ram_free;
-    unsigned long ram_used;
-    unsigned long ram_available;
-    unsigned long ram_buffers;
-    unsigned long ram_cached;
-    unsigned long ram_shared;
-    char *output_color;
-};
+static void handle_used_method(struct print_mem_info *minfo, memory_ctx_t *ctx) {
+    if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
+        minfo->ram_used = minfo->ram_total - minfo->ram_available;
+    } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
+        minfo->ram_used = minfo->ram_total - minfo->ram_free - minfo->ram_buffers - minfo->ram_cached;
+    } else {
+        die("Unexpected value: memory_used_method = %s", ctx->memory_used_method);
+    }
+}
+
+static void handle_threshold(struct print_mem_info *minfo, memory_ctx_t *ctx) {
+    if (ctx->threshold_degraded) {
+        const unsigned long threshold = memory_absolute(ctx->threshold_degraded, minfo->ram_total);
+        if (minfo->ram_available < threshold) {
+            minfo->output_color = "color_degraded";
+        }
+    }
+
+    if (ctx->threshold_critical) {
+        const unsigned long threshold = memory_absolute(ctx->threshold_critical, minfo->ram_total);
+        if (minfo->ram_available < threshold) {
+            minfo->output_color = "color_bad";
+        }
+    }
+}
 
 static void get_memory_info(struct print_mem_info *minfo, memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
@@ -144,27 +168,8 @@ static void get_memory_info(struct print_mem_info *minfo, memory_ctx_t *ctx) {
     minfo->ram_cached *= 1024UL;
     minfo->ram_shared *= 1024UL;
 
-    if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
-        minfo->ram_used = minfo->ram_total - minfo->ram_available;
-    } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
-        minfo->ram_used = minfo->ram_total - minfo->ram_free - minfo->ram_buffers - minfo->ram_cached;
-    } else {
-        die("Unexpected value: memory_used_method = %s", ctx->memory_used_method);
-    }
-
-    if (ctx->threshold_degraded) {
-        const unsigned long threshold = memory_absolute(ctx->threshold_degraded, minfo->ram_total);
-        if (minfo->ram_available < threshold) {
-            output_color = "color_degraded";
-        }
-    }
-
-    if (ctx->threshold_critical) {
-        const unsigned long threshold = memory_absolute(ctx->threshold_critical, minfo->ram_total);
-        if (minfo->ram_available < threshold) {
-            minfo->output_color = "color_bad";
-        }
-    }
+    handle_used_method(minfo, ctx);
+    handle_threshold(minfo, ctx);
 error:
     OUTPUT_FULL_TEXT("can't read memory");
     fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
@@ -188,6 +193,9 @@ error:
     minfo->ram_cached = 0;
     minfo->ram_shared = 0;
     minfo->output_color = NULL;
+
+    handle_used_method(minfo, ctx);
+    handle_threshold(minfo, ctx);
 #else
     OUTPUT_FULL_TEXT("");
     fputs("i3status: Memory status information is not supported on this system\n", stderr);
