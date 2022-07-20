@@ -144,7 +144,6 @@ static void get_memory_info(struct print_mem_info *minfo, memory_ctx_t *ctx) {
     minfo->ram_cached *= 1024UL;
     minfo->ram_shared *= 1024UL;
 
-    unsigned long minfo->ram_used;
     if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
         minfo->ram_used = minfo->ram_total - minfo->ram_available;
     } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
