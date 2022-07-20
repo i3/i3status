@@ -194,7 +194,7 @@ error:
 #endif
 }
 
-void print_formatted_memory(struct print_mem_info *minfo, memory_ctx_t *ctx) {
+static void print_formatted_memory(struct print_mem_info *minfo, memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     const char *selected_format = ctx->format;
     char string_ram_total[STRING_SIZE];
