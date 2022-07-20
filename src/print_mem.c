@@ -40,8 +40,8 @@ static int print_percentage(char *outwalk, float percent) {
     return snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
 }
 
-static unsigned long page2mbyte (unsigned pageCnt) {
-    return (pageCnt * getpagesize ()) >> 20;
+static unsigned long page2byte (unsigned pageCnt) {
+    return pageCnt * getpagesize ();
 }
 
 #if defined(__linux__)
@@ -181,9 +181,9 @@ error:
         return;
     }
 
-    minfo->ram_total = page2mbyte(our_uvmexp.npages);
-    minfo->ram_free  = page2mbyte(our_uvmexp.free + our_uvmexp.inactive);
-    minfo->ram_used  = page2mbyte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
+    minfo->ram_total = page2byte(our_uvmexp.npages);
+    minfo->ram_free  = page2byte(our_uvmexp.free + our_uvmexp.inactive);
+    minfo->ram_used  = page2byte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
     minfo->ram_available = minfo->ram_free;
     minfo->ram_buffers = 0;
     minfo->ram_cached = 0;
