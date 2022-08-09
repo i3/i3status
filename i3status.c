@@ -512,7 +512,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'h':
                 printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
-                       "Syntax: %s [-c <configfile>] [-h] [-v]\n",
+                       "Syntax: %s [-c <configfile>] [-h] [-v] [--run-once]\n",
                        argv[0]);
                 return 0;
                 break;
