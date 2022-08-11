@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build and test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: install build dependencies
+      run: sudo apt update && sudo apt install clang-format-6.0 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio meson
+
+    - name: Ensure all files were formatted as per clang-format
+      run: |
+        clang-format-6.0 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+
+    - name: build
+      run: |
+        mkdir -p build && cd build && meson -Dmans=true .. && ninja -v && ldd ./i3status |& grep -q pulse || (echo "not linked against pulseaudio"; exit 1)
+        ninja clean && meson -Dmans=true -Dpulseaudio=false -Db_sanitize=address .. && ninja -v && ldd ./i3status |& grep -q pulse && (echo "linked against pulseaudio"; exit 1) || true
+
+    - name: run tests
+      # percentliteral-volume fails on GitHub Actions because the environment
+      # has no ALSA master device.
+      run: rm -rf testcases/020-percentliteral-volume && cd build && ninja -v test || (cat meson-logs/testlog.txt; false)

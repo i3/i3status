@@ -1,7 +1,7 @@
 i3status(1)
 ===========
 Michael Stapelberg <michael@i3wm.org>
-v2.13, June 2019
+v2.14, November 2021
 
 == NAME
 
@@ -9,11 +9,11 @@ i3status - Generates a status line for i3bar, dzen2, xmobar or lemonbar
 
 == SYNOPSIS
 
-i3status [-c configfile] [-h] [-v]
+i3status [-c configfile] [-h] [-v] [--run-once]
 
 == OPTIONS
 
--c::
+-c --config::
 Specifies an alternate configuration file path. By default, i3status looks for
 configuration files in the following order:
 
@@ -21,6 +21,16 @@ configuration files in the following order:
 2. /etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
 3. ~/.i3status.conf
 4. /etc/i3status.conf
+
+-h --help::
+Print the verison and a minimal syntax.
+
+-v --version::
+Print the version and any build configuration.
+
+--run-once::
+Only run once instead of looping.
+
 
 == DESCRIPTION
 

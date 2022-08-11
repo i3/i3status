@@ -37,51 +37,50 @@ void set_timezone(const char *tz) {
     tzset();
 }
 
-void print_time(yajl_gen json_gen, char *buffer, const char *title, const char *format, const char *tz, const char *locale, const char *format_time, bool hide_if_equals_localtime, time_t t) {
-    char *outwalk = buffer;
+void print_time(time_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     struct tm local_tm, tm;
 
-    if (title != NULL)
-        INSTANCE(title);
+    if (ctx->title != NULL)
+        INSTANCE(ctx->title);
 
     set_timezone(NULL);
-    localtime_r(&t, &local_tm);
+    localtime_r(&ctx->t, &local_tm);
 
-    set_timezone(tz);
-    localtime_r(&t, &tm);
+    set_timezone(ctx->tz);
+    localtime_r(&ctx->t, &tm);
 
     // When hide_if_equals_localtime is true, compare local and target time to display only if different
     time_t local_t = mktime(&local_tm);
-    double diff = difftime(local_t, t);
-    if (hide_if_equals_localtime && diff == 0.0) {
+    double diff = difftime(local_t, ctx->t);
+    if (ctx->hide_if_equals_localtime && diff == 0.0) {
         goto out;
     }
 
-    if (locale != NULL) {
-        setlocale(LC_ALL, locale);
+    if (ctx->locale != NULL) {
+        setlocale(LC_ALL, ctx->locale);
     }
 
     char string_time[STRING_SIZE];
 
-    if (format_time == NULL) {
-        outwalk += strftime(buffer, 4096, format, &tm);
+    if (ctx->format_time == NULL) {
+        outwalk += strftime(ctx->buf, 4096, ctx->format, &tm);
     } else {
-        strftime(string_time, sizeof(string_time), format_time, &tm);
+        strftime(string_time, sizeof(string_time), ctx->format_time, &tm);
         placeholder_t placeholders[] = {
             {.name = "%time", .value = string_time}};
 
         const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-        buffer = format_placeholders(format_time, &placeholders[0], num);
+        char *formatted = format_placeholders(ctx->format_time, &placeholders[0], num);
+        OUTPUT_FORMATTED;
+        free(formatted);
     }
 
-    if (locale != NULL) {
+    if (ctx->locale != NULL) {
         setlocale(LC_ALL, "");
     }
 
 out:
     *outwalk = '\0';
-    OUTPUT_FULL_TEXT(buffer);
-    if (format_time != NULL) {
-        free(buffer);
-    }
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

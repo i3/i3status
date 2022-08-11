@@ -63,7 +63,7 @@ static int print_bytes_human(char *outwalk, uint64_t bytes, const char *prefix_t
  * Determines whether remaining bytes are below given threshold.
  *
  */
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__DragonFly__) || defined(__APPLE__)
 static bool below_threshold(struct statfs buf, const char *prefix_type, const char *threshold_type, const double low_threshold) {
 #else
 static bool below_threshold(struct statvfs buf, const char *prefix_type, const char *threshold_type, const double low_threshold) {
@@ -73,9 +73,17 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
     } else if (strcasecmp(threshold_type, "percentage_avail") == 0) {
         return 100.0 * (double)buf.f_bavail / (double)buf.f_blocks < low_threshold;
     } else if (strcasecmp(threshold_type, "bytes_free") == 0) {
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+        return (double)buf.f_bsize * (double)buf.f_bfree < low_threshold;
+#else
         return (double)buf.f_frsize * (double)buf.f_bfree < low_threshold;
+#endif
     } else if (strcasecmp(threshold_type, "bytes_avail") == 0) {
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+        return (double)buf.f_bsize * (double)buf.f_bavail < low_threshold;
+#else
         return (double)buf.f_frsize * (double)buf.f_bavail < low_threshold;
+#endif
     } else if (threshold_type[0] != '\0' && strncasecmp(threshold_type + 1, "bytes_", strlen("bytes_")) == 0) {
         uint64_t base = strcasecmp(prefix_type, "decimal") == 0 ? DECIMAL_BASE : BINARY_BASE;
         double factor = 1;
@@ -116,37 +124,37 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
  * human readable manner.
  *
  */
-void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const char *format, const char *format_below_threshold, const char *format_not_mounted, const char *prefix_type, const char *threshold_type, const double low_threshold) {
-    const char *selected_format = format;
-    char *outwalk = buffer;
+void print_disk_info(disk_info_ctx_t *ctx) {
+    const char *selected_format = ctx->format;
+    char *outwalk = ctx->buf;
     bool colorful_output = false;
     bool mounted = false;
 
-    INSTANCE(path);
+    INSTANCE(ctx->path);
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__DragonFly__) || defined(__APPLE__)
     struct statfs buf;
 
     if (statfs(path, &buf) == -1)
         return;
 
     mounted = true;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
     struct statvfs buf;
 
-    if (statvfs(path, &buf) == -1)
+    if (statvfs(ctx->path, &buf) == -1)
         return;
 
     mounted = true;
 #else
     struct statvfs buf;
 
-    if (statvfs(path, &buf) == -1) {
+    if (statvfs(ctx->path, &buf) == -1) {
         /* If statvfs errors, e.g., due to the path not existing,
          * we consider the device not mounted. */
         mounted = false;
     } else {
-        char *sanitized = sstrdup(path);
+        char *sanitized = sstrdup(ctx->path);
         if (strlen(sanitized) > 1 && sanitized[strlen(sanitized) - 1] == '/')
             sanitized[strlen(sanitized) - 1] = '\0';
         FILE *mntentfile = setmntent("/etc/mtab", "r");
@@ -171,14 +179,14 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
 #endif
 
     if (!mounted) {
-        if (format_not_mounted == NULL)
-            format_not_mounted = "";
-        selected_format = format_not_mounted;
-    } else if (low_threshold > 0 && below_threshold(buf, prefix_type, threshold_type, low_threshold)) {
+        if (ctx->format_not_mounted == NULL)
+            ctx->format_not_mounted = "";
+        selected_format = ctx->format_not_mounted;
+    } else if (ctx->low_threshold > 0 && below_threshold(buf, ctx->prefix_type, ctx->threshold_type, ctx->low_threshold)) {
         START_COLOR("color_bad");
         colorful_output = true;
-        if (format_below_threshold != NULL)
-            selected_format = format_below_threshold;
+        if (ctx->format_below_threshold != NULL)
+            selected_format = ctx->format_below_threshold;
     }
 
     char string_free[STRING_SIZE];
@@ -190,10 +198,17 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
     char string_percentage_used[STRING_SIZE];
     char string_percentage_avail[STRING_SIZE];
 
-    print_bytes_human(string_free, (uint64_t)buf.f_frsize * (uint64_t)buf.f_bfree, prefix_type);
-    print_bytes_human(string_used, (uint64_t)buf.f_frsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), prefix_type);
-    print_bytes_human(string_total, (uint64_t)buf.f_frsize * (uint64_t)buf.f_blocks, prefix_type);
-    print_bytes_human(string_avail, (uint64_t)buf.f_frsize * (uint64_t)buf.f_bavail, prefix_type);
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+    print_bytes_human(string_free, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bfree, ctx->prefix_type);
+    print_bytes_human(string_used, (uint64_t)buf.f_bsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), ctx->prefix_type);
+    print_bytes_human(string_total, (uint64_t)buf.f_bsize * (uint64_t)buf.f_blocks, ctx->prefix_type);
+    print_bytes_human(string_avail, (uint64_t)buf.f_bsize * (uint64_t)buf.f_bavail, ctx->prefix_type);
+#else
+    print_bytes_human(string_free, (uint64_t)buf.f_frsize * (uint64_t)buf.f_bfree, ctx->prefix_type);
+    print_bytes_human(string_used, (uint64_t)buf.f_frsize * ((uint64_t)buf.f_blocks - (uint64_t)buf.f_bfree), ctx->prefix_type);
+    print_bytes_human(string_total, (uint64_t)buf.f_frsize * (uint64_t)buf.f_blocks, ctx->prefix_type);
+    print_bytes_human(string_avail, (uint64_t)buf.f_frsize * (uint64_t)buf.f_bavail, ctx->prefix_type);
+#endif
     snprintf(string_percentage_free, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
     snprintf(string_percentage_used_of_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
     snprintf(string_percentage_used, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
@@ -210,12 +225,13 @@ void print_disk_info(yajl_gen json_gen, char *buffer, const char *path, const ch
         {.name = "%percentage_avail", .value = string_percentage_avail}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(selected_format, &placeholders[0], num);
+    char *formatted = format_placeholders(selected_format, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     if (colorful_output)
         END_COLOR;
 
     *outwalk = '\0';
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

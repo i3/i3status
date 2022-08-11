@@ -92,12 +92,12 @@ struct disc_time *get_ddate(struct tm *current_tm) {
     return &dt;
 }
 
-void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) {
-    char *outwalk = buffer;
+void print_ddate(ddate_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     struct tm current_tm;
     struct disc_time *dt;
     set_timezone(NULL); /* Use local time. */
-    localtime_r(&t, &current_tm);
+    localtime_r(&ctx->t, &current_tm);
     if ((dt = get_ddate(&current_tm)) == NULL)
         return;
 
@@ -171,7 +171,8 @@ void print_ddate(yajl_gen json_gen, char *buffer, const char *format, time_t t) 
         {.name = "%}", .value = ""}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(format, &placeholders[0], num);
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    char *formatted = format_placeholders(ctx->format, &placeholders[0], num);
+    OUTPUT_FORMATTED;
+    free(formatted);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

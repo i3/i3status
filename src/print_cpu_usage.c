@@ -39,11 +39,22 @@
 #include "i3status.h"
 
 struct cpu_usage {
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+    long user;
+    long nice;
+    long system;
+    long idle;
+    long total;
+#else
     int user;
     int nice;
     int system;
     int idle;
+#if defined(__OpenBSD__)
+    int spin;
+#endif
     int total;
+#endif
 };
 
 #if defined(__linux__)
@@ -58,12 +69,17 @@ static struct cpu_usage *curr_cpus = NULL;
  * percentage.
  *
  */
-void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const char *format_above_threshold, const char *format_above_degraded_threshold, const char *path, const float max_threshold, const float degraded_threshold) {
-    const char *selected_format = format;
+void print_cpu_usage(cpu_usage_ctx_t *ctx) {
+    const char *selected_format = ctx->format;
     const char *walk;
-    char *outwalk = buffer;
+    char *outwalk = ctx->buf;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
-    int diff_idle, diff_total, diff_usage;
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+    long diff_idle, diff_total;
+#else
+    int diff_idle, diff_total;
+#endif
+    int diff_usage;
     bool colorful_output = false;
 
 #if defined(__linux__)
@@ -79,9 +95,9 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(ctx->path, "r");
     if (f == NULL) {
-        fprintf(stderr, "i3status: open %s: %s\n", path, strerror(errno));
+        fprintf(stderr, "i3status: open %s: %s\n", ctx->path, strerror(errno));
         goto error;
     }
     curr_cpu_count = get_nprocs();
@@ -150,8 +166,16 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     curr_all.user = cp_time[CP_USER];
     curr_all.nice = cp_time[CP_NICE];
     curr_all.system = cp_time[CP_SYS];
+#if defined(__DragonFly__)
+    curr_all.system += cp_time[CP_INTR];
+#endif
     curr_all.idle = cp_time[CP_IDLE];
+#if defined(__OpenBSD__)
+    curr_all.spin = cp_time[CP_SPIN];
+    curr_all.total = curr_all.user + curr_all.nice + curr_all.system + curr_all.idle + curr_all.spin;
+#else
     curr_all.total = curr_all.user + curr_all.nice + curr_all.system + curr_all.idle;
+#endif
     diff_idle = curr_all.idle - prev_all.idle;
     diff_total = curr_all.total - prev_all.total;
     diff_usage = (diff_total ? (1000 * (diff_total - diff_idle) / diff_total + 5) / 10 : 0);
@@ -160,16 +184,16 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     goto error;
 #endif
 
-    if (diff_usage >= max_threshold) {
+    if (diff_usage >= ctx->max_threshold) {
         START_COLOR("color_bad");
         colorful_output = true;
-        if (format_above_threshold != NULL)
-            selected_format = format_above_threshold;
-    } else if (diff_usage >= degraded_threshold) {
+        if (ctx->format_above_threshold != NULL)
+            selected_format = ctx->format_above_threshold;
+    } else if (diff_usage >= ctx->degraded_threshold) {
         START_COLOR("color_degraded");
         colorful_output = true;
-        if (format_above_degraded_threshold != NULL)
-            selected_format = format_above_degraded_threshold;
+        if (ctx->format_above_degraded_threshold != NULL)
+            selected_format = ctx->format_above_degraded_threshold;
     }
 
     for (walk = selected_format; *walk != '\0'; walk++) {
@@ -210,7 +234,7 @@ void print_cpu_usage(yajl_gen json_gen, char *buffer, const char *format, const 
     if (colorful_output)
         END_COLOR;
 
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
     return;
 error:
     OUTPUT_FULL_TEXT("cant read cpu usage");

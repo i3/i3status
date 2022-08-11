@@ -47,10 +47,10 @@
         fprintf(stderr, "i3status: ALSA: " #channel "_switch: %s\n", snd_strerror(err)); \
     if (!pbval) {                                                                        \
         START_COLOR("color_degraded");                                                   \
-        fmt = fmt_muted;                                                                 \
+        ctx->fmt = ctx->fmt_muted;                                                       \
     }
 
-static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, const char *devicename) {
+static char *apply_volume_format(const char *fmt, int ivolume, const char *devicename) {
     char string_volume[STRING_SIZE];
 
     snprintf(string_volume, STRING_SIZE, "%d%s", ivolume, pct_mark);
@@ -61,19 +61,17 @@ static char *apply_volume_format(const char *fmt, char *buffer, int ivolume, con
         {.name = "%devicename", .value = devicename}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    buffer = format_placeholders(fmt, &placeholders[0], num);
-
-    return buffer;
+    return format_placeholders(fmt, &placeholders[0], num);
 }
 
-void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx) {
-    char *outwalk = buffer;
+void print_volume(volume_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     int pbval = 1;
 
     /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {
         char *instance;
-        asprintf(&instance, "%s.%s.%d", device, mixer, mixer_idx);
+        asprintf(&instance, "%s.%s.%d", ctx->device, ctx->mixer, ctx->mixer_idx);
         INSTANCE(instance);
         free(instance);
     }
@@ -84,11 +82,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     /* If the device name has the format "pulse[:N]" where N is the
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
-    if (!strncasecmp(device, "pulse", strlen("pulse"))) {
-        uint32_t sink_idx = device[strlen("pulse")] == ':' ? (uint32_t)atoi(device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
-        const char *sink_name = device[strlen("pulse")] == ':' &&
-                                        !isdigit(device[strlen("pulse:")])
-                                    ? device + strlen("pulse:")
+    if (!strncasecmp(ctx->device, "pulse", strlen("pulse"))) {
+        uint32_t sink_idx = ctx->device[strlen("pulse")] == ':' ? (uint32_t)atoi(ctx->device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
+        const char *sink_name = ctx->device[strlen("pulse")] == ':' &&
+                                        !isdigit(ctx->device[strlen("pulse:")])
+                                    ? ctx->device + strlen("pulse:")
                                     : NULL;
         int cvolume = 0;
         char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
@@ -111,12 +109,13 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         /* negative result means error, stick to 0 */
         if (ivolume < 0)
             ivolume = 0;
-        buffer = apply_volume_format(muted ? fmt_muted : fmt,
-                                     buffer,
-                                     ivolume,
-                                     description);
+        char *formatted = apply_volume_format(muted ? ctx->fmt_muted : ctx->fmt,
+                                              ivolume,
+                                              description);
+        OUTPUT_FORMATTED;
+        free(formatted);
         goto out_with_format;
-    } else if (!strcasecmp(device, "default") && pulse_initialize()) {
+    } else if (!strcasecmp(ctx->device, "default") && pulse_initialize()) {
         /* no device specified or "default" set */
         char description[MAX_SINK_DESCRIPTION_LEN];
         bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
@@ -128,10 +127,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
                 START_COLOR("color_degraded");
                 pbval = 0;
             }
-            buffer = apply_volume_format(muted ? fmt_muted : fmt,
-                                         buffer,
-                                         ivolume,
-                                         description);
+            char *formatted = apply_volume_format(muted ? ctx->fmt_muted : ctx->fmt,
+                                                  ivolume,
+                                                  description);
+            OUTPUT_FORMATTED;
+            free(formatted);
             goto out_with_format;
         }
         /* negative result or NULL description means error, fail PulseAudio attempt */
@@ -157,7 +157,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Attach this mixer handle to the given device */
-    if ((err = snd_mixer_attach(m, device)) < 0) {
+    if ((err = snd_mixer_attach(m, ctx->device)) < 0) {
         fprintf(stderr, "i3status: ALSA: Cannot attach mixer to device: %s\n", snd_strerror(err));
         snd_mixer_close(m);
         goto out;
@@ -183,8 +183,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
     /* Find the given mixer */
-    snd_mixer_selem_id_set_index(sid, mixer_idx);
-    snd_mixer_selem_id_set_name(sid, mixer);
+    snd_mixer_selem_id_set_index(sid, ctx->mixer_idx);
+    snd_mixer_selem_id_set_name(sid, ctx->mixer);
     if (!(elem = snd_mixer_find_selem(m, sid))) {
         fprintf(stderr, "i3status: ALSA: Cannot find mixer %s (index %u)\n",
                 snd_mixer_selem_id_get_name(sid), snd_mixer_selem_id_get_index(sid));
@@ -195,7 +195,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
     /* Get the volume range to convert the volume later */
     snd_mixer_handle_events(m);
-    if (!strncasecmp(mixer, "capture", strlen("capture"))) {
+    if (!strncasecmp(ctx->mixer, "capture", strlen("capture"))) {
         ALSA_VOLUME(capture)
     } else {
         ALSA_VOLUME(playback)
@@ -234,7 +234,9 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         ALSA_MUTE_SWITCH(capture)
     }
 
-    buffer = apply_volume_format(fmt, buffer, avg, mixer_name);
+    char *formatted = apply_volume_format(ctx->fmt, avg, mixer_name);
+    OUTPUT_FORMATTED;
+    free(formatted);
 
     snd_mixer_close(m);
     snd_mixer_selem_id_free(sid);
@@ -248,8 +250,8 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     const char *devicename = "UNSUPPORTED"; /* TODO: implement support for this */
     pbval = 1;
 
-    if (mixer_idx > 0)
-        asprintf(&mixerpath, "/dev/mixer%d", mixer_idx);
+    if (ctx->mixer_idx > 0)
+        asprintf(&mixerpath, "/dev/mixer%d", ctx->mixer_idx);
     else
         mixerpath = defaultmixer;
 
@@ -262,7 +264,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
         goto out;
     }
 
-    if (mixer_idx > 0)
+    if (ctx->mixer_idx > 0)
         free(mixerpath);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -328,7 +330,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
         if (vinfo.un.ord) {
             START_COLOR("color_degraded");
-            fmt = fmt_muted;
+            ctx->fmt = ctx->fmt_muted;
             pbval = 0;
         }
     }
@@ -349,7 +351,7 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
     }
 
 #endif
-    buffer = apply_volume_format(fmt, buffer, vol & 0x7f, devicename);
+    ctx->buf = apply_volume_format(ctx->fmt, vol & 0x7f, devicename);
     close(mixfd);
     goto out_with_format;
 #endif
@@ -357,12 +359,11 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 out:
     if (!pbval)
         END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
     return;
 
 out_with_format:
     if (!pbval)
         END_COLOR;
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }

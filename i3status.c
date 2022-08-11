@@ -516,7 +516,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'h':
                 printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
-                       "Syntax: %s [-c <configfile>] [-f <output_format>] [-h] [-v]\n",
+                       "Syntax: %s [-c <configfile>] [-f <output_format>] [-h] [-v] [--run-once]\n",
                        argv[0]);
                 return 0;
                 break;
@@ -635,8 +635,14 @@ int main(int argc, char *argv[]) {
             cfg_general->name, cfg_general->line, interval);
     }
 
-    cfg_section = cfg_getsec(cfg, "battery");
-    if (cfg_section != NULL) {
+    for (int j = 0; j < cfg_size(cfg, "order"); j++) {
+        const char *current = cfg_getnstr(cfg, "order", j);
+        const char *name = "battery";
+        if (!BEGINS_WITH(current, name)) {
+            continue;
+        }
+        const char *title = current + strlen(name) + 1;
+        cfg_section = cfg_gettsec(cfg, name, title);
         bool integer_battery_capacity = cfg_getbool(cfg_section, "integer_battery_capacity");
         char *format_percentage = cfg_getstr(cfg_section, "format_percentage");
         if (integer_battery_capacity) {
@@ -679,7 +685,14 @@ int main(int argc, char *argv[]) {
 
             CASE_SEC("ipv6") {
                 SEC_OPEN_MAP("ipv6");
-                print_ipv6_info(json_gen, buffer, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                ipv6_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_ipv6_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
@@ -690,7 +703,19 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_WIRELESS);
                 if (interface == NULL)
                     interface = title;
-                print_wireless_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "format_bitrate"), cfg_getstr(sec, "format_noise"), cfg_getstr(sec, "format_quality"), cfg_getstr(sec, "format_signal"));
+                wireless_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .interface = interface,
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                    .format_bitrate = cfg_getstr(sec, "format_bitrate"),
+                    .format_noise = cfg_getstr(sec, "format_noise"),
+                    .format_quality = cfg_getstr(sec, "format_quality"),
+                    .format_signal = cfg_getstr(sec, "format_signal"),
+                };
+                print_wireless_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
@@ -701,89 +726,233 @@ int main(int argc, char *argv[]) {
                     interface = first_eth_interface(NET_TYPE_ETHERNET);
                 if (interface == NULL)
                     interface = title;
-                print_eth_info(json_gen, buffer, interface, cfg_getstr(sec, "format_up"), cfg_getstr(sec, "format_down"));
+                eth_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .interface = interface,
+                    .format_up = cfg_getstr(sec, "format_up"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_eth_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("battery") {
                 SEC_OPEN_MAP("battery");
-                print_battery_info(json_gen, buffer, (strcasecmp(title, "all") == 0 ? -1 : atoi(title)), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"), cfg_getstr(sec, "status_chr"), cfg_getstr(sec, "status_bat"), cfg_getstr(sec, "status_unk"), cfg_getstr(sec, "status_full"), cfg_getint(sec, "low_threshold"), cfg_getstr(sec, "threshold_type"), cfg_getbool(sec, "last_full_capacity"), cfg_getstr(sec, "format_percentage"), cfg_getbool(sec, "hide_seconds"));
+                battery_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .number = (strcasecmp(title, "all") == 0 ? -1 : atoi(title)),
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                    .status_chr = cfg_getstr(sec, "status_chr"),
+                    .status_bat = cfg_getstr(sec, "status_bat"),
+                    .status_unk = cfg_getstr(sec, "status_unk"),
+                    .status_full = cfg_getstr(sec, "status_full"),
+                    .low_threshold = cfg_getint(sec, "low_threshold"),
+                    .threshold_type = cfg_getstr(sec, "threshold_type"),
+                    .last_full_capacity = cfg_getbool(sec, "last_full_capacity"),
+                    .format_percentage = cfg_getstr(sec, "format_percentage"),
+                    .hide_seconds = cfg_getbool(sec, "hide_seconds"),
+                };
+                print_battery_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("run_watch") {
                 SEC_OPEN_MAP("run_watch");
-                print_run_watch(json_gen, buffer, title, cfg_getstr(sec, "pidfile"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
+                run_watch_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .pidfile = cfg_getstr(sec, "pidfile"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_run_watch(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("path_exists") {
                 SEC_OPEN_MAP("path_exists");
-                print_path_exists(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_down"));
+                path_exists_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_down = cfg_getstr(sec, "format_down"),
+                };
+                print_path_exists(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("disk") {
                 SEC_OPEN_MAP("disk_info");
-                print_disk_info(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_below_threshold"), cfg_getstr(sec, "format_not_mounted"), cfg_getstr(sec, "prefix_type"), cfg_getstr(sec, "threshold_type"), cfg_getfloat(sec, "low_threshold"));
+                disk_info_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .path = title,
+                    .format = cfg_getstr(sec, "format"),
+                    .format_below_threshold = cfg_getstr(sec, "format_below_threshold"),
+                    .format_not_mounted = cfg_getstr(sec, "format_not_mounted"),
+                    .prefix_type = cfg_getstr(sec, "prefix_type"),
+                    .threshold_type = cfg_getstr(sec, "threshold_type"),
+                    .low_threshold = cfg_getfloat(sec, "low_threshold"),
+                };
+                print_disk_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("load") {
                 SEC_OPEN_MAP("load");
-                print_load(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getfloat(sec, "max_threshold"));
+                load_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .max_threshold = cfg_getfloat(sec, "max_threshold"),
+                };
+                print_load(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("memory") {
                 SEC_OPEN_MAP("memory");
-                print_memory(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_degraded"), cfg_getstr(sec, "threshold_degraded"), cfg_getstr(sec, "threshold_critical"), cfg_getstr(sec, "memory_used_method"), cfg_getstr(sec, "unit"), cfg_getint(sec, "decimals"));
+                memory_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_degraded = cfg_getstr(sec, "format_degraded"),
+                    .threshold_degraded = cfg_getstr(sec, "threshold_degraded"),
+                    .threshold_critical = cfg_getstr(sec, "threshold_critical"),
+                    .memory_used_method = cfg_getstr(sec, "memory_used_method"),
+                    .unit = cfg_getstr(sec, "unit"),
+                    .decimals = cfg_getint(sec, "decimals"),
+                };
+                print_memory(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("time") {
                 SEC_OPEN_MAP("time");
-                print_time(json_gen, buffer, NULL, cfg_getstr(sec, "format"), NULL, NULL, NULL, false, tv.tv_sec);
+                time_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = NULL,
+                    .format = cfg_getstr(sec, "format"),
+                    .tz = NULL,
+                    .locale = NULL,
+                    .format_time = NULL,
+                    .hide_if_equals_localtime = false,
+                    .t = tv.tv_sec,
+                };
+                print_time(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("tztime") {
                 SEC_OPEN_MAP("tztime");
-                print_time(json_gen, buffer, title, cfg_getstr(sec, "format"), cfg_getstr(sec, "timezone"), cfg_getstr(sec, "locale"), cfg_getstr(sec, "format_time"), cfg_getbool(sec, "hide_if_equals_localtime"), tv.tv_sec);
+                time_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .format = cfg_getstr(sec, "format"),
+                    .tz = cfg_getstr(sec, "timezone"),
+                    .locale = cfg_getstr(sec, "locale"),
+                    .format_time = cfg_getstr(sec, "format_time"),
+                    .hide_if_equals_localtime = cfg_getbool(sec, "hide_if_equals_localtime"),
+                    .t = tv.tv_sec,
+                };
+                print_time(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("ddate") {
                 SEC_OPEN_MAP("ddate");
-                print_ddate(json_gen, buffer, cfg_getstr(sec, "format"), tv.tv_sec);
+                ddate_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .t = tv.tv_sec,
+                };
+                print_ddate(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("volume") {
                 SEC_OPEN_MAP("volume");
-                print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
-                             cfg_getstr(sec, "format_muted"),
-                             cfg_getstr(sec, "device"),
-                             cfg_getstr(sec, "mixer"),
-                             cfg_getint(sec, "mixer_idx"));
+                volume_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .fmt = cfg_getstr(sec, "format"),
+                    .fmt_muted = cfg_getstr(sec, "format_muted"),
+                    .device = cfg_getstr(sec, "device"),
+                    .mixer = cfg_getstr(sec, "mixer"),
+                    .mixer_idx = cfg_getint(sec, "mixer_idx"),
+                };
+                print_volume(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("cpu_temperature") {
                 SEC_OPEN_MAP("cpu_temperature");
-                print_cpu_temperature_info(json_gen, buffer, atoi(title), cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getint(sec, "max_threshold"));
+                cpu_temperature_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .zone = atoi(title),
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .max_threshold = cfg_getint(sec, "max_threshold"),
+                };
+                print_cpu_temperature_info(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC("cpu_usage") {
                 SEC_OPEN_MAP("cpu_usage");
-                print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_above_threshold"), cfg_getstr(sec, "format_above_degraded_threshold"), cfg_getstr(sec, "path"), cfg_getfloat(sec, "max_threshold"), cfg_getfloat(sec, "degraded_threshold"));
+                cpu_usage_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .format_above_degraded_threshold = cfg_getstr(sec, "format_above_degraded_threshold"),
+                    .path = cfg_getstr(sec, "path"),
+                    .max_threshold = cfg_getfloat(sec, "max_threshold"),
+                    .degraded_threshold = cfg_getfloat(sec, "degraded_threshold"),
+                };
+                print_cpu_usage(&ctx);
                 SEC_CLOSE_MAP;
             }
 
             CASE_SEC_TITLE("read_file") {
                 SEC_OPEN_MAP("read_file");
-                print_file_contents(json_gen, buffer, title, cfg_getstr(sec, "path"), cfg_getstr(sec, "format"), cfg_getstr(sec, "format_bad"), cfg_getint(sec, "max_characters"));
+                file_contents_ctx_t ctx = {
+                    .json_gen = json_gen,
+                    .buf = buffer,
+                    .buflen = sizeof(buffer),
+                    .title = title,
+                    .path = cfg_getstr(sec, "path"),
+                    .format = cfg_getstr(sec, "format"),
+                    .format_bad = cfg_getstr(sec, "format_bad"),
+                    .max_chars = cfg_getint(sec, "max_characters"),
+                };
+                print_file_contents(&ctx);
                 SEC_CLOSE_MAP;
             }
         }

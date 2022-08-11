@@ -135,7 +135,7 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
 }
 #endif
 
-static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
+static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, int number, const char *path, const char *format_down) {
     char *outwalk = buffer;
 
 #if defined(__linux__)
@@ -516,7 +516,7 @@ static bool slurp_battery_info(struct battery_info *batt_info, yajl_gen json_gen
  * Populate batt_info with aggregate information about all batteries.
  * Returns false on error, and an error message will have been written.
  */
-static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
+static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *batt_info, yajl_gen json_gen, char *buffer, const char *path, const char *format_down) {
 #if defined(__linux__)
     char *outwalk = buffer;
     bool is_found = false;
@@ -545,7 +545,7 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
                 .present_rate = 0,
                 .status = CS_UNKNOWN,
             };
-            if (!slurp_battery_info(&batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
+            if (!slurp_battery_info(ctx, &batt_buf, json_gen, buffer, i, globbuf.gl_pathv[i], format_down)) {
                 globfree(&globbuf);
                 free(globpath);
                 return false;
@@ -568,14 +568,14 @@ static bool slurp_all_batteries(struct battery_info *batt_info, yajl_gen json_ge
     /* FreeBSD and OpenBSD only report aggregates. NetBSD always
      * iterates through all batteries, so it's more efficient to
      * aggregate in slurp_battery_info. */
-    return slurp_battery_info(batt_info, json_gen, buffer, -1, path, format_down);
+    return slurp_battery_info(ctx, batt_info, json_gen, buffer, -1, path, format_down);
 #endif
 
     return true;
 }
 
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, const char *status_chr, const char *status_bat, const char *status_unk, const char *status_full, int low_threshold, char *threshold_type, bool last_full_capacity, const char *format_percentage, bool hide_seconds) {
-    char *outwalk = buffer;
+void print_battery_info(battery_info_ctx_t *ctx) {
+    char *outwalk = ctx->buf;
     struct battery_info batt_info = {
         .full_design = -1,
         .full_last = -1,
@@ -589,20 +589,20 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
-    if (strcmp("%.02f%s", format_percentage) == 0) {
-        format_percentage = "%.00f%s";
+    if (strcmp("%.02f%s", ctx->format_percentage) == 0) {
+        ctx->format_percentage = "%.00f%s";
     }
 #endif
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery time in minutes. */
-    hide_seconds = true;
+    ctx->hide_seconds = true;
 #endif
 
-    if (number < 0) {
-        if (!slurp_all_batteries(&batt_info, json_gen, buffer, path, format_down))
+    if (ctx->number < 0) {
+        if (!slurp_all_batteries(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->path, ctx->format_down))
             return;
     } else {
-        if (!slurp_battery_info(&batt_info, json_gen, buffer, number, path, format_down))
+        if (!slurp_battery_info(ctx, &batt_info, ctx->json_gen, ctx->buf, ctx->number, ctx->path, ctx->format_down))
             return;
     }
 
@@ -615,13 +615,13 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     // If we don't have either then both full_design and full_last <= 0,
     // which implies full <= 0, which bails out on the following line.
     int full = batt_info.full_design;
-    if (full <= 0 || (last_full_capacity && batt_info.full_last > 0)) {
+    if (full <= 0 || (ctx->last_full_capacity && batt_info.full_last > 0)) {
         full = batt_info.full_last;
     }
     if (full <= 0 && batt_info.remaining < 0 && batt_info.percentage_remaining < 0) {
         /* We have no physical measurements and no estimates. Nothing
          * much we can report, then. */
-        OUTPUT_FULL_TEXT(format_down);
+        OUTPUT_FULL_TEXT(ctx->format_down);
         return;
     }
 
@@ -632,7 +632,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
          * the percentage calculated based on the last full capacity, we clamp the
          * value to 100%, as that makes more sense.
          * See http://bugs.debian.org/785398 */
-        if (last_full_capacity && batt_info.percentage_remaining > 100) {
+        if (ctx->last_full_capacity && batt_info.percentage_remaining > 100) {
             batt_info.percentage_remaining = 100;
         }
     }
@@ -646,11 +646,11 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
             batt_info.seconds_remaining = 0;
     }
 
-    if (batt_info.status == CS_DISCHARGING && low_threshold > 0) {
-        if (batt_info.percentage_remaining >= 0 && strcasecmp(threshold_type, "percentage") == 0 && batt_info.percentage_remaining < low_threshold) {
+    if (batt_info.status == CS_DISCHARGING && ctx->low_threshold > 0) {
+        if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
-        } else if (batt_info.seconds_remaining >= 0 && strcasecmp(threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * low_threshold) {
+        } else if (batt_info.seconds_remaining >= 0 && strcasecmp(ctx->threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * ctx->low_threshold) {
             START_COLOR("color_bad");
             colorful_output = true;
         }
@@ -666,19 +666,19 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
     const char *statusstr;
     switch (batt_info.status) {
         case CS_CHARGING:
-            statusstr = status_chr;
+            statusstr = ctx->status_chr;
             break;
         case CS_DISCHARGING:
-            statusstr = status_bat;
+            statusstr = ctx->status_bat;
             break;
         case CS_FULL:
-            statusstr = status_full;
+            statusstr = ctx->status_full;
             break;
         default:
-            statusstr = status_unk;
+            statusstr = ctx->status_unk;
     }
     snprintf(string_status, STRING_SIZE, "%s", statusstr);
-    snprintf(string_percentage, STRING_SIZE, format_percentage, batt_info.percentage_remaining, pct_mark);
+    snprintf(string_percentage, STRING_SIZE, ctx->format_percentage, batt_info.percentage_remaining, pct_mark);
 
     if (batt_info.seconds_remaining >= 0) {
         int seconds, hours, minutes;
@@ -686,7 +686,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         seconds = batt_info.seconds_remaining - (hours * 3600);
         minutes = seconds / 60;
         seconds -= (minutes * 60);
-        if (hide_seconds)
+        if (ctx->hide_seconds)
             snprintf(string_remaining, STRING_SIZE, "%02d:%02d", max(hours, 0), max(minutes, 0));
         else
             snprintf(string_remaining, STRING_SIZE, "%02d:%02d:%02d", max(hours, 0), max(minutes, 0), max(seconds, 0));
@@ -696,7 +696,7 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         time_t empty_time = time(NULL) + batt_info.seconds_remaining;
         set_timezone(NULL); /* Use local time. */
         struct tm *empty_tm = localtime(&empty_time);
-        if (hide_seconds)
+        if (ctx->hide_seconds)
             snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
         else
             snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
@@ -713,13 +713,15 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
         {.name = "%consumption", .value = string_consumption}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    char *untrimmed = format_placeholders(format, &placeholders[0], num);
-    buffer = trim(untrimmed);
+    char *untrimmed = format_placeholders(ctx->format, &placeholders[0], num);
+    char *formatted = trim(untrimmed);
+    OUTPUT_FORMATTED;
+    free(formatted);
     free(untrimmed);
 
-    if (colorful_output)
+    if (colorful_output) {
         END_COLOR;
+    }
 
-    OUTPUT_FULL_TEXT(buffer);
-    free(buffer);
+    OUTPUT_FULL_TEXT(ctx->buf);
 }
