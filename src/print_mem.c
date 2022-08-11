@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include "i3status.h"
@@ -175,23 +177,41 @@ error:
     fputs("i3status: Cannot read system memory using /proc/meminfo\n", stderr);
 
 #elif defined(__OpenBSD__)
-    int mib [] = { CTL_VM, VM_UVMEXP };
+    int uvm_mib [] = { CTL_VM, VM_UVMEXP };
+	int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
+	int malloc_mib[] = {CTL_KERN, KERN_MALLOCSTATS, KERN_MALLOC_KMEMSTATS, M_SHM};
     struct uvmexp our_uvmexp;
+    struct bcachestats bcstats;
+    struct kmemstats kmemstats;
     size_t size = sizeof (our_uvmexp);
 
-    if (sysctl (mib, 2, &our_uvmexp, &size, NULL, 0) < 0) {
+    if (sysctl(uvm_mib, 2, &our_uvmexp, &size, NULL, 0) < 0) {
         OUTPUT_FULL_TEXT("");
-        fputs("i3status: cannot get memory info!\n", stderr);
+        fputs("i3status: cannot get memory info (uvm)!\n", stderr);
         return;
     }
+
+	size = sizeof(bcstats);
+	if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) == -1) {
+        OUTPUT_FULL_TEXT("");
+        fputs("i3status: cannot get memory info (bcachestats)!\n", stderr);
+        return;
+	}
+
+	size = sizeof(kmemstats);
+	if (sysctl(malloc_mib, 4, &kmemstats, &size, NULL, 0) == -1) {
+        OUTPUT_FULL_TEXT("");
+        fputs("i3status: cannot get memory info (malloc)!\n", stderr);
+        return;
+	}
 
     minfo->ram_total = page2byte(our_uvmexp.npages);
     minfo->ram_free  = page2byte(our_uvmexp.free + our_uvmexp.inactive);
     minfo->ram_used  = page2byte(our_uvmexp.npages - our_uvmexp.free - our_uvmexp.inactive);
     minfo->ram_available = minfo->ram_free;
-    minfo->ram_buffers = 0;
+    minfo->ram_buffers = page2byte(bcstats.numbufpages);
     minfo->ram_cached = 0;
-    minfo->ram_shared = 0;
+    minfo->ram_shared = kmemstats.ks_memuse;
     minfo->output_color = NULL;
 
     handle_used_method(minfo, ctx);
