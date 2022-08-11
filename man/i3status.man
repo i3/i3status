@@ -467,8 +467,8 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 
 === Memory
 
-Gets the memory usage from system on a Linux system from +/proc/meminfo+. Other
-systems are currently not supported.
+Gets the memory usage from system on Linux from +/proc/meminfo+, on OpenBSD
+from sysctl.  Other systems are currently not supported.
 
 As format placeholders, +total+, +used+, +free+, +available+ and +shared+ are
 available. These will print human readable values. It's also possible to prefix
@@ -495,7 +495,8 @@ decimals can be configured via the +decimals+ option. If no such option is
 given the converted format placeholder will have one decimal.
 
 As Linux' meminfo doesn't expose the overall memory in use, there are multiple
-methods to distinguish the actually used memory. 
+methods to distinguish the actually used memory. The methods are availabe on
+OpenBSD as well.
 
 *Example memory_used_method*: +memavailable+ ("total memory" - "MemAvailable", matches +free+ command)
 
