@@ -99,9 +99,9 @@ static int print_eth_speed(char *outwalk, const char *interface) {
 
     for (desc = ifm_subtype_descriptions; desc->ifmt_string != NULL; desc++) {
         /*
-		 * Skip these non-informative values and go right ahead to the
-		 * actual speeds.
-		 */
+         * Skip these non-informative values and go right ahead to the
+         * actual speeds.
+         */
         if (BEGINS_WITH(desc->ifmt_string, "autoselect") ||
             BEGINS_WITH(desc->ifmt_string, "auto"))
             continue;
@@ -150,7 +150,7 @@ void print_eth_info(eth_info_ctx_t *ctx) {
     /*
      * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
      * as the output already includes the interface name.
-    */
+     */
     if (ipv6_address != NULL) {
         char *prct_ptr = strstr(ipv6_address, "%");
         if (prct_ptr != NULL) {

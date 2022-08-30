@@ -402,9 +402,9 @@ error1:
     close(s);
     if (na.i_len >= sizeof(u.req)) {
         /*
-	 * Just use the first BSSID returned even if there are
-	 * multiple APs sharing the same BSSID.
-	 */
+         * Just use the first BSSID returned even if there are
+         * multiple APs sharing the same BSSID.
+         */
         info->signal_level = u.req.info[0].isi_rssi / 2 +
                              u.req.info[0].isi_noise;
         info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
@@ -523,7 +523,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     /*
      * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
      * as the output already includes the interface name.
-    */
+     */
     if (ipv6_address != NULL) {
         char *prct_ptr = strstr(ipv6_address, "%");
         if (prct_ptr != NULL) {
