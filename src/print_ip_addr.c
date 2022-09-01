@@ -32,7 +32,7 @@ static char *strip_optional_label(const char *ifa_name) {
     char *ptr1 = strchr(copy, ':');
     char *ptr2 = strchr(copy, '@');
 
-    if (ptr1 && ptr1 < ptr2) {
+    if (ptr1 && (ptr1 < ptr2)) {
         *ptr1 = '\0';
     } else if (ptr2) {
         *ptr2 = '\0';
