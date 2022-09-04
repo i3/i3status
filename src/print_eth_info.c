@@ -46,6 +46,13 @@ static int print_eth_speed(char *outwalk, const char *interface) {
     (void)strcpy(ifr.ifr_name, interface);
     if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0) {
         ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ethtool_cmd_speed(&ecmd));
+        if (ethspeed == 2500) {
+            // 2.5 Gbit/s is the only case where floating point formatting is most
+            // common.
+            return sprintf(outwalk, "%.1f Gbit/s", (double)ethspeed / 1000);
+        } else if (ethspeed > 1000) {
+            return sprintf(outwalk, "%d Gbit/s", ethspeed / 1000);
+        }
         return sprintf(outwalk, "%d Mbit/s", ethspeed);
     } else
         return sprintf(outwalk, "?");
