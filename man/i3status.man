@@ -421,7 +421,8 @@ Gets the temperature of the given thermal zone. It is possible to
 define a +max_threshold+ that will color the temperature red in case the
 specified thermal zone is getting too hot. Defaults to 75 degrees C. The
 output format when above +max_threshold+ can be customized with
-+format_above_threshold+.
++format_above_threshold+. There also is an option +format_down+. You can hide
+the output with +format_down=""+.
 
 *Example order*: +cpu_temperature 0+
 
