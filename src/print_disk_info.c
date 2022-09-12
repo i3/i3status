@@ -135,7 +135,7 @@ void print_disk_info(disk_info_ctx_t *ctx) {
 #if defined(__DragonFly__) || defined(__APPLE__)
     struct statfs buf;
 
-    if (statfs(path, &buf) == -1)
+    if (statfs(ctx->path, &buf) == -1)
         return;
 
     mounted = true;
