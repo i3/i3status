@@ -93,13 +93,13 @@ typedef struct {
     int signal_level_max;
     int noise_level;
     int noise_level_max;
-    int bitrate;
+    long int bitrate;
     double frequency;
 } wireless_info_t;
 
 #if defined(__linux__) || defined(__FreeBSD__)
 // Like iw_print_bitrate, but without the dependency on libiw.
-static void print_bitrate(char *buffer, int buflen, int bitrate, const char *format_bitrate) {
+static void print_bitrate(char *buffer, int buflen, long int bitrate, const char *format_bitrate) {
     const int kilo = 1e3;
     const int mega = 1e6;
     const int giga = 1e9;
@@ -191,7 +191,7 @@ static int gwi_sta_cb(struct nl_msg *msg, void *data) {
 
     // NL80211_RATE_INFO_BITRATE is specified in units of 100 kbit/s, but iw
     // used to specify bit/s, so we convert to use the same code path.
-    info->bitrate = (int)nla_get_u16(rinfo[NL80211_RATE_INFO_BITRATE]) * 100 * 1000;
+    info->bitrate = (long int)nla_get_u16(rinfo[NL80211_RATE_INFO_BITRATE]) * 100 * 1000;
 
     if (sinfo[NL80211_STA_INFO_SIGNAL] != NULL) {
         info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
@@ -412,7 +412,7 @@ error1:
         info->flags |= WIRELESS_INFO_FLAG_HAS_NOISE;
         // isi_txmbps is specified in units of 500 Kbit/s
         // Convert them to bit/s
-        info->bitrate = u.req.info[0].isi_txmbps * 500 * 1000;
+        info->bitrate = (long int)u.req.info[0].isi_txmbps * 500 * 1000;
     }
 
     return 1;
