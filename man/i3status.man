@@ -453,9 +453,13 @@ when above degraded threshold can be customized with
 For displaying the Nth CPU usage, you can use the %cpu<N> format string,
 starting from %cpu0. This feature is currently not supported in FreeBSD.
 
+CPU usage can also be represented graphically using %usagebar and %cpubar<N>
+instead of, respectively, %usage and %cpu<N>. This feature requires the use
+of a (preferrably, monospace) font implementing "Block Elements" 
+
 *Example order*: +cpu_usage+
 
-*Example format*: +all: %usage CPU_0: %cpu0 CPU_1: %cpu1+
+*Example format*: +all: %usage [%cpubar0%cpubar1]+
 
 *Example max_threshold*: +75+
 
