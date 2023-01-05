@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -117,8 +119,69 @@ static char *get_ipv6_addr(void) {
     return NULL;
 }
 
+/*
+ * Returns the name of the interface with which the given IPv6 address is
+ * associated.
+ * The return value is a statically allocated char* and mustn't be freed.
+ */
+char *get_iface_addr(const char *searched_addr_string) {
+    static char iface_string[IFNAMSIZ] = "(error)";
+    struct ifaddrs *addresses;
+
+    if (searched_addr_string == NULL) {
+        return iface_string;
+    }
+
+    /* getifaddrs(3) returns a linked list of all the available IP addresses on
+     * the system. */
+    if (getifaddrs(&addresses) == -1) {
+        perror("getifaddrs()");
+        return iface_string;
+    }
+
+    /* Search the linked list for our IP address */
+    bool iface_found = false;
+    for (struct ifaddrs *addr = addresses; addr != NULL; addr = addr->ifa_next) {
+        if (addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET6) {
+            // Not an IPv6 address
+            continue;
+        }
+
+        /* It's an IPv6 address, cast its `ifa_addr` to a more specialized type */
+        struct in6_addr *ipv6_addr = &((struct sockaddr_in6 *)addr->ifa_addr)->sin6_addr;
+
+        /* Get the string representation of the current address */
+        char addr_string[INET6_ADDRSTRLEN];
+        if (inet_ntop(AF_INET6, ipv6_addr, addr_string, sizeof(addr_string)) == NULL) {
+            perror("inet_ntop()");
+            return iface_string;
+        }
+
+        if (!strcmp(addr_string, searched_addr_string)) {
+            /* Found the address we wanted */
+            iface_found = true;
+            strncpy(iface_string, addr->ifa_name, sizeof(iface_string));
+            break;
+        }
+    }
+    freeifaddrs(addresses);
+
+    if (!iface_found) {
+        fprintf(stderr, "No matching interface found for the outgoing IPv6\n");
+    }
+    return iface_string;
+}
+
 void print_ipv6_info(ipv6_info_ctx_t *ctx) {
+    const char *iface_placeholder = "%iface";
+
     char *addr_string = get_ipv6_addr();
+    /* Lookup the interface name only if there is IPv6 connectivity *and* the
+     * user actually wants to display the interface name */
+    const char *iface_string =
+        (addr_string && strstr(ctx->format_up, iface_placeholder))
+            ? get_iface_addr(addr_string)
+            : "";
     char *outwalk = ctx->buf;
 
     if (addr_string == NULL) {
@@ -132,7 +195,8 @@ void print_ipv6_info(ipv6_info_ctx_t *ctx) {
     START_COLOR("color_good");
 
     placeholder_t placeholders[] = {
-        {.name = "%ip", .value = addr_string}};
+        {.name = "%ip", .value = addr_string},
+        {.name = iface_placeholder, .value = iface_string}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     char *formatted = format_placeholders(ctx->format_up, &placeholders[0], num);
