@@ -19,11 +19,11 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: install build dependencies
-      run: sudo apt update && sudo apt install clang-format-6.0 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio meson
+      run: sudo apt update && sudo apt install clang-format-12 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio meson
 
     - name: Ensure all files were formatted as per clang-format
       run: |
-        clang-format-6.0 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
+        clang-format-12 -i $(find . -name "*.[ch]" | tr '\n' ' ') && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)
 
     - name: build
       run: |
