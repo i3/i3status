@@ -235,9 +235,10 @@ disk "/" {
 === IPv6
 
 This module gets the IPv6 address used for outgoing connections (that is, the
-best available public IPv6 address on your computer).
+best available public IPv6 address on your computer) and the interface it is
+assigned to.
 
-*Example format_up*: +%ip+
+*Example format_up*: +%iface: %ip+
 
 *Example format_down*: +no IPv6+
 
