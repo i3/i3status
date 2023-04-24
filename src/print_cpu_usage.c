@@ -201,7 +201,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             *(outwalk++) = *walk;
 
         } else if (BEGINS_WITH(walk + 1, "usage")) {
-            outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
+            outwalk += sprintf(outwalk, ctx->format_usage, diff_usage, pct_mark);
             walk += strlen("usage");
         }
 #if defined(__linux__)
@@ -217,7 +217,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
                 int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
                 int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
-                outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
+                outwalk += sprintf(outwalk, ctx->format_usage, cpu_diff_usage, pct_mark);
             }
             walk += length;
         }

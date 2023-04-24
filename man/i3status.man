@@ -451,6 +451,9 @@ getting higher than the configured threshold. Defaults to 90. The output format
 when above degraded threshold can be customized with
 +format_above_degraded_threshold+.
 
+CPU usage is by default displayed as a percentage zero-padded to 2 digits. If
+you want the usage percentage to be shown in another format, use +format_usage+.
+
 For displaying the Nth CPU usage, you can use the %cpu<N> format string,
 starting from %cpu0. This feature is currently not supported in FreeBSD.
 
@@ -465,6 +468,8 @@ starting from %cpu0. This feature is currently not supported in FreeBSD.
 *Example degraded_threshold*: +25+
 
 *Example format_above_degraded_threshold*: +Warning above degraded threshold: %usage+
+
+*Example format_usage*: +"%02d%s"+
 
 === Memory
 
