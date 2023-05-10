@@ -596,6 +596,10 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         .status = CS_UNKNOWN,
     };
     bool colorful_output = false;
+    bool discharging_low = false;
+    bool discharging_quarter = false;
+    bool discharging_half = false;
+    bool discharging_three_quarters = false;
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__OpenBSD__)
     /* These OSes report battery stats in whole percent. */
@@ -656,14 +660,36 @@ void print_battery_info(battery_info_ctx_t *ctx) {
             batt_info.seconds_remaining = 0;
     }
 
-    if (batt_info.status == CS_DISCHARGING && ctx->low_threshold > 0) {
-        if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
-        } else if (batt_info.seconds_remaining >= 0 && strcasecmp(ctx->threshold_type, "time") == 0 && batt_info.seconds_remaining < 60 * ctx->low_threshold) {
-            START_COLOR("color_bad");
-            colorful_output = true;
+    if (batt_info.status == CS_DISCHARGING) {
+        if (!strcasecmp(ctx->threshold_type, "percentage")) {
+            if (batt_info.percentage_remaining <= ctx->low_threshold)
+                discharging_low = true;
+            else if (batt_info.percentage_remaining <= ctx->quarter_threshold)
+                discharging_quarter = true;
+            else if (batt_info.percentage_remaining <= ctx->half_threshold)
+                discharging_half = true;
+            else if (batt_info.percentage_remaining <= ctx->three_quarters_threshold)
+                discharging_three_quarters = true;
+        } else if (!strcasecmp(ctx->threshold_type, "time")) {
+            if (batt_info.seconds_remaining <= 60 * ctx->low_threshold)
+                discharging_low = true;
+            else if (batt_info.seconds_remaining <= 60 * ctx->quarter_threshold)
+                discharging_quarter = true;
+            else if (batt_info.seconds_remaining <= 60 * ctx->half_threshold)
+                discharging_half = true;
+            else if (batt_info.seconds_remaining <= 60 * ctx->three_quarters_threshold)
+                discharging_three_quarters = true;
         }
+    }
+
+    if (discharging_low) {
+        START_COLOR("color_bad");
+        colorful_output = true;
+    }
+
+    if (discharging_quarter) {
+        START_COLOR("color_degraded");
+        colorful_output = true;
     }
 
     char string_status[STRING_SIZE];
@@ -680,6 +706,18 @@ void print_battery_info(battery_info_ctx_t *ctx) {
             break;
         case CS_DISCHARGING:
             statusstr = ctx->status_bat;
+
+            if (discharging_low && strcmp(ctx->status_bat_low, "BAT"))
+                statusstr = ctx->status_bat_low;
+
+            if (discharging_quarter && strcmp(ctx->status_bat_quarter, "BAT"))
+                statusstr = ctx->status_bat_quarter;
+
+            if (discharging_half && strcmp(ctx->status_bat_half, "BAT"))
+                statusstr = ctx->status_bat_half;
+
+            if (discharging_three_quarters && strcmp(ctx->status_bat_three_quarters, "BAT"))
+                statusstr = ctx->status_bat_three_quarters;
             break;
         case CS_FULL:
             statusstr = ctx->status_full;
