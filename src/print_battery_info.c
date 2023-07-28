@@ -49,6 +49,7 @@ typedef enum {
     CS_DISCHARGING,
     CS_CHARGING,
     CS_FULL,
+    CS_IDLE,
 } charging_status_t;
 
 /* A description of the state of one or more batteries. */
@@ -129,6 +130,13 @@ static void add_battery_info(struct battery_info *acc, const struct battery_info
                 acc->status = batt_info->status;
             /* else: retain FULL, since it is more specific than UNKNOWN */
             break;
+
+        case CS_IDLE:
+            if (batt_info->status != CS_UNKNOWN && batt_info->status != CS_FULL)
+                acc->status = batt_info->status;
+            /* else: retain IDLE, since it is more specific than UNKNOWN and is
+             * implied by CS_FULL though correct for all batteries */
+            break;
     }
 
     acc->present_rate = abs(present_rate);
@@ -187,8 +195,10 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
             batt_info->status = CS_CHARGING;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Full"))
             batt_info->status = CS_FULL;
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging") || BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Not charging"))
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Discharging"))
             batt_info->status = CS_DISCHARGING;
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS=Not charging"))
+            batt_info->status = CS_IDLE;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_STATUS="))
             batt_info->status = CS_UNKNOWN;
         else if (BEGINS_WITH(last, "POWER_SUPPLY_CHARGE_FULL_DESIGN=") ||
@@ -673,6 +683,9 @@ void print_battery_info(battery_info_ctx_t *ctx) {
             break;
         case CS_FULL:
             statusstr = ctx->status_full;
+            break;
+        case CS_IDLE:
+            statusstr = ctx->status_idle;
             break;
         default:
             statusstr = ctx->status_unk;

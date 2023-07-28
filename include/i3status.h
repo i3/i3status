@@ -271,6 +271,7 @@ typedef struct {
     const char *status_bat;
     const char *status_unk;
     const char *status_full;
+    const char *status_idle;
     int low_threshold;
     char *threshold_type;
     bool last_full_capacity;
