@@ -8,7 +8,6 @@
 #define NET_STAT_BUFFER_SIZE 100
 #define RATE_BUFFER_SIZE 10
 
-
 typedef struct {
     unsigned long last_time;
     unsigned long last_rx;
@@ -22,8 +21,7 @@ static NetworkState prev_state = {
     0,
     0,
     {'0', '\0'},
-    {'0', '\0'}
-};
+    {'0', '\0'}};
 
 void readable(unsigned long bytes, char *output) {
     unsigned long kb = bytes / 1000;  // Convert to kilobytes (base-10)
@@ -31,7 +29,7 @@ void readable(unsigned long bytes, char *output) {
         sprintf(output, "%lu KB", kb);
     } else {
         unsigned long mb_int = kb / 1000;
-        unsigned long mb_dec = (kb % 1000 * 100) / 1000; // Multiplied by 100, then divided by 1000 for 2 decimal places
+        unsigned long mb_dec = (kb % 1000 * 100) / 1000;  // Multiplied by 100, then divided by 1000 for 2 decimal places
         sprintf(output, "%lu.%02lu MB", mb_int, mb_dec);
     }
 }
@@ -40,11 +38,12 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     const char *selected_format = ctx->format;
 
-    unsigned long current_time = (unsigned long) time(NULL);  // Renamed variable
+    unsigned long current_time = (unsigned long)time(NULL);  // Renamed variable
 
     DIR *d;
     d = opendir("/sys/class/net");
-    if (d ==NULL) return;
+    if (d == NULL)
+        return;
 
     int ret;
     char path[PATH_MAX], line[PATH_MAX];
@@ -54,15 +53,19 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     unsigned long rx = 0, tx = 0;
 
     while ((dir = readdir(d)) != NULL) {
-        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0) continue;
+        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+            continue;
 
         snprintf(interface, sizeof(interface), "/sys/class/net/%s", dir->d_name);
 
-        if (realpath(interface, resolved_path) == NULL) continue;
-        if (strstr(resolved_path, "devices/virtual") != NULL) continue; // only get for physical devices
+        if (realpath(interface, resolved_path) == NULL)
+            continue;
+        if (strstr(resolved_path, "devices/virtual") != NULL)
+            continue;  // only get for physical devices
 
         ret = snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/rx_bytes", dir->d_name);
-        if (ret >= sizeof(path) || ret < 0) continue;
+        if (ret >= sizeof(path) || ret < 0)
+            continue;
 
         FILE *fp = fopen(path, "r");
         fgets(line, NET_STAT_BUFFER_SIZE, fp);
@@ -70,7 +73,8 @@ void print_netspeed(netspeed_ctx_t *ctx) {
         rx += strtoul(line, NULL, 10);
 
         ret = snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/tx_bytes", dir->d_name);
-        if (ret >= sizeof(path) || ret < 0) continue;
+        if (ret >= sizeof(path) || ret < 0)
+            continue;
 
         fp = fopen(path, "r");
         fgets(line, NET_STAT_BUFFER_SIZE, fp);
@@ -95,9 +99,8 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     }
 
     placeholder_t placeholders[] = {
-        {.name = "%down", .value = prev_state.last_rate_down },
-        {.name = "%up", .value = prev_state.last_rate_up }
-    };
+        {.name = "%down", .value = prev_state.last_rate_down},
+        {.name = "%up", .value = prev_state.last_rate_up}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     char *formatted = format_placeholders(selected_format, &placeholders[0], num);
@@ -105,4 +108,3 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     free(formatted);
     OUTPUT_FULL_TEXT(ctx->buf);
 }
-
