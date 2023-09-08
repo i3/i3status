@@ -25,6 +25,11 @@ On debian-based systems, the following line will install all requirements:
 apt-get install autoconf libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libpulse-dev libnl-genl-3-dev meson
 ```
 
+On arch-based systems, the following line will install all requirements:
+```bash
+pacman -S base-devel alsa-lib confuse libnl libpulse yajl meson asciidoc
+```
+
 ## Upstream
 
 i3status is developed at https://github.com/i3/i3status
