@@ -38,7 +38,7 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     char *outwalk = ctx->buf;
     const char *selected_format = ctx->format;
 
-    unsigned long current_time = (unsigned long)time(NULL);  // Renamed variable
+    unsigned long current_time = (unsigned long)time(NULL);
 
     DIR *d;
     d = opendir("/sys/class/net");
@@ -52,6 +52,9 @@ void print_netspeed(netspeed_ctx_t *ctx) {
     struct dirent *dir;
     unsigned long rx = 0, tx = 0;
 
+    const char virtual_iface_path[] = "/sys/devices/virtual/net/";
+    size_t virtual_iface_len = strlen(virtual_iface_path);
+
     while ((dir = readdir(d)) != NULL) {
         if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
             continue;
@@ -60,8 +63,13 @@ void print_netspeed(netspeed_ctx_t *ctx) {
 
         if (realpath(interface, resolved_path) == NULL)
             continue;
-        if (strstr(resolved_path, "devices/virtual") != NULL)
-            continue;  // only get for physical devices
+
+        size_t full_path_len = virtual_iface_len + strlen(dir->d_name) + 1;
+        snprintf(path, full_path_len, "%s%s", virtual_iface_path, dir->d_name);
+
+         // check if interface is virtual
+        if (strcmp(path, resolved_path) == 0)
+            continue;
 
         ret = snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/rx_bytes", dir->d_name);
         if (ret >= sizeof(path) || ret < 0)
