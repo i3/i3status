@@ -10,7 +10,7 @@
 
 #include "i3status.h"
 
-#define STRING_SIZE 10
+#define STRING_SIZE 128
 
 #if defined(__linux__)
 #include <errno.h>
