@@ -726,11 +726,9 @@ void print_battery_info(battery_info_ctx_t *ctx) {
         {.name = "%consumption", .value = string_consumption}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-    char *untrimmed = format_placeholders(ctx->format, &placeholders[0], num);
-    char *formatted = trim(untrimmed);
+    char *formatted = format_placeholders(ctx->format, &placeholders[0], num);
     OUTPUT_FORMATTED;
     free(formatted);
-    free(untrimmed);
 
     if (colorful_output) {
         END_COLOR;

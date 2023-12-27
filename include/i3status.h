@@ -206,10 +206,6 @@ char *endcolor() __attribute__((pure));
 void reset_cursor(void);
 void maybe_escape_markup(char *text, char **buffer);
 
-char *rtrim(const char *s);
-char *ltrim(const char *s);
-char *trim(const char *s);
-
 // copied from  i3:libi3/format_placeholders.c
 /* src/format_placeholders.c */
 typedef struct {
