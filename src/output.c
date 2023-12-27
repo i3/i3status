@@ -63,15 +63,15 @@ void print_separator(const char *separator) {
         return;
 
     if (output_format == O_DZEN2)
-        printf("^fg(%s)%s^fg()", cfg_getstr(cfg_general, "color_separator"), separator);
+        printf(" ^fg(%s)%s^fg() ", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_XMOBAR)
-        printf("<fc=%s>%s</fc>", cfg_getstr(cfg_general, "color_separator"), separator);
+        printf(" <fc=%s>%s</fc> ", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_LEMONBAR)
-        printf("%%{F%s}%s%%{F-}", cfg_getstr(cfg_general, "color_separator"), separator);
+        printf(" %%{F%s}%s%%{F-} ", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_TERM)
-        printf("%s%s%s", color("color_separator"), separator, endcolor());
+        printf(" %s%s%s ", color("color_separator"), separator, endcolor());
     else if (output_format == O_NONE)
-        printf("%s", separator);
+        printf(" %s ", separator);
 }
 
 /*
@@ -121,37 +121,4 @@ void maybe_escape_markup(char *text, char **buffer) {
                 break;
         }
     }
-}
-
-/*
- * remove leading spaces
- */
-char *ltrim(const char *s) {
-    while (isspace(*s))
-        ++s;
-    return sstrdup(s);
-}
-
-/*
- * remove trailing spaces
- */
-char *rtrim(const char *s) {
-    char *r = sstrdup(s);
-    if (r != NULL) {
-        char *fr = r + strlen(s) - 1;
-        while ((isspace(*fr) || *fr == 0) && fr >= r)
-            --fr;
-        *++fr = 0;
-    }
-    return r;
-}
-
-/*
- * remove leading & trailing spaces
- */
-char *trim(const char *s) {
-    char *r = rtrim(s);
-    char *f = ltrim(r);
-    free(r);
-    return f;
 }
