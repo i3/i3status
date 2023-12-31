@@ -46,7 +46,7 @@
     if ((err = snd_mixer_selem_get_##channel##_switch(elem, 0, &pbval)) < 0)             \
         fprintf(stderr, "i3status: ALSA: " #channel "_switch: %s\n", snd_strerror(err)); \
     if (!pbval) {                                                                        \
-        START_COLOR("color_degraded");                                                   \
+        outcolor = COLOR_DEGRADED;                                                       \
         ctx->fmt = ctx->fmt_muted;                                                       \
     }
 
@@ -66,6 +66,7 @@ static char *apply_volume_format(const char *fmt, int ivolume, const char *devic
 
 void print_volume(volume_ctx_t *ctx) {
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     int pbval = 1;
 
     /* Printing volume works with ALSA and PulseAudio at the moment */
@@ -102,8 +103,7 @@ void print_volume(volume_ctx_t *ctx) {
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (muted) {
-            START_COLOR("color_degraded");
-            pbval = 0;
+            outcolor = COLOR_DEGRADED;
         }
 
         /* negative result means error, stick to 0 */
@@ -124,8 +124,7 @@ void print_volume(volume_ctx_t *ctx) {
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0 && success) {
             if (muted) {
-                START_COLOR("color_degraded");
-                pbval = 0;
+                outcolor = COLOR_DEGRADED;
             }
             char *formatted = apply_volume_format(muted ? ctx->fmt_muted : ctx->fmt,
                                                   ivolume,
@@ -248,7 +247,6 @@ void print_volume(volume_ctx_t *ctx) {
     char defaultmixer[] = "/dev/mixer";
     int mixfd, vol, devmask = 0;
     const char *devicename = "UNSUPPORTED"; /* TODO: implement support for this */
-    pbval = 1;
 
     if (ctx->mixer_idx > 0)
         asprintf(&mixerpath, "/dev/mixer%d", ctx->mixer_idx);
@@ -329,9 +327,8 @@ void print_volume(volume_ctx_t *ctx) {
             goto out;
 
         if (vinfo.un.ord) {
-            START_COLOR("color_degraded");
+            outcolor = COLOR_DEGRADED;
             ctx->fmt = ctx->fmt_muted;
-            pbval = 0;
         }
     }
 
@@ -346,8 +343,7 @@ void print_volume(volume_ctx_t *ctx) {
     }
 
     if (((vol & 0x7f) == 0) && (((vol >> 8) & 0x7f) == 0)) {
-        START_COLOR("color_degraded");
-        pbval = 0;
+        outcolor = COLOR_DEGRADED;
     }
 
 #endif
@@ -357,13 +353,9 @@ void print_volume(volume_ctx_t *ctx) {
 #endif
 
 out:
-    if (!pbval)
-        END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
     return;
 
 out_with_format:
-    if (!pbval)
-        END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
 }

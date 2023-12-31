@@ -39,6 +39,7 @@ void set_timezone(const char *tz) {
 
 void print_time(time_ctx_t *ctx) {
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     struct tm local_tm, tm;
 
     if (ctx->title != NULL)

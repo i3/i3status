@@ -73,6 +73,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     const char *selected_format = ctx->format;
     const char *walk;
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
     struct cpu_usage curr_all = {0, 0, 0, 0, 0};
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     long diff_idle, diff_total;
@@ -80,7 +81,6 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     int diff_idle, diff_total;
 #endif
     int diff_usage;
-    bool colorful_output = false;
 
 #if defined(__linux__)
 
@@ -185,13 +185,11 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
 #endif
 
     if (diff_usage >= ctx->max_threshold) {
-        START_COLOR("color_bad");
-        colorful_output = true;
+        outcolor = COLOR_BAD;
         if (ctx->format_above_threshold != NULL)
             selected_format = ctx->format_above_threshold;
     } else if (diff_usage >= ctx->degraded_threshold) {
-        START_COLOR("color_degraded");
-        colorful_output = true;
+        outcolor = COLOR_DEGRADED;
         if (ctx->format_above_degraded_threshold != NULL)
             selected_format = ctx->format_above_degraded_threshold;
     }
@@ -230,9 +228,6 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     struct cpu_usage *temp_cpus = prev_cpus;
     prev_cpus = curr_cpus;
     curr_cpus = temp_cpus;
-
-    if (colorful_output)
-        END_COLOR;
 
     OUTPUT_FULL_TEXT(ctx->buf);
     return;

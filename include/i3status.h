@@ -17,6 +17,14 @@ typedef enum {
 } markup_format_t;
 extern markup_format_t markup_format;
 
+typedef enum {
+    COLOR_DEFAULT,
+    COLOR_GOOD,
+    COLOR_BAD,
+    COLOR_DEGRADED,
+    COLOR_SEPARATOR,
+} output_color_t;
+
 extern char *pct_mark;
 
 #include <stdbool.h>
@@ -87,14 +95,22 @@ extern char *pct_mark;
         /* Terminate the output buffer here in any case, so that it’s                              \
          * not forgotten in the module */                                                            \
         *outwalk = '\0';                                                                             \
+        const char *colorstr = begin_color_str(outcolor, true);                                      \
         if (output_format == O_I3BAR) {                                                              \
+            if (colorstr) {                                                                          \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)"color", strlen("color"));     \
+                yajl_gen_string(ctx->json_gen, (const unsigned char *)colorstr, strlen(colorstr));   \
+            }                                                                                        \
             char *_markup = cfg_getstr(cfg_general, "markup");                                       \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)"markup", strlen("markup"));       \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)_markup, strlen(_markup));         \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)text, strlen(text));               \
         } else {                                                                                     \
-            printf("%s", text);                                                                      \
+            if (colorstr)                                                                            \
+                printf("%s%s%s", colorstr, text, end_color_str());                                   \
+            else                                                                                     \
+                printf("%s", text);                                                                  \
         }                                                                                            \
     } while (0)
 
@@ -143,30 +159,6 @@ extern char *pct_mark;
         }                                                                                                                   \
     } while (0)
 
-#define START_COLOR(colorstr)                                                                    \
-    do {                                                                                         \
-        if (cfg_getbool(cfg_general, "colors")) {                                                \
-            const char *_val = NULL;                                                             \
-            if (cfg_section)                                                                     \
-                _val = cfg_getstr(cfg_section, colorstr);                                        \
-            if (!_val)                                                                           \
-                _val = cfg_getstr(cfg_general, colorstr);                                        \
-            if (output_format == O_I3BAR) {                                                      \
-                yajl_gen_string(ctx->json_gen, (const unsigned char *)"color", strlen("color")); \
-                yajl_gen_string(ctx->json_gen, (const unsigned char *)_val, strlen(_val));       \
-            } else {                                                                             \
-                outwalk += sprintf(outwalk, "%s", color(colorstr));                              \
-            }                                                                                    \
-        }                                                                                        \
-    } while (0)
-
-#define END_COLOR                                                             \
-    do {                                                                      \
-        if (cfg_getbool(cfg_general, "colors") && output_format != O_I3BAR) { \
-            outwalk += sprintf(outwalk, "%s", endcolor());                    \
-        }                                                                     \
-    } while (0)
-
 #define INSTANCE(instance)                                                                         \
     do {                                                                                           \
         if (output_format == O_I3BAR) {                                                            \
@@ -201,8 +193,8 @@ char *sstrdup(const char *str);
 
 /* src/output.c */
 void print_separator(const char *separator);
-char *color(const char *colorstr);
-char *endcolor() __attribute__((pure));
+const char *begin_color_str(output_color_t outcolor, bool try_cfg_section);
+const char *end_color_str() __attribute__((pure));
 void reset_cursor(void);
 void maybe_escape_markup(char *text, char **buffer);
 
@@ -444,6 +436,8 @@ void print_file_contents(file_contents_ctx_t *ctx);
 
 /* socket file descriptor for general purposes */
 extern int general_socket;
+
+extern bool enable_colors;
 
 extern cfg_t *cfg, *cfg_general, *cfg_section;
 

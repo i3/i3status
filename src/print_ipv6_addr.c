@@ -183,16 +183,16 @@ void print_ipv6_info(ipv6_info_ctx_t *ctx) {
             ? get_iface_addr(addr_string)
             : "";
     char *outwalk = ctx->buf;
+    output_color_t outcolor = COLOR_DEFAULT;
 
     if (addr_string == NULL) {
-        START_COLOR("color_bad");
+        outcolor = COLOR_BAD;
         outwalk += sprintf(outwalk, "%s", ctx->format_down);
-        END_COLOR;
         OUTPUT_FULL_TEXT(ctx->buf);
         return;
     }
 
-    START_COLOR("color_good");
+    outcolor = COLOR_GOOD;
 
     placeholder_t placeholders[] = {
         {.name = "%ip", .value = addr_string},
@@ -203,6 +203,5 @@ void print_ipv6_info(ipv6_info_ctx_t *ctx) {
     OUTPUT_FORMATTED;
     free(formatted);
 
-    END_COLOR;
     OUTPUT_FULL_TEXT(ctx->buf);
 }

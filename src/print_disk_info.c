@@ -127,7 +127,7 @@ static bool below_threshold(struct statvfs buf, const char *prefix_type, const c
 void print_disk_info(disk_info_ctx_t *ctx) {
     const char *selected_format = ctx->format;
     char *outwalk = ctx->buf;
-    bool colorful_output = false;
+    output_color_t outcolor = COLOR_DEFAULT;
     bool mounted = false;
 
     INSTANCE(ctx->path);
@@ -183,8 +183,7 @@ void print_disk_info(disk_info_ctx_t *ctx) {
             ctx->format_not_mounted = "";
         selected_format = ctx->format_not_mounted;
     } else if (ctx->low_threshold > 0 && below_threshold(buf, ctx->prefix_type, ctx->threshold_type, ctx->low_threshold)) {
-        START_COLOR("color_bad");
-        colorful_output = true;
+        outcolor = COLOR_BAD;
         if (ctx->format_below_threshold != NULL)
             selected_format = ctx->format_below_threshold;
     }
@@ -228,9 +227,6 @@ void print_disk_info(disk_info_ctx_t *ctx) {
     char *formatted = format_placeholders(selected_format, &placeholders[0], num);
     OUTPUT_FORMATTED;
     free(formatted);
-
-    if (colorful_output)
-        END_COLOR;
 
     *outwalk = '\0';
     OUTPUT_FULL_TEXT(ctx->buf);
