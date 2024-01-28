@@ -192,7 +192,7 @@ static char *get_config_path(void) {
 
     xdg_config_home = resolve_tilde(xdg_config_home);
     if (asprintf(&config_path, "%s/i3status/config", xdg_config_home) == -1)
-        die("asprintf() failed");
+        die("asprintf() failed\n");
     free(xdg_config_home);
 
     if (path_exists(config_path))
@@ -213,7 +213,7 @@ static char *get_config_path(void) {
     while (tok != NULL) {
         tok = resolve_tilde(tok);
         if (asprintf(&config_path, "%s/i3status/config", tok) == -1)
-            die("asprintf() failed");
+            die("asprintf() failed\n");
         free(tok);
         if (path_exists(config_path)) {
             free(buf);
@@ -503,7 +503,7 @@ int main(int argc, char *argv[]) {
     sigaction(SIGUSR1, &action, NULL);
 
     if (setlocale(LC_ALL, "") == NULL)
-        die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.");
+        die("Could not set locale. Please make sure all your LC_* / LANG settings are correct.\n");
 
     while ((opt = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != -1) {
         switch (opt) {
@@ -585,7 +585,7 @@ int main(int argc, char *argv[]) {
         separator = get_default_separator();
 
     if (!valid_color(cfg_getstr(cfg_general, "color_good")) || !valid_color(cfg_getstr(cfg_general, "color_degraded")) || !valid_color(cfg_getstr(cfg_general, "color_bad")) || !valid_color(cfg_getstr(cfg_general, "color_separator")))
-        die("Bad color format");
+        die("Bad color format\n");
 
     char *markup_str = cfg_getstr(cfg_general, "markup");
     if (strcasecmp(markup_str, "pango") == 0)
