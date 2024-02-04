@@ -386,7 +386,7 @@ the number indicates the battery index as reported in /sys.
 
 Optionally custom strings including any UTF-8 symbols can be used for different
 battery states. This makes it possible to display individual symbols
-for each state (charging, discharging, unknown, full)
+for each state (charging, discharging, unknown, full).
 Of course it will also work with special iconic fonts, such as FontAwesome.
 If any of these special status strings are omitted, the default (CHR, BAT, UNK,
 FULL) is used.
