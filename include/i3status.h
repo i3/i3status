@@ -327,6 +327,15 @@ typedef struct {
     yajl_gen json_gen;
     char *buf;
     const size_t buflen;
+    const char *format;
+} netspeed_ctx_t;
+
+void print_netspeed(netspeed_ctx_t *ctx);
+
+typedef struct {
+    yajl_gen json_gen;
+    char *buf;
+    const size_t buflen;
     const char *title;
     const char *pidfile;
     const char *format;
