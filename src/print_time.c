@@ -71,7 +71,7 @@ void print_time(time_ctx_t *ctx) {
             {.name = "%time", .value = string_time}};
 
         const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-        char *formatted = format_placeholders(ctx->format_time, &placeholders[0], num);
+        char *formatted = format_placeholders(ctx->format, &placeholders[0], num);
         OUTPUT_FORMATTED;
         free(formatted);
     }
