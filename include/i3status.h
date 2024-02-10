@@ -266,6 +266,7 @@ typedef struct {
     int number;
     const char *path;
     const char *format;
+    const char *format_below_threshold;
     const char *format_down;
     const char *status_chr;
     const char *status_bat;
