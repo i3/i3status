@@ -277,6 +277,7 @@ typedef struct {
     bool last_full_capacity;
     const char *format_percentage;
     bool hide_seconds;
+    const char *battery_full_emptytime;
 } battery_info_ctx_t;
 
 void print_battery_info(battery_info_ctx_t *ctx);
