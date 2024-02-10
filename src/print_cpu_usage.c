@@ -45,14 +45,12 @@ struct cpu_usage {
     long system;
     long idle;
     long total;
+    int spin;
 #else
     int user;
     int nice;
     int system;
     int idle;
-#if defined(__OpenBSD__)
-    int spin;
-#endif
     int total;
 #endif
 };
