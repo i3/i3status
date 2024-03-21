@@ -12,6 +12,8 @@
 
 #include "i3status.h"
 
+#define STRING_SIZE 30
+
 /*
  * Returns the correct color format for dzen (^fg(color)), xmobar (<fc=color>)
  * or lemonbar (%{Fcolor})
@@ -90,7 +92,7 @@ void reset_cursor(void) {
  */
 void maybe_escape_markup(char *text, char **buffer) {
     if (markup_format == M_NONE) {
-        *buffer += sprintf(*buffer, "%s", text);
+        *buffer += snprintf(*buffer, STRING_SIZE, "%s", text);
         return;
     }
     for (; *text != '\0'; text++) {
