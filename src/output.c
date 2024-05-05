@@ -88,39 +88,49 @@ void reset_cursor(void) {
  * https://git.gnome.org/browse/glib/tree/glib/gmarkup.c?id=03db1f455b4265654e237d2ad55464b4113cba8a#n2142
  *
  */
-void maybe_escape_markup(char *text, char **buffer) {
+char *maybe_escape_markup(char *text) {
     if (markup_format == M_NONE) {
-        *buffer += sprintf(*buffer, "%s", text);
-        return;
+        return strdup(text);
     }
+
+    size_t idx = 0;
+    size_t size = 32;
+    char *buffer = malloc(size);
     for (; *text != '\0'; text++) {
+        if (idx + 10 > size) {
+            size *= 2;
+            buffer = realloc(buffer, size);
+        }
         switch (*text) {
             case '&':
-                *buffer += sprintf(*buffer, "%s", "&amp;");
+                idx += sprintf(&buffer[idx], "%s", "&amp;");
                 break;
             case '<':
-                *buffer += sprintf(*buffer, "%s", "&lt;");
+                idx += sprintf(&buffer[idx], "%s", "&lt;");
                 break;
             case '>':
-                *buffer += sprintf(*buffer, "%s", "&gt;");
+                idx += sprintf(&buffer[idx], "%s", "&gt;");
                 break;
             case '\'':
-                *buffer += sprintf(*buffer, "%s", "&apos;");
+                idx += sprintf(&buffer[idx], "%s", "&apos;");
                 break;
             case '"':
-                *buffer += sprintf(*buffer, "%s", "&quot;");
+                idx += sprintf(&buffer[idx], "%s", "&quot;");
                 break;
             default:
                 if ((0x1 <= *text && *text <= 0x8) ||
                     (0xb <= *text && *text <= 0xc) ||
                     (0xe <= *text && *text <= 0x1f)) {
-                    *buffer += sprintf(*buffer, "&#x%x;", *text);
+                    idx += sprintf(&buffer[idx], "&#x%x;", *text);
                 } else {
-                    *(*buffer)++ = *text;
+                    buffer[idx] = *text;
+                    idx++;
                 }
                 break;
         }
     }
+    buffer[idx] = 0;
+    return buffer;
 }
 
 /*

@@ -402,9 +402,9 @@ error1:
     close(s);
     if (na.i_len >= sizeof(u.req)) {
         /*
-	 * Just use the first BSSID returned even if there are
-	 * multiple APs sharing the same BSSID.
-	 */
+         * Just use the first BSSID returned even if there are
+         * multiple APs sharing the same BSSID.
+         */
         info->signal_level = u.req.info[0].isi_rssi / 2 +
                              u.req.info[0].isi_noise;
         info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
@@ -523,7 +523,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     /*
      * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
      * as the output already includes the interface name.
-    */
+     */
     if (ipv6_address != NULL) {
         char *prct_ptr = strstr(ipv6_address, "%");
         if (prct_ptr != NULL) {
@@ -569,7 +569,6 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     char string_quality[STRING_SIZE] = {'\0'};
     char string_signal[STRING_SIZE] = {'\0'};
     char string_noise[STRING_SIZE] = {'\0'};
-    char string_essid[STRING_SIZE] = {'\0'};
     char string_frequency[STRING_SIZE] = {'\0'};
     char string_ip[STRING_SIZE] = {'\0'};
     char string_bitrate[STRING_SIZE] = {'\0'};
@@ -601,13 +600,13 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
         snprintf(string_noise, STRING_SIZE, "?");
     }
 
-    char *tmp = string_essid;
+    char *string_essid_tmp = NULL; /* Dynamic allocation of ESSID */
+    char *string_essid = "?";
 #ifdef IW_ESSID_MAX_SIZE
-    if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
-        maybe_escape_markup(info.essid, &tmp);
-    else
+    if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID) {
+        string_essid = string_essid_tmp = maybe_escape_markup(info.essid);
+    }
 #endif
-        snprintf(string_essid, STRING_SIZE, "?");
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_FREQUENCY)
         snprintf(string_frequency, STRING_SIZE, "%1.1f GHz", info.frequency / 1e9);
@@ -633,6 +632,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     char *formatted = format_placeholders(walk, &placeholders[0], num);
     OUTPUT_FORMATTED;
     free(formatted);
+    free(string_essid_tmp);
 
     END_COLOR;
     free(ipv4_address);
