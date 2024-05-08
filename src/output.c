@@ -88,35 +88,42 @@ void reset_cursor(void) {
  * https://git.gnome.org/browse/glib/tree/glib/gmarkup.c?id=03db1f455b4265654e237d2ad55464b4113cba8a#n2142
  *
  */
-void maybe_escape_markup(char *text, char **buffer) {
+void maybe_escape_markup(char *text, char *buffer, size_t size) {
+    size--; /* Leave a byte for NUL termination. */
+
     if (markup_format == M_NONE) {
-        *buffer += sprintf(*buffer, "%s", text);
+        *buffer += snprintf(buffer, size, "%s", text);
         return;
     }
-    for (; *text != '\0'; text++) {
+
+    for (size_t i = 0; *text != '\0'; text++) {
+        if (i >= size) {
+            return;
+        }
         switch (*text) {
             case '&':
-                *buffer += sprintf(*buffer, "%s", "&amp;");
+                i += snprintf(&buffer[i], size - i, "%s", "&amp;");
                 break;
             case '<':
-                *buffer += sprintf(*buffer, "%s", "&lt;");
+                i += snprintf(&buffer[i], size - i, "%s", "&lt;");
                 break;
             case '>':
-                *buffer += sprintf(*buffer, "%s", "&gt;");
+                i += snprintf(&buffer[i], size - i, "%s", "&gt;");
                 break;
             case '\'':
-                *buffer += sprintf(*buffer, "%s", "&apos;");
+                i += snprintf(&buffer[i], size - i, "%s", "&apos;");
                 break;
             case '"':
-                *buffer += sprintf(*buffer, "%s", "&quot;");
+                i += snprintf(&buffer[i], size - i, "%s", "&quot;");
                 break;
             default:
                 if ((0x1 <= *text && *text <= 0x8) ||
                     (0xb <= *text && *text <= 0xc) ||
                     (0xe <= *text && *text <= 0x1f)) {
-                    *buffer += sprintf(*buffer, "&#x%x;", *text);
+                    i += snprintf(&buffer[i], size - i, "&#x%x;", *text);
                 } else {
-                    *(*buffer)++ = *text;
+                    buffer[i] = *text;
+                    i++;
                 }
                 break;
         }

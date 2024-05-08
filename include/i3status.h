@@ -204,7 +204,7 @@ void print_separator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
-void maybe_escape_markup(char *text, char **buffer);
+void maybe_escape_markup(char *text, char *buffer, size_t size);
 
 char *rtrim(const char *s);
 char *ltrim(const char *s);

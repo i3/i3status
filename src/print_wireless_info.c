@@ -68,7 +68,7 @@
 
 #include "i3status.h"
 
-#define STRING_SIZE 30
+#define STRING_SIZE 60
 
 #define WIRELESS_INFO_FLAG_HAS_ESSID (1 << 0)
 #define WIRELESS_INFO_FLAG_HAS_QUALITY (1 << 1)
@@ -402,9 +402,9 @@ error1:
     close(s);
     if (na.i_len >= sizeof(u.req)) {
         /*
-	 * Just use the first BSSID returned even if there are
-	 * multiple APs sharing the same BSSID.
-	 */
+         * Just use the first BSSID returned even if there are
+         * multiple APs sharing the same BSSID.
+         */
         info->signal_level = u.req.info[0].isi_rssi / 2 +
                              u.req.info[0].isi_noise;
         info->flags |= WIRELESS_INFO_FLAG_HAS_SIGNAL;
@@ -523,7 +523,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     /*
      * Removing '%' and following characters from IPv6 since the interface identifier is redundant,
      * as the output already includes the interface name.
-    */
+     */
     if (ipv6_address != NULL) {
         char *prct_ptr = strstr(ipv6_address, "%");
         if (prct_ptr != NULL) {
@@ -601,10 +601,9 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
         snprintf(string_noise, STRING_SIZE, "?");
     }
 
-    char *tmp = string_essid;
 #ifdef IW_ESSID_MAX_SIZE
     if (info.flags & WIRELESS_INFO_FLAG_HAS_ESSID)
-        maybe_escape_markup(info.essid, &tmp);
+        maybe_escape_markup(info.essid, string_essid, STRING_SIZE);
     else
 #endif
         snprintf(string_essid, STRING_SIZE, "?");
