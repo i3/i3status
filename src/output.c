@@ -88,49 +88,46 @@ void reset_cursor(void) {
  * https://git.gnome.org/browse/glib/tree/glib/gmarkup.c?id=03db1f455b4265654e237d2ad55464b4113cba8a#n2142
  *
  */
-char *maybe_escape_markup(char *text) {
+void maybe_escape_markup(char *text, char *buffer, size_t size) {
+    size--; /* Leave a byte for NUL termination. */
+
     if (markup_format == M_NONE) {
-        return strdup(text);
+        *buffer += snprintf(buffer, size, "%s", text);
+        return;
     }
 
-    size_t idx = 0;
-    size_t size = 32;
-    char *buffer = malloc(size);
-    for (; *text != '\0'; text++) {
-        if (idx + 10 > size) {
-            size *= 2;
-            buffer = realloc(buffer, size);
+    for (size_t i = 0; *text != '\0'; text++) {
+        if (i >= size) {
+            return;
         }
         switch (*text) {
             case '&':
-                idx += sprintf(&buffer[idx], "%s", "&amp;");
+                i += snprintf(&buffer[i], size - i, "%s", "&amp;");
                 break;
             case '<':
-                idx += sprintf(&buffer[idx], "%s", "&lt;");
+                i += snprintf(&buffer[i], size - i, "%s", "&lt;");
                 break;
             case '>':
-                idx += sprintf(&buffer[idx], "%s", "&gt;");
+                i += snprintf(&buffer[i], size - i, "%s", "&gt;");
                 break;
             case '\'':
-                idx += sprintf(&buffer[idx], "%s", "&apos;");
+                i += snprintf(&buffer[i], size - i, "%s", "&apos;");
                 break;
             case '"':
-                idx += sprintf(&buffer[idx], "%s", "&quot;");
+                i += snprintf(&buffer[i], size - i, "%s", "&quot;");
                 break;
             default:
                 if ((0x1 <= *text && *text <= 0x8) ||
                     (0xb <= *text && *text <= 0xc) ||
                     (0xe <= *text && *text <= 0x1f)) {
-                    idx += sprintf(&buffer[idx], "&#x%x;", *text);
+                    i += snprintf(&buffer[i], size - i, "&#x%x;", *text);
                 } else {
-                    buffer[idx] = *text;
-                    idx++;
+                    buffer[i] = *text;
+                    i++;
                 }
                 break;
         }
     }
-    buffer[idx] = 0;
-    return buffer;
 }
 
 /*
