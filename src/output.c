@@ -92,7 +92,7 @@ void maybe_escape_markup(char *text, char *buffer, size_t size) {
     size--; /* Leave a byte for NUL termination. */
 
     if (markup_format == M_NONE) {
-        *buffer += snprintf(buffer, size, "%s", text);
+        snprintf(buffer, size, "%s", text);
         return;
     }
 
