@@ -51,6 +51,8 @@ static char *format_for_process(const char *name) {
         return "dzen2";
     else if (strcasecmp(name, "xmobar") == 0)
         return "xmobar";
+    else if (strcasecmp(name, "tmux") == 0)
+        return "tmux";
     else
         return NULL;
 }
