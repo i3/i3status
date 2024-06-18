@@ -285,10 +285,10 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
         batt_info->status = CS_DISCHARGING;
 #elif defined(__OpenBSD__)
     /*
-	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
-	 * the generic interface on macppc/sparc64/zaurus.  Machines that have ACPI
-	 * battery sensors gain some extra information.
-	 */
+     * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
+     * the generic interface on macppc/sparc64/zaurus.  Machines that have ACPI
+     * battery sensors gain some extra information.
+     */
     struct apm_power_info apm_info;
     struct sensordev sensordev;
     struct sensor sensor;
