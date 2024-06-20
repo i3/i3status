@@ -123,6 +123,16 @@ static void print_bitrate(char *buffer, int buflen, long int bitrate, const char
 #endif
 
 #ifdef __linux__
+static void print_bssid(char *buffer, int buflen, uint8_t bssid[]) {
+    unsigned int i;
+
+    snprintf(buffer, buflen, "%02x", (unsigned char)bssid[0]);
+    for (i = 1; i < ETH_ALEN; i++) {
+        // +2 1st 2 digits + 3*(i-1) next ":XX" digits
+        snprintf(buffer + 2 + (3 * (i - 1)), 4 * sizeof(char), ":%02x", (unsigned char)bssid[i]);
+    }
+}
+
 // Based on NetworkManager/src/platform/wifi/wifi-utils-nl80211.c
 static uint32_t nl80211_xbm_to_percent(int32_t xbm, int32_t divisor) {
 #define NOISE_FLOOR_DBM -90
@@ -573,6 +583,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     char string_frequency[STRING_SIZE] = {'\0'};
     char string_ip[STRING_SIZE] = {'\0'};
     char string_bitrate[STRING_SIZE] = {'\0'};
+    char string_bssid[STRING_SIZE] = {'\0'};
 
     if (info.flags & WIRELESS_INFO_FLAG_HAS_QUALITY) {
         if (info.quality_max)
@@ -619,6 +630,10 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     print_bitrate(string_bitrate, sizeof(string_bitrate), info.bitrate, ctx->format_bitrate);
 #endif
 
+#if defined(__linux__)
+    print_bssid(string_bssid, sizeof(string_bssid), info.bssid);
+#endif
+
     placeholder_t placeholders[] = {
         {.name = "%quality", .value = string_quality},
         {.name = "%signal", .value = string_signal},
@@ -626,7 +641,8 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
         {.name = "%essid", .value = string_essid},
         {.name = "%frequency", .value = string_frequency},
         {.name = "%ip", .value = string_ip},
-        {.name = "%bitrate", .value = string_bitrate}};
+        {.name = "%bitrate", .value = string_bitrate},
+        {.name = "%bssid", .value = string_bssid}};
 
     const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
     char *formatted = format_placeholders(walk, &placeholders[0], num);
