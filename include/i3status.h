@@ -367,6 +367,7 @@ typedef struct {
     const char *format;
     const char *format_above_threshold;
     const char *format_above_degraded_threshold;
+    const char *format_usage;
     const char *path;
     const float max_threshold;
     const float degraded_threshold;
