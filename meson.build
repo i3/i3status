@@ -50,6 +50,10 @@ if get_option('pulseaudio')
   cdata.set('HAS_PULSEAUDIO', 1)
 endif
 
+if get_option('sndio')
+  cdata.set('HAS_SNDIO', 1)
+endif
+
 # Instead of generating config.h directly, make vcs_tag generate it so that
 # @VCS_TAG@ is replaced.
 config_h_in = configure_file(
@@ -189,6 +193,12 @@ if get_option('pulseaudio')
   pulse_dep = dependency('libpulse', method: 'pkg-config')
   i3status_deps += [pulse_dep]
   i3status_srcs += ['src/pulse.c']
+endif
+
+if get_option('sndio')
+  sndio_dep = cc.find_library('sndio')
+  i3status_deps += [sndio_dep]
+  i3status_srcs += ['src/sndio.c']
 endif
 
 host_os = host_machine.system()
