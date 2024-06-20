@@ -378,7 +378,8 @@ It is possible to define a low_threshold that causes the battery text to be
 colored +color_bad+. The +low_threshold+ type can be of +threshold_type+ "time"
 or "percentage". So, if you configure +low_threshold+ to 10 and +threshold_type+
 to "time", and your battery lasts another 9 minutes, it will be colored
-+color_bad+.
++color_bad+. You can customize the output format when below
++low_threshold+ with +format_below_threshold.+
 
 To show an aggregate of all batteries in the system, use "all" as the number. In
 this case (for Linux), the /sys path must contain the "%d" sequence. Otherwise,
@@ -396,6 +397,8 @@ FULL) is used.
 *Example order (aggregate of all batteries)*: +battery all+
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
+
+*Example format_below_threshold*: +Warning: %remaining (%emptytime)+
 
 *Example format_down*: +No battery+
 

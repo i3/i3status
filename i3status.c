@@ -316,6 +316,7 @@ int main(int argc, char *argv[]) {
 
     cfg_opt_t battery_opts[] = {
         CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
+        CFG_STR("format_below_threshold", NULL, CFGF_NONE),
         CFG_STR("format_down", "No battery", CFGF_NONE),
         CFG_STR("format_percentage", "%.02f%s", CFGF_NONE),
         CFG_STR("status_chr", "CHR", CFGF_NONE),
@@ -738,6 +739,7 @@ int main(int argc, char *argv[]) {
                     .number = (strcasecmp(title, "all") == 0 ? -1 : atoi(title)),
                     .path = cfg_getstr(sec, "path"),
                     .format = cfg_getstr(sec, "format"),
+                    .format_below_threshold = cfg_getstr(sec, "format_below_threshold"),
                     .format_down = cfg_getstr(sec, "format_down"),
                     .status_chr = cfg_getstr(sec, "status_chr"),
                     .status_bat = cfg_getstr(sec, "status_bat"),
