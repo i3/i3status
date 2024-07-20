@@ -19,7 +19,8 @@
     }
 
 /*
- * Reads size bytes into the destination buffer from filename.
+ * Reads (size - 1) bytes into the destination buffer from filename,
+ * and null-terminate it.
  *
  * On success, true is returned. Otherwise, false is returned and the content
  * of destination is left untouched.

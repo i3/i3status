@@ -155,12 +155,15 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
     sprintf(batpath, path, number);
     INSTANCE(batpath);
 
-    if (!slurp(batpath, buf, sizeof(buf))) {
+    if (!slurp(batpath, buf, sizeof(buf))) { // `slurp()` null-terminates `buf`
         OUTPUT_FULL_TEXT(format_down);
         return false;
     }
 
     for (walk = buf, last = buf; (walk - buf) < 1024; walk++) {
+        if (*walk == '\0') // `*walk` (slice of `buf`) is only initialised until `null` written by `slurp()`
+            break;
+
         if (*walk == '\n') {
             last = walk + 1;
             continue;
