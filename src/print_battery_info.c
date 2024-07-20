@@ -161,6 +161,11 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
     }
 
     for (walk = buf, last = buf; (walk - buf) < 1024; walk++) {
+        // `*walk` (slice of `buf`) is only initialised until `null` written by `slurp()`
+        if (*walk == '\0') {
+            break;
+        }
+
         if (*walk == '\n') {
             last = walk + 1;
             continue;
