@@ -6,6 +6,7 @@ typedef enum {
     O_XMOBAR,
     O_I3BAR,
     O_LEMONBAR,
+    O_TMUX,
     O_TERM,
     O_NONE
 } output_format_t;
