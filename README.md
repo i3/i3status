@@ -25,6 +25,11 @@ On debian-based systems, the following line will install all requirements:
 apt-get install autoconf libconfuse-dev libyajl-dev libasound2-dev libiw-dev asciidoc libpulse-dev libnl-genl-3-dev meson
 ```
 
+On OpenBSD, the following line will install the requirements:
+```bash
+pkg_add autoconf libconfuse libyajl asciidoc pluseaudio meson
+```
+
 ## Upstream
 
 i3status is developed at https://github.com/i3/i3status
