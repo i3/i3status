@@ -407,6 +407,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t temp_opts[] = {
         CFG_STR("format", "%degrees C", CFGF_NONE),
         CFG_STR("format_above_threshold", NULL, CFGF_NONE),
+        CFG_STR("format_down", "can't read temp", CFGF_NONE),
         CFG_STR("path", NULL, CFGF_NONE),
         CFG_INT("max_threshold", 75, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
@@ -909,6 +910,7 @@ int main(int argc, char *argv[]) {
                     .path = cfg_getstr(sec, "path"),
                     .format = cfg_getstr(sec, "format"),
                     .format_above_threshold = cfg_getstr(sec, "format_above_threshold"),
+                    .format_down = cfg_getstr(sec, "format_down"),
                     .max_threshold = cfg_getint(sec, "max_threshold"),
                 };
                 print_cpu_temperature_info(&ctx);
