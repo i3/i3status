@@ -5,7 +5,7 @@ v2.15, August 2024
 
 == NAME
 
-i3status - Generates a status line for i3bar, dzen2, xmobar or lemonbar
+i3status - Generates a status line for i3bar, dzen2, xmobar, lemonbar or tmux
 
 == SYNOPSIS
 
@@ -183,6 +183,8 @@ with the xmonad Window Manager.
 lemonbar::
 lemonbar is a lightweight bar based entirely on XCB. It has full UTF-8 support
 and is EWMH compliant.
+tmux::
+tmux is a simple terminal multiplexer that supports multiple panes and a status bar.
 term::
 Use ANSI Escape sequences to produce a terminal-output as close as possible to
 the graphical outputs. This makes debugging your config file a little bit
@@ -734,6 +736,17 @@ is set to +xmobar+. *Note*: +min_width+ is not supported.
 i3status | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
 ---------------------------------------------------------------------
 
+== Using i3status with tmux
+
+To use i3status with tmux, just ensure that +output_format+ is set to +tmux+
+and configure the status bar in tmux to execute i3status. *Note*: +min_width+
+is not supported.
+
+*Example tmux configuration for usage of i3status*:
+---------------------------------------------------------------------
+set -g status-right '#(i3status)'
+---------------------------------------------------------------------
+
 == What about CPU frequency?
 
 While talking about specific things, please understand this section as a
@@ -787,7 +800,7 @@ after changing the system volume, for example.
 
 == SEE ALSO
 
-+strftime(3)+, +date(1)+, +glob(3)+, +dzen2(1)+, +xmobar(1)+
++strftime(3)+, +date(1)+, +glob(3)+, +dzen2(1)+, +xmobar(1)+, +tmux(1)+
 
 == AUTHORS
 

@@ -29,6 +29,14 @@ char *color(const char *colorstr) {
         (void)snprintf(colorbuf, sizeof(colorbuf), "<fc=%s>", cfg_getstr(cfg_general, colorstr));
     else if (output_format == O_LEMONBAR)
         (void)snprintf(colorbuf, sizeof(colorbuf), "%%{F%s}", cfg_getstr(cfg_general, colorstr));
+    else if (output_format == O_TMUX) {
+        /* The hex color codes for tmux need to be lowercase, because
+         * #F is a reserved variable that is replaced before colors are
+         * interpreted. This is arguably a bug in tmux. */
+        char *str = cfg_getstr(cfg_general, colorstr);
+        int col = strtol(str + 1, NULL, 16);
+        (void)snprintf(colorbuf, sizeof(colorbuf), "#[fg=#%06x]", col);
+    }
     else if (output_format == O_TERM) {
         /* The escape-sequence for color is <CSI><col>;1m (bright/bold
          * output), where col is a 3-bit rgb-value with b in the
@@ -68,6 +76,13 @@ void print_separator(const char *separator) {
         printf("<fc=%s>%s</fc>", cfg_getstr(cfg_general, "color_separator"), separator);
     else if (output_format == O_LEMONBAR)
         printf("%%{F%s}%s%%{F-}", cfg_getstr(cfg_general, "color_separator"), separator);
+    else if (output_format == O_TMUX) {
+        /* This is the same situation as in `color` above. color hex
+         * codes need to be lowercase in tmux. */
+        char *str = cfg_getstr(cfg_general, "color_separator");
+        int col = strtol(str + 1, NULL, 16);
+        printf("#[fg=#%06x]%s#[default]", col, separator);
+    }
     else if (output_format == O_TERM)
         printf("%s%s%s", color("color_separator"), separator, endcolor());
     else if (output_format == O_NONE)
