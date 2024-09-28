@@ -35,7 +35,7 @@ readable() {
   local bytes=$1
   local kib=$(( bytes >> 10 ))
   if [ $kib -lt 0 ]; then
-    echo "? K"
+    echo "? k"
   elif [ $kib -gt 1024 ]; then
     local mib_int=$(( kib >> 10 ))
     local mib_dec=$(( kib % 1024 * 976 / 10000 ))
@@ -44,31 +44,28 @@ readable() {
     fi
     echo "${mib_int}.${mib_dec} M"
   else
-    echo "${kib} K"
+    echo "${kib} k"
   fi
 }
 
 update_rate() {
   local time=$(date +%s)
-  local rx=0 tx=0 tmp_rx tmp_tx
-
-  for iface in $ifaces; do
-    read tmp_rx < "/sys/class/net/${iface}/statistics/rx_bytes"
-    read tmp_tx < "/sys/class/net/${iface}/statistics/tx_bytes"
-    rx=$(( rx + tmp_rx ))
-    tx=$(( tx + tmp_tx ))
-  done
-
   local interval=$(( $time - $last_time ))
   if [ $interval -gt 0 ]; then
-    rate="$(readable $(( (rx - last_rx) / interval )))↓ $(readable $(( (tx - last_tx) / interval )))↑"
-  else
-    rate=""
-  fi
+    local rx=0 tx=0 tmp_rx tmp_tx
 
-  last_time=$time
-  last_rx=$rx
-  last_tx=$tx
+    for iface in $ifaces; do
+      read tmp_rx < "/sys/class/net/${iface}/statistics/rx_bytes"
+      read tmp_tx < "/sys/class/net/${iface}/statistics/tx_bytes"
+      rx=$(( rx + tmp_rx ))
+      tx=$(( tx + tmp_tx ))
+    done
+
+    rate="$(readable $(( (rx - last_rx) / interval )))↓ $(readable $(( (tx - last_tx) / interval )))↑"
+    last_time=$time
+    last_rx=$rx
+    last_tx=$tx
+  fi
 }
 
 i3status | (read line && echo "$line" && read line && echo "$line" && read line && echo "$line" && update_rate && while :
