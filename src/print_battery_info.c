@@ -720,6 +720,9 @@ void print_battery_info(battery_info_ctx_t *ctx) {
             snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
     }
 
+    if (batt_info.seconds_remaining < 0 && ctx->battery_full_emptytime[0] != 0)
+        snprintf(string_emptytime, STRING_SIZE, "%s", ctx->battery_full_emptytime);
+
     if (batt_info.present_rate >= 0)
         snprintf(string_consumption, STRING_SIZE, "%1.2fW", batt_info.present_rate / 1e6);
 
