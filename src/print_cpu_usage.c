@@ -64,6 +64,8 @@ static struct cpu_usage prev_all = {0, 0, 0, 0, 0};
 static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;
 
+static const char *bars[] = {" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
+
 /*
  * Reads the CPU utilization from /proc/stat and returns the usage as a
  * percentage.
@@ -201,14 +203,27 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             *(outwalk++) = *walk;
 
         } else if (BEGINS_WITH(walk + 1, "usage")) {
-            outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
-            walk += strlen("usage");
+            if (BEGINS_WITH(walk + 1, "usagebar")) {
+                if (diff_usage > 98)
+                    diff_usage = 98;
+                outwalk += sprintf(outwalk, "%s", bars[diff_usage / 11]);
+                walk += strlen("usagebar");
+            } else {
+                outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
+                walk += strlen("usage");
+            }
         }
 #if defined(__linux__)
         else if (BEGINS_WITH(walk + 1, "cpu")) {
+            bool bar = false;
+            if (BEGINS_WITH(walk + 1, "cpubar"))
+                bar = true;
             int number = -1;
             int length = strlen("cpu");
-            sscanf(walk + 1, "cpu%d%n", &number, &length);
+            if (bar)
+                sscanf(walk + 1, "cpubar%d%n", &number, &length);
+            else
+                sscanf(walk + 1, "cpu%d%n", &number, &length);
             if (number == -1) {
                 fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
             } else if (number >= cpu_count) {
@@ -217,7 +232,12 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
                 int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
                 int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
-                outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
+                if (bar) {
+                    if (cpu_diff_usage > 98)
+                        cpu_diff_usage = 98;
+                    outwalk += sprintf(outwalk, "%s", bars[cpu_diff_usage / 11]);
+                } else
+                    outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
             }
             walk += length;
         }
