@@ -9,6 +9,9 @@
 # Then, in your ~/.i3/config, use:
 #     status_command i3status | ~/i3status/contrib/wrapper.pl
 # In the 'bar' section.
+# You can also chain multiple wrappers:
+#     status_command i3status | ~/i3/example.pl  | ~/i3status/contrib/wrapper.pl
+
 
 use strict;
 use warnings;
@@ -39,5 +42,5 @@ while (my ($statusline) = (<STDIN> =~ /^,?(.*)/)) {
     }, @blocks);
 
     # Output the line as JSON.
-    print encode_json(\@blocks) . ",\n";
+    print encode_json(\@blocks) . "\n,";
 }
