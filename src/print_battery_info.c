@@ -661,6 +661,10 @@ void print_battery_info(battery_info_ctx_t *ctx) {
             batt_info.seconds_remaining = 0;
     }
 
+    if (batt_info.status == CS_FULL && ctx->full_good ){
+        START_COLOR("color_good");
+        colorful_output = true;
+    }
     if (batt_info.status == CS_DISCHARGING && ctx->low_threshold > 0) {
         if (batt_info.percentage_remaining >= 0 && strcasecmp(ctx->threshold_type, "percentage") == 0 && batt_info.percentage_remaining < ctx->low_threshold) {
             START_COLOR("color_bad");
