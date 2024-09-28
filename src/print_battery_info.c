@@ -257,7 +257,9 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
             default:
                 batt_info->status = CS_UNKNOWN;
         }
+    } else {
         OUTPUT_FULL_TEXT(format_down);
+        return false;
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     int state;
