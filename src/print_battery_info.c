@@ -151,6 +151,7 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
     const char *walk, *last;
     bool watt_as_unit = false;
     int voltage = -1;
+    int seconds_remaining;
     char batpath[512];
     sprintf(batpath, path, number);
     INSTANCE(batpath);
@@ -188,8 +189,17 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
             batt_info->present_rate = abs(atoi(walk + 1));
         else if (BEGINS_WITH(last, "POWER_SUPPLY_VOLTAGE_NOW="))
             voltage = abs(atoi(walk + 1));
-        else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_NOW="))
-            batt_info->seconds_remaining = abs(atoi(walk + 1)) * 60;
+        else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_EMPTY_NOW=")) {
+            seconds_remaining = abs(atoi(walk + 1));
+            if (seconds_remaining) {
+                batt_info->seconds_remaining = seconds_remaining;
+            }
+        } else if (BEGINS_WITH(last, "POWER_SUPPLY_TIME_TO_FULL_NOW=")) {
+            seconds_remaining = abs(atoi(walk + 1));
+            if (seconds_remaining) {
+                batt_info->seconds_remaining = seconds_remaining;
+            }
+        }
         /* on some systems POWER_SUPPLY_POWER_NOW does not exist, but actually
          * it is the same as POWER_SUPPLY_CURRENT_NOW but with μWh as
          * unit instead of μAh. We will calculate it as we need it
