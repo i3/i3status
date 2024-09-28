@@ -353,6 +353,14 @@ network interface found on the system (excluding devices starting with "lo").
 
 *Example format_down*: +E: down+
 
+=== Netspeed
+
+Shows the traffic per seconnd for all physical network interfaces.
+
+*Example order*: +netspeed+
+
+*Example format*: +%down/s↓ %up/s↑+
+
 === Battery
 
 Gets the status (charging, discharging, unknown, full), percentage, remaining
