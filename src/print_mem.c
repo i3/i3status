@@ -37,8 +37,9 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
     return sprintf(outwalk, "%.*f %s", prec, base, iec_symbols[exponent]);
 }
 
-static int print_percentage(char *outwalk, float percent) {
-    return snprintf(outwalk, STRING_SIZE, "%.1f%s", percent, pct_mark);
+static int print_percentage(char *outwalk, float percent, const int decimals) {
+    const int prec = decimals > MAX_DECIMALS ? MAX_DECIMALS : decimals;
+    return snprintf(outwalk, STRING_SIZE, "%.*f%s", prec, percent, pct_mark);
 }
 #endif
 
@@ -184,10 +185,10 @@ void print_memory(memory_ctx_t *ctx) {
     print_bytes_human(string_ram_free, ram_free, ctx->unit, ctx->decimals);
     print_bytes_human(string_ram_available, ram_available, ctx->unit, ctx->decimals);
     print_bytes_human(string_ram_shared, ram_shared, ctx->unit, ctx->decimals);
-    print_percentage(string_percentage_free, 100.0 * ram_free / ram_total);
-    print_percentage(string_percentage_available, 100.0 * ram_available / ram_total);
-    print_percentage(string_percentage_used, 100.0 * ram_used / ram_total);
-    print_percentage(string_percentage_shared, 100.0 * ram_shared / ram_total);
+    print_percentage(string_percentage_free, 100.0 * ram_free / ram_total, ctx->decimals);
+    print_percentage(string_percentage_available, 100.0 * ram_available / ram_total, ctx->decimals);
+    print_percentage(string_percentage_used, 100.0 * ram_used / ram_total, ctx->decimals);
+    print_percentage(string_percentage_shared, 100.0 * ram_shared / ram_total, ctx->decimals);
 
     placeholder_t placeholders[] = {
         {.name = "%total", .value = string_ram_total},
