@@ -38,7 +38,7 @@ If you absolutely have to build from source, use:
 ```bash
   mkdir build
   cd build
-  meson ..
+  meson setup
   ninja
   sudo ninja install
 ```
