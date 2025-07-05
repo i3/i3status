@@ -339,6 +339,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t time_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -351,6 +352,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_time", NULL, CFGF_NONE),
         CFG_BOOL("hide_if_equals_localtime", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
