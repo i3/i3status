@@ -63,8 +63,10 @@ void print_time(time_ctx_t *ctx) {
 
     char string_time[STRING_SIZE];
 
+    START_COLOR("color_good");
+
     if (ctx->format_time == NULL) {
-        outwalk += strftime(ctx->buf, 4096, ctx->format, &tm);
+        outwalk += strftime(outwalk, 4096, ctx->format, &tm);
     } else {
         strftime(string_time, sizeof(string_time), ctx->format_time, &tm);
         placeholder_t placeholders[] = {
@@ -75,6 +77,8 @@ void print_time(time_ctx_t *ctx) {
         OUTPUT_FORMATTED;
         free(formatted);
     }
+
+    END_COLOR;
 
     if (ctx->locale != NULL) {
         setlocale(LC_ALL, "");
