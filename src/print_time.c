@@ -63,18 +63,22 @@ void print_time(time_ctx_t *ctx) {
 
     char string_time[STRING_SIZE];
 
+    START_COLOR("color_good");
+
     if (ctx->format_time == NULL) {
-        outwalk += strftime(ctx->buf, 4096, ctx->format, &tm);
+        outwalk += strftime(outwalk, 4096, ctx->format, &tm);
     } else {
         strftime(string_time, sizeof(string_time), ctx->format_time, &tm);
         placeholder_t placeholders[] = {
             {.name = "%time", .value = string_time}};
 
         const size_t num = sizeof(placeholders) / sizeof(placeholder_t);
-        char *formatted = format_placeholders(ctx->format_time, &placeholders[0], num);
+        char *formatted = format_placeholders(ctx->format, &placeholders[0], num);
         OUTPUT_FORMATTED;
         free(formatted);
     }
+
+    END_COLOR;
 
     if (ctx->locale != NULL) {
         setlocale(LC_ALL, "");
