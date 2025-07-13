@@ -436,6 +436,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "♪: %volume", CFGF_NONE),
         CFG_STR("format_muted", "♪: 0%%", CFGF_NONE),
         CFG_STR("device", "default", CFGF_NONE),
+        CFG_STR("type", "sink", CFGF_NONE),
         CFG_STR("mixer", "Master", CFGF_NONE),
         CFG_INT("mixer_idx", 0, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
@@ -894,6 +895,7 @@ int main(int argc, char *argv[]) {
                     .fmt = cfg_getstr(sec, "format"),
                     .fmt_muted = cfg_getstr(sec, "format_muted"),
                     .device = cfg_getstr(sec, "device"),
+                    .type = cfg_getstr(sec, "type"),
                     .mixer = cfg_getstr(sec, "mixer"),
                     .mixer_idx = cfg_getint(sec, "mixer_idx"),
                 };
