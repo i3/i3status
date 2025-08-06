@@ -12,6 +12,7 @@ project(
     'warning_level=1',  # enable all warnings (-Wall)
     # TODO(https://github.com/i3/i3/issues/4087): switch to
     # 'buildtype=debugoptimized',
+    'buildtype=release',
   ],
   # Ubuntu 18.04 (supported until 2023) has meson 0.45.
   # We can revisit our minimum supported meson version

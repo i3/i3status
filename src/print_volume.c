@@ -31,6 +31,10 @@
 #include "i3status.h"
 #include "queue.h"
 
+#define PULSE_STRING "pulse"
+#define SINK_STRING "sink"
+#define SOURCE_STRING "source"
+
 #define STRING_SIZE 10
 
 #define ALSA_VOLUME(channel)                                                    \
@@ -79,22 +83,24 @@ void print_volume(volume_ctx_t *ctx) {
 #if HAS_PULSEAUDIO
     /* Try PulseAudio first */
 
+    bool is_sink = (!strncasecmp(ctx->type, SINK_STRING, strlen(SINK_STRING)));
+
     /* If the device name has the format "pulse[:N]" where N is the
      * index of the PulseAudio sink then force PulseAudio, optionally
      * overriding the default sink */
-    if (!strncasecmp(ctx->device, "pulse", strlen("pulse"))) {
-        uint32_t sink_idx = ctx->device[strlen("pulse")] == ':' ? (uint32_t)atoi(ctx->device + strlen("pulse:")) : DEFAULT_SINK_INDEX;
-        const char *sink_name = ctx->device[strlen("pulse")] == ':' &&
-                                        !isdigit(ctx->device[strlen("pulse:")])
-                                    ? ctx->device + strlen("pulse:")
+    if (!strncasecmp(ctx->device, PULSE_STRING, strlen(PULSE_STRING))) {
+        uint32_t device_idx = ctx->device[strlen(PULSE_STRING)] == ':' ? (uint32_t)atoi(ctx->device + strlen(PULSE_STRING) + 1) : DEFAULT_DEVICE_INDEX;
+        const char *device_name = ctx->device[strlen(PULSE_STRING)] == ':' &&
+                                        !isdigit(ctx->device[strlen(PULSE_STRING) + 1])
+                                    ? ctx->device + strlen(PULSE_STRING) + 1
                                     : NULL;
         int cvolume = 0;
-        char description[MAX_SINK_DESCRIPTION_LEN] = {'\0'};
+        char description[MAX_PULSE_DESCRIPTION_LEN] = {'\0'};
 
         if (pulse_initialize()) {
-            cvolume = volume_pulseaudio(sink_idx, sink_name);
+            cvolume = volume_pulseaudio(is_sink, device_idx, device_name);
             /* false result means error, stick to empty-string */
-            if (!description_pulseaudio(sink_idx, sink_name, description)) {
+            if (!description_pulseaudio(is_sink, device_idx, device_name, description)) {
                 description[0] = '\0';
             }
         }
@@ -115,11 +121,11 @@ void print_volume(volume_ctx_t *ctx) {
         OUTPUT_FORMATTED;
         free(formatted);
         goto out_with_format;
-    } else if (!strcasecmp(ctx->device, "default") && pulse_initialize()) {
+    } else if ((!strcasecmp(ctx->device, "default")) && pulse_initialize()) {
         /* no device specified or "default" set */
-        char description[MAX_SINK_DESCRIPTION_LEN];
-        bool success = description_pulseaudio(DEFAULT_SINK_INDEX, NULL, description);
-        int cvolume = volume_pulseaudio(DEFAULT_SINK_INDEX, NULL);
+        char description[MAX_PULSE_DESCRIPTION_LEN];
+        bool success = description_pulseaudio(is_sink, DEFAULT_DEVICE_INDEX, NULL, description);
+        int cvolume = volume_pulseaudio(is_sink, DEFAULT_DEVICE_INDEX, NULL);
         int ivolume = DECOMPOSE_VOLUME(cvolume);
         bool muted = DECOMPOSE_MUTED(cvolume);
         if (ivolume >= 0 && success) {

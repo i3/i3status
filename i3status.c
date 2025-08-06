@@ -339,6 +339,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t time_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -351,6 +352,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_time", NULL, CFGF_NONE),
         CFG_BOOL("hide_if_equals_localtime", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -383,6 +385,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("memory_used_method", "classical", CFGF_NONE),
         CFG_STR("unit", "auto", CFGF_NONE),
         CFG_INT("decimals", 1, CFGF_NONE),
+        CFG_BOOL("compact", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
@@ -434,6 +437,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "♪: %volume", CFGF_NONE),
         CFG_STR("format_muted", "♪: 0%%", CFGF_NONE),
         CFG_STR("device", "default", CFGF_NONE),
+        CFG_STR("type", "sink", CFGF_NONE),
         CFG_STR("mixer", "Master", CFGF_NONE),
         CFG_INT("mixer_idx", 0, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
@@ -829,6 +833,7 @@ int main(int argc, char *argv[]) {
                     .memory_used_method = cfg_getstr(sec, "memory_used_method"),
                     .unit = cfg_getstr(sec, "unit"),
                     .decimals = cfg_getint(sec, "decimals"),
+                    .compact = cfg_getbool(sec, "compact"),
                 };
                 print_memory(&ctx);
                 SEC_CLOSE_MAP;
@@ -892,6 +897,7 @@ int main(int argc, char *argv[]) {
                     .fmt = cfg_getstr(sec, "format"),
                     .fmt_muted = cfg_getstr(sec, "format_muted"),
                     .device = cfg_getstr(sec, "device"),
+                    .type = cfg_getstr(sec, "type"),
                     .mixer = cfg_getstr(sec, "mixer"),
                     .mixer_idx = cfg_getint(sec, "mixer_idx"),
                 };

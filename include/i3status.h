@@ -32,11 +32,11 @@ extern char *pct_mark;
 #define BEGINS_WITH(haystack, needle) (strncmp(haystack, needle, strlen(needle)) == 0)
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-#define DEFAULT_SINK_INDEX UINT32_MAX
+#define DEFAULT_DEVICE_INDEX UINT32_MAX
 #define COMPOSE_VOLUME_MUTE(vol, mute) ((vol) | ((mute) ? (1 << 30) : 0))
 #define DECOMPOSE_VOLUME(cvol) ((cvol) & ~(1 << 30))
 #define DECOMPOSE_MUTED(cvol) (((cvol) & (1 << 30)) != 0)
-#define MAX_SINK_DESCRIPTION_LEN (128) /* arbitrary */
+#define MAX_PULSE_DESCRIPTION_LEN (128) /* arbitrary */
 
 #if defined(__linux__)
 
@@ -407,6 +407,7 @@ typedef struct {
     const char *memory_used_method;
     const char *unit;
     const int decimals;
+    bool compact;
 } memory_ctx_t;
 
 void print_memory(memory_ctx_t *ctx);
@@ -418,6 +419,7 @@ typedef struct {
     const char *fmt;
     const char *fmt_muted;
     const char *device;
+    const char *type;
     const char *mixer;
     int mixer_idx;
 } volume_ctx_t;
@@ -425,9 +427,9 @@ typedef struct {
 void print_volume(volume_ctx_t *ctx);
 
 bool process_runs(const char *path);
-int volume_pulseaudio(uint32_t sink_idx, const char *sink_name);
-bool description_pulseaudio(uint32_t sink_idx, const char *sink_name, char buffer[MAX_SINK_DESCRIPTION_LEN]);
-bool pulse_initialize(void);
+int volume_pulseaudio(bool is_sink, uint32_t idx, const char *name);
+bool description_pulseaudio(bool is_sink, uint32_t idx, const char *name, char buffer[MAX_PULSE_DESCRIPTION_LEN]);
+bool pulse_initialize();
 
 typedef struct {
     yajl_gen json_gen;
