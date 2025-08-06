@@ -22,7 +22,7 @@ static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static int print_bytes_human(char *outwalk, unsigned long bytes, const char *unit, const int decimals) {
+static int print_bytes_human(char *outwalk, unsigned long bytes, const char *unit, const int decimals, bool shortened) {
     double base = bytes;
     size_t exponent = 0;
     while (base >= BINARY_BASE && exponent < MAX_EXPONENT) {
@@ -34,6 +34,9 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
         exponent += 1;
     }
     const int prec = decimals > MAX_DECIMALS ? MAX_DECIMALS : decimals;
+    if (shortened == true) {
+        return sprintf(outwalk, "%.*f%c", prec, base, iec_symbols[exponent][0]);
+    }
     return sprintf(outwalk, "%.*f %s", prec, base, iec_symbols[exponent]);
 }
 
@@ -179,11 +182,11 @@ void print_memory(memory_ctx_t *ctx) {
     char string_percentage_used[STRING_SIZE];
     char string_percentage_shared[STRING_SIZE];
 
-    print_bytes_human(string_ram_total, ram_total, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_used, ram_used, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_free, ram_free, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_available, ram_available, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_shared, ram_shared, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_total, ram_total, ctx->unit, ctx->decimals, ctx->shortened);
+    print_bytes_human(string_ram_used, ram_used, ctx->unit, ctx->decimals, ctx->shortened);
+    print_bytes_human(string_ram_free, ram_free, ctx->unit, ctx->decimals, ctx->shortened);
+    print_bytes_human(string_ram_available, ram_available, ctx->unit, ctx->decimals, ctx->shortened);
+    print_bytes_human(string_ram_shared, ram_shared, ctx->unit, ctx->decimals, ctx->shortened);
     print_percentage(string_percentage_free, 100.0 * ram_free / ram_total);
     print_percentage(string_percentage_available, 100.0 * ram_available / ram_total);
     print_percentage(string_percentage_used, 100.0 * ram_used / ram_total);
