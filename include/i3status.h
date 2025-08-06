@@ -407,7 +407,7 @@ typedef struct {
     const char *memory_used_method;
     const char *unit;
     const int decimals;
-    bool shortened;
+    bool compact;
 } memory_ctx_t;
 
 void print_memory(memory_ctx_t *ctx);
