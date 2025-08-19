@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_down", "W: down", CFGF_NONE),
         CFG_STR("format_bitrate", "%g %cb/s", CFGF_NONE),
         CFG_STR("format_noise", "%3d%s", CFGF_NONE),
-        CFG_STR("format_quality", "%3d%s", CFGF_NONE),
+        CFG_STR("format_quality", "%d%s", CFGF_NONE),
         CFG_STR("format_signal", "%3d%s", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
         CFG_CUSTOM_COLOR_OPTS,
