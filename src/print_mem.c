@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#ifdef __OpenBSD__
+# include <sys/mount.h>
+# include <sys/shm.h>
+# include <sys/sysctl.h>
+#endif
 #include "i3status.h"
 
 #define MAX_DECIMALS 4
@@ -12,12 +17,12 @@
 
 #define BINARY_BASE 1024UL
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
 static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
 #define MAX_EXPONENT ((sizeof iec_symbols / sizeof *iec_symbols) - 1)
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
 /*
  * Prints the given amount of bytes in a human readable manner.
  *
@@ -42,7 +47,7 @@ static int print_percentage(char *outwalk, float percent) {
 }
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
 /*
  * Convert a string to its absolute representation based on the total
  * memory of `mem_total`.
@@ -89,11 +94,10 @@ static unsigned long memory_absolute(const char *mem_amount, const unsigned long
 void print_memory(memory_ctx_t *ctx) {
     char *outwalk = ctx->buf;
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
     const char *selected_format = ctx->format;
     const char *output_color = NULL;
 
-    int unread_fields = 6;
     unsigned long ram_total;
     unsigned long ram_free;
     unsigned long ram_available;
@@ -101,6 +105,51 @@ void print_memory(memory_ctx_t *ctx) {
     unsigned long ram_cached;
     unsigned long ram_shared;
 
+#if defined(__OpenBSD__)
+    int64_t tmp;
+    size_t sz;
+
+    /* Total memory set to the physical memory less kernel. */
+
+    int usermem_mib[] = {CTL_HW, HW_USERMEM64};
+    sz = sizeof(tmp);
+    if (sysctl(usermem_mib, 2, &tmp, &sz, NULL, 0) != 0) {
+        goto error;
+    }
+    ram_total = tmp;
+
+    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
+    struct uvmexp uvmexp;
+    sz = sizeof(uvmexp);
+    if (sysctl(uvmexp_mib, 2, &uvmexp, &sz, NULL, 0) == -1) {
+        goto error;
+    }
+    const long pagesize = sysconf(_SC_PAGESIZE);
+    ram_free = uvmexp.free * pagesize;
+
+    int shmall_mib[] = {CTL_KERN, KERN_SHMINFO, KERN_SHMINFO_SHMALL};
+    sz = sizeof(tmp);
+    if (sysctl(shmall_mib, 3, &tmp, &sz, NULL, 0) == -1) {
+        goto error;
+    }
+
+    int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
+    struct bcachestats bcstats;
+    sz = sizeof(bcstats);
+    if (sysctl(bcstats_mib, 3, &bcstats, &sz, NULL, 0) == -1) {
+        goto error;
+    }
+    ram_cached = bcstats.numbufpages * pagesize;
+
+    /* Available is free and cached memory. */
+
+    ram_available = ram_free + ram_cached;
+
+    /* This information doesn't seem to exist. */
+
+    ram_shared = ram_buffers = 0;
+#elif defined(__linux__)
+    int unread_fields = 6;
     FILE *file = fopen("/proc/meminfo", "r");
     if (!file) {
         goto error;
@@ -138,6 +187,7 @@ void print_memory(memory_ctx_t *ctx) {
     ram_buffers *= 1024UL;
     ram_cached *= 1024UL;
     ram_shared *= 1024UL;
+#endif
 
     unsigned long ram_used;
     if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
