@@ -1,6 +1,7 @@
 // vim:ts=4:sw=4:expandtab
 #include <config.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <limits.h>
 #include <glob.h>
 #include <stdio.h>
@@ -33,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/sensors.h>
-#include <errno.h>
 #include <err.h>
 
 #define MUKTOC(v) ((v - 273150000) / 1000000.0)
@@ -57,18 +57,23 @@ typedef struct temperature_s {
 static int read_temperature(char *thermal_zone, temperature_t *temperature) {
 #if defined(__linux__)
     static char buf[16];
+    char *end = NULL;
     long int temp;
 
     if (!slurp(thermal_zone, buf, sizeof(buf)))
         return ERROR_CODE;
 
-    temp = strtol(buf, NULL, 10);
-    temperature->raw_value = temp / 1000;
+    errno = 0;
+    temp = strtol(buf, &end, 10);
 
-    if (temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
-        strcpy(temperature->formatted_value, "?");
-    else
-        sprintf(temperature->formatted_value, "%ld", (temp / 1000));
+    if (errno != 0 || end == buf || temp == LONG_MIN || temp == LONG_MAX || temp <= 0)
+        return ERROR_CODE;
+
+    temperature->raw_value = temp / 1000.0;
+    snprintf(temperature->formatted_value,
+             sizeof(temperature->formatted_value),
+             "%.0f",
+             temperature->raw_value);
 
 #elif defined(__DragonFly__)
     struct sensor th_sensor;
@@ -218,12 +223,31 @@ void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx) {
     bool colorful_output = false;
     char *thermal_zone;
     temperature_t temperature;
+    temperature_t current;
     temperature.raw_value = 0;
-    sprintf(temperature.formatted_value, "%.2f", 0.0);
+    snprintf(temperature.formatted_value, sizeof(temperature.formatted_value), "%.2f", 0.0);
 
-    if (ctx->path == NULL)
+    if (ctx->path == NULL) {
+#if defined(__linux__)
+        /*
+         * Scan all thermal zones and use the highest temperature. On many
+         * systems thermal_zone0 is not the CPU package sensor.
+         */
+        asprintf(&thermal_zone, "/sys/class/thermal/thermal_zone*/temp");
+#else
         asprintf(&thermal_zone, THERMAL_ZONE, ctx->zone);
-    else {
+#endif
+    } else {
+#if defined(__linux__)
+        /*
+         * If the user supplied a glob, scan all matching files and keep the
+         * highest temperature. Otherwise preserve the old single-path behavior.
+         */
+        if (strpbrk(ctx->path, "*?[") != NULL)
+            asprintf(&thermal_zone, "%s", ctx->path);
+        else
+            asprintf(&thermal_zone, ctx->path, ctx->zone);
+#else
         static glob_t globbuf;
         if (glob(ctx->path, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
             die("glob() failed\n");
@@ -235,12 +259,39 @@ void print_cpu_temperature_info(cpu_temperature_ctx_t *ctx) {
             asprintf(&thermal_zone, "%s", globbuf.gl_pathv[0]);
         }
         globfree(&globbuf);
+#endif
     }
 
     INSTANCE(thermal_zone);
 
+#if defined(__linux__)
+    {
+        glob_t globbuf;
+        bool found = false;
+        size_t i;
+
+        if (glob(thermal_zone, GLOB_NOCHECK | GLOB_TILDE, NULL, &globbuf) != 0)
+            die("glob() failed\n");
+
+        for (i = 0; i < globbuf.gl_pathc; i++) {
+            if (read_temperature(globbuf.gl_pathv[i], &current) != 0)
+                continue;
+
+            if (!found || current.raw_value > temperature.raw_value) {
+                temperature = current;
+                found = true;
+            }
+        }
+
+        globfree(&globbuf);
+
+        if (!found)
+            goto error;
+    }
+#else
     if (read_temperature(thermal_zone, &temperature) != 0)
         goto error;
+#endif
 
     if (temperature.raw_value >= ctx->max_threshold) {
         START_COLOR("color_bad");
