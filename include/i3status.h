@@ -269,10 +269,17 @@ typedef struct {
     const char *format_down;
     const char *status_chr;
     const char *status_bat;
+    const char *status_bat_low;
+    const char *status_bat_quarter;
+    const char *status_bat_half;
+    const char *status_bat_three_quarters;
     const char *status_unk;
     const char *status_full;
     const char *status_idle;
     int low_threshold;
+    int quarter_threshold;
+    int half_threshold;
+    int three_quarters_threshold;
     char *threshold_type;
     bool last_full_capacity;
     const char *format_percentage;

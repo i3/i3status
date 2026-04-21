@@ -92,6 +92,25 @@ battery 0 {
         low_threshold = 10
 }
 
+battery 1 {
+        format = "%status %percentage %remaining %emptytime"
+        format_down = "No battery"
+        status_chr = "⚡ CHR"
+        status_bat = "🔋 BAT"
+        status_unk = "? UNK"
+        status_full = "☻ FULL"
+        status_idle = "☻ IDLE"
+        status_bat_low = "LOW"
+        status_bat_half = "½"
+        status_bat_quarter = "¼"
+        status_bat_three_quarters = "¾"
+        path = "/sys/class/power_supply/BAT%d/uevent"
+        low_threshold = 15
+        quarter_threshold = 35
+        half_threshold = 65
+        threshold_type = "percentage"
+}
+
 run_watch DHCP {
         pidfile = "/var/run/dhclient*.pid"
 }
@@ -389,7 +408,8 @@ battery states. This makes it possible to display individual symbols
 for each state (charging, discharging, unknown, full).
 Of course it will also work with special iconic fonts, such as FontAwesome.
 If any of these special status strings are omitted, the default (CHR, BAT, UNK,
-FULL) is used.
+FULL) is used. Battery capacity can also be shown with different custom strings
+per quartile, with definable thresholds.
 
 *Example order (for the first battery)*: +battery 0+
 
@@ -405,17 +425,33 @@ FULL) is used.
 
 *Example status_bat*: +🔋 BAT+
 
+*Example status_bat_half*: +½+
+
+*Example status_bat_low*: +LOW+
+
+*Example status_bat_quarter*: +¼+
+
+*Example status_bat_three_quarters*: +¾+
+
 *Example status_unk*: +? UNK+
 
 *Example status_full*: +☻ FULL+
 
 *Example low_threshold*: +30+
 
-*Example threshold_type*: +time+
+*Example threshold_type*: +time+ or +percentage+
 
 *Example path (%d replaced by title number)*: +/sys/class/power_supply/CMB%d/uevent+
 
 *Example path (ignoring the number)*: +/sys/class/power_supply/CMB1/uevent+
+
+*Example half_threshold (e.g., percentage)*: +65+
+
+*Example low_threshold*: +15+
+
+*Example quarter_threshold*: +35+
+
+*Example three_quarters_threshold*: +85+
 
 === CPU-Temperature
 
@@ -497,7 +533,7 @@ decimals can be configured via the +decimals+ option. If no such option is
 given the converted format placeholder will have one decimal.
 
 As Linux' meminfo doesn't expose the overall memory in use, there are multiple
-methods to distinguish the actually used memory. 
+methods to distinguish the actually used memory.
 
 *Example memory_used_method*: +memavailable+ ("total memory" - "MemAvailable", matches +free+ command)
 
@@ -524,7 +560,7 @@ methods to distinguish the actually used memory.
 Gets the system load (number of processes waiting for CPU time in the last
 1, 5 and 15 minutes). It is possible to define a max_threshold that will
 color the load value +color_bad+ in case the load average of the last minute is
-getting higher than the configured threshold. Defaults to 5. The output 
+getting higher than the configured threshold. Defaults to 5. The output
 format when above +max_threshold+ can be customized with
 +format_above_threshold+.
 
@@ -657,7 +693,7 @@ volume master {
 
 Outputs the contents of the specified file. You can use this to check contents
 of files on your system, for example /proc/uptime. By default the function only
-reads the first 254 characters of the file, if you want to override this set 
+reads the first 254 characters of the file, if you want to override this set
 the +Max_characters+ option. It will never read beyond the first 4095
 characters. If the file is not found "no file" will be printed, if the file
 can't be read "error read" will be printed.
