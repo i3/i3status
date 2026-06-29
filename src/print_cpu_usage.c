@@ -10,6 +10,7 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 #include <errno.h>
+#include <time.h>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
@@ -64,6 +65,18 @@ static struct cpu_usage prev_all = {0, 0, 0, 0, 0};
 static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;
 
+#if defined(__linux__)
+static int last_diff_usage = 0;
+static int *last_cpu_diff_usage = NULL;
+static struct timespec last_sample_time = {0, 0};
+static bool has_last_sample = false;
+
+static long elapsed_ms(const struct timespec *start, const struct timespec *end) {
+    return (end->tv_sec - start->tv_sec) * 1000 +
+           (end->tv_nsec - start->tv_nsec) / 1000000;
+}
+#endif
+
 /*
  * Reads the CPU utilization from /proc/stat and returns the usage as a
  * percentage.
@@ -81,6 +94,9 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
 #endif
     int diff_usage;
     bool colorful_output = false;
+#if defined(__linux__)
+    bool update_sample = true;
+#endif
 
 #if defined(__linux__)
 
@@ -92,6 +108,18 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
         prev_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
         free(curr_cpus);
         curr_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
+        free(last_cpu_diff_usage);
+        last_cpu_diff_usage = (int *)calloc(cpu_count, sizeof(int));
+
+        if (prev_cpus == NULL || curr_cpus == NULL || last_cpu_diff_usage == NULL) {
+            cpu_count = 0;
+            goto error;
+        }
+
+        prev_all = (struct cpu_usage){0, 0, 0, 0, 0};
+        last_diff_usage = 0;
+        last_sample_time = (struct timespec){0, 0};
+        has_last_sample = false;
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
@@ -138,10 +166,28 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
         curr_all.total += curr_cpus[cpu_idx].total;
     }
 
-    diff_idle = curr_all.idle - prev_all.idle;
-    diff_total = curr_all.total - prev_all.total;
-    diff_usage = (diff_total ? (1000 * (diff_total - diff_idle) / diff_total + 5) / 10 : 0);
-    prev_all = curr_all;
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
+        goto error;
+
+    int interval_ms = cfg_getint(cfg_general, "interval") * 1000;
+    if (interval_ms <= 0)
+        interval_ms = 1000;
+
+    if (has_last_sample &&
+        elapsed_ms(&last_sample_time, &now) < interval_ms) {
+        diff_usage = last_diff_usage;
+        update_sample = false;
+    } else {
+        diff_idle = curr_all.idle - prev_all.idle;
+        diff_total = curr_all.total - prev_all.total;
+        diff_usage = (diff_total ? (1000 * (diff_total - diff_idle) / diff_total + 5) / 10 : 0);
+        last_diff_usage = diff_usage;
+        last_sample_time = now;
+        has_last_sample = true;
+        prev_all = curr_all;
+    }
+
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
@@ -214,9 +260,17 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             } else if (number >= cpu_count) {
                 fprintf(stderr, "i3status: provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
             } else {
-                int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
-                int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
-                int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
+                int cpu_diff_usage;
+
+                if (!update_sample) {
+                    cpu_diff_usage = last_cpu_diff_usage[number];
+                } else {
+                    int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
+                    int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
+                    cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
+                    last_cpu_diff_usage[number] = cpu_diff_usage;
+                }
+
                 outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
             }
             walk += length;
@@ -227,9 +281,17 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
         }
     }
 
+#if defined(__linux__)
+    if (update_sample) {
+        struct cpu_usage *temp_cpus = prev_cpus;
+        prev_cpus = curr_cpus;
+        curr_cpus = temp_cpus;
+    }
+#else
     struct cpu_usage *temp_cpus = prev_cpus;
     prev_cpus = curr_cpus;
     curr_cpus = temp_cpus;
+#endif
 
     if (colorful_output)
         END_COLOR;
