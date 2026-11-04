@@ -60,6 +60,15 @@ static int print_bytes_human(char *outwalk, uint64_t bytes, const char *prefix_t
 }
 
 /*
+ * Returns part as a percentage of total. Some filesystems (and a path that is
+ * not mounted) report zero blocks, which must not turn into a division by zero.
+ *
+ */
+static double percentage_of(uint64_t part, uint64_t total) {
+    return total == 0 ? 0.0 : 100.0 * (double)part / (double)total;
+}
+
+/*
  * Determines whether remaining bytes are below given threshold.
  *
  */
@@ -69,9 +78,9 @@ static bool below_threshold(struct statfs buf, const char *prefix_type, const ch
 static bool below_threshold(struct statvfs buf, const char *prefix_type, const char *threshold_type, const double low_threshold) {
 #endif
     if (strcasecmp(threshold_type, "percentage_free") == 0) {
-        return 100.0 * (double)buf.f_bfree / (double)buf.f_blocks < low_threshold;
+        return percentage_of(buf.f_bfree, buf.f_blocks) < low_threshold;
     } else if (strcasecmp(threshold_type, "percentage_avail") == 0) {
-        return 100.0 * (double)buf.f_bavail / (double)buf.f_blocks < low_threshold;
+        return percentage_of(buf.f_bavail, buf.f_blocks) < low_threshold;
     } else if (strcasecmp(threshold_type, "bytes_free") == 0) {
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
         return (double)buf.f_bsize * (double)buf.f_bfree < low_threshold;
@@ -135,7 +144,7 @@ void print_disk_info(disk_info_ctx_t *ctx) {
 #if defined(__DragonFly__) || defined(__APPLE__)
     struct statfs buf;
 
-    if (statfs(path, &buf) == -1)
+    if (statfs(ctx->path, &buf) == -1)
         return;
 
     mounted = true;
@@ -147,7 +156,10 @@ void print_disk_info(disk_info_ctx_t *ctx) {
 
     mounted = true;
 #else
+    /* Start from zero: if statvfs() fails below, the (unused) values must at
+     * least be well-defined rather than uninitialised stack contents. */
     struct statvfs buf;
+    memset(&buf, 0, sizeof(buf));
 
     if (statvfs(ctx->path, &buf) == -1) {
         /* If statvfs errors, e.g., due to the path not existing,
@@ -209,10 +221,10 @@ void print_disk_info(disk_info_ctx_t *ctx) {
     print_bytes_human(string_total, (uint64_t)buf.f_frsize * (uint64_t)buf.f_blocks, ctx->prefix_type);
     print_bytes_human(string_avail, (uint64_t)buf.f_frsize * (uint64_t)buf.f_bavail, ctx->prefix_type);
 #endif
-    snprintf(string_percentage_free, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bfree / (double)buf.f_blocks, pct_mark);
-    snprintf(string_percentage_used_of_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bavail) / (double)buf.f_blocks, pct_mark);
-    snprintf(string_percentage_used, STRING_SIZE, "%.01f%s", 100.0 * (double)(buf.f_blocks - buf.f_bfree) / (double)buf.f_blocks, pct_mark);
-    snprintf(string_percentage_avail, STRING_SIZE, "%.01f%s", 100.0 * (double)buf.f_bavail / (double)buf.f_blocks, pct_mark);
+    snprintf(string_percentage_free, STRING_SIZE, "%.01f%s", percentage_of(buf.f_bfree, buf.f_blocks), pct_mark);
+    snprintf(string_percentage_used_of_avail, STRING_SIZE, "%.01f%s", percentage_of(buf.f_blocks - buf.f_bavail, buf.f_blocks), pct_mark);
+    snprintf(string_percentage_used, STRING_SIZE, "%.01f%s", percentage_of(buf.f_blocks - buf.f_bfree, buf.f_blocks), pct_mark);
+    snprintf(string_percentage_avail, STRING_SIZE, "%.01f%s", percentage_of(buf.f_bavail, buf.f_blocks), pct_mark);
 
     placeholder_t placeholders[] = {
         {.name = "%free", .value = string_free},

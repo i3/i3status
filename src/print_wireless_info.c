@@ -76,7 +76,7 @@
 #define WIRELESS_INFO_FLAG_HAS_NOISE (1 << 3)
 #define WIRELESS_INFO_FLAG_HAS_FREQUENCY (1 << 4)
 
-#define PERCENT_VALUE(value, total) ((int)(value * 100 / (float)total + 0.5f))
+#define PERCENT_VALUE(value, total) ((int)((value) * 100 / (float)(total) + 0.5f))
 
 typedef struct {
     int flags;
@@ -143,9 +143,15 @@ static void find_ssid(uint8_t *ies, uint32_t ies_len, uint8_t **ssid, uint32_t *
     *ssid = NULL;
     *ssid_len = 0;
 
+    /* The information elements come from beacon frames sent by any access
+     * point in range, so never trust the embedded length fields: stop as soon
+     * as an element claims to be larger than what is left of the buffer. */
     while (ies_len > 2 && ies[0] != WLAN_EID_SSID) {
-        ies_len -= ies[1] + 2;
-        ies += ies[1] + 2;
+        const uint32_t element_len = (uint32_t)ies[1] + 2;
+        if (element_len > ies_len)
+            return;
+        ies_len -= element_len;
+        ies += element_len;
     }
     if (ies_len < 2)
         return;
@@ -291,6 +297,8 @@ static int get_wireless_info(const char *interface, wireless_info_t *info) {
 
 #ifdef __linux__
     struct nl_sock *sk = nl_socket_alloc();
+    if (sk == NULL)
+        return 0;
     if (genl_connect(sk) != 0)
         goto error1;
 
@@ -535,7 +543,7 @@ void print_wireless_info(wireless_info_ctx_t *ctx) {
     if (ipv4_address == NULL) {
         if (ipv6_address == NULL) {
             START_COLOR("color_bad");
-            outwalk += sprintf(outwalk, "%s", ctx->format_down);
+            OUTPUT_STRING(ctx->format_down);
 
             END_COLOR;
             free(ipv4_address);

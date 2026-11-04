@@ -71,7 +71,8 @@ void print_volume(volume_ctx_t *ctx) {
     /* Printing volume works with ALSA and PulseAudio at the moment */
     if (output_format == O_I3BAR) {
         char *instance;
-        asprintf(&instance, "%s.%s.%d", ctx->device, ctx->mixer, ctx->mixer_idx);
+        if (asprintf(&instance, "%s.%s.%d", ctx->device, ctx->mixer, ctx->mixer_idx) == -1)
+            die("asprintf() failed\n");
         INSTANCE(instance);
         free(instance);
     }
@@ -203,17 +204,26 @@ void print_volume(volume_ctx_t *ctx) {
 
     if (err != 0) {
         fprintf(stderr, "i3status: ALSA: Cannot get playback volume.\n");
+        /* We run once per interval: always release the mixer, or every
+         * failure leaks a handle (and its file descriptors). */
+        snd_mixer_close(m);
+        snd_mixer_selem_id_free(sid);
         goto out;
     }
 
     mixer_name = snd_mixer_selem_get_name(elem);
     if (!mixer_name) {
         fprintf(stderr, "i3status: ALSA: NULL mixer_name.\n");
+        snd_mixer_close(m);
+        snd_mixer_selem_id_free(sid);
         goto out;
     }
 
-    /* Use linear mapping for raw register values or small ranges of 24 dB */
-    if (force_linear || max - min <= MAX_LINEAR_DB_SCALE * 100) {
+    if (max == min) {
+        /* A degenerate range cannot be turned into a percentage. */
+        avg = 0;
+    } else if (force_linear || max - min <= MAX_LINEAR_DB_SCALE * 100) {
+        /* Use linear mapping for raw register values or small ranges of 24 dB */
         float avgf = ((float)(val - min) / (max - min)) * 100;
         avg = (int)avgf;
         avg = (avgf - avg < 0.5 ? avg : (avg + 1));

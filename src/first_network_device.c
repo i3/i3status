@@ -2,7 +2,9 @@
 #include <config.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ifaddrs.h>
 #if defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/types.h>
@@ -41,14 +43,21 @@ static bool sysfs_devtype(char *dest, size_t n, const char *ifnam) {
         char *s;
 
         slen = strlen(buf);
+        if (slen == 0)
+            continue;
         /* Line is too long to fit in the buffer */
         if (buf[slen - 1] != '\n' && !feof(fp))
             break;
         if ((s = strchr(buf, '='))) {
-            if (strncmp(buf, "DEVTYPE", s - buf))
+            /* The whole key has to be "DEVTYPE", not just a prefix of it. */
+            if ((size_t)(s - buf) != strlen("DEVTYPE") || strncmp(buf, "DEVTYPE", s - buf))
                 continue;
-            buf[slen - 1] = '\0';
-            strncpy(dest, ++s, n);
+            /* Only strip a newline that is really there: the last line of
+             * the file may not have one. */
+            if (buf[slen - 1] == '\n')
+                buf[slen - 1] = '\0';
+            /* strncpy() does not terminate the result when it is truncated. */
+            snprintf(dest, n, "%s", s + 1);
             break;
         }
     }
@@ -159,9 +168,9 @@ const char *first_eth_interface(const net_type_t type) {
     struct ifaddrs *ifaddr, *addrp;
     net_type_t iftype;
 
-    getifaddrs(&ifaddr);
-
-    if (ifaddr == NULL)
+    /* On failure the pointer is left undefined, so the result has to be
+     * checked rather than the pointer. */
+    if (getifaddrs(&ifaddr) == -1 || ifaddr == NULL)
         return NULL;
 
     free(interface);
@@ -189,7 +198,7 @@ const char *first_eth_interface(const net_type_t type) {
             continue;
         if (is_virtual(addrp->ifa_name))
             continue;
-        interface = strdup(addrp->ifa_name);
+        interface = sstrdup(addrp->ifa_name);
         break;
     }
 

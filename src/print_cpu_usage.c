@@ -46,14 +46,14 @@ struct cpu_usage {
     long idle;
     long total;
 #else
-    int user;
-    int nice;
-    int system;
-    int idle;
-#if defined(__OpenBSD__)
-    int spin;
-#endif
-    int total;
+    /* The counters in /proc/stat are unsigned long values that keep growing
+     * for as long as the machine is up, and they get summed over all CPUs.
+     * That overflows a plain int after a couple of weeks of uptime. */
+    long long user;
+    long long nice;
+    long long system;
+    long long idle;
+    long long total;
 #endif
 };
 
@@ -77,7 +77,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     long diff_idle, diff_total;
 #else
-    int diff_idle, diff_total;
+    long long diff_idle, diff_total;
 #endif
     int diff_usage;
     bool colorful_output = false;
@@ -92,6 +92,8 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
         prev_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
         free(curr_cpus);
         curr_cpus = (struct cpu_usage *)calloc(cpu_count, sizeof(struct cpu_usage));
+        if (prev_cpus == NULL || curr_cpus == NULL)
+            die("Error: out of memory (calloc())\n");
     }
 
     memcpy(curr_cpus, prev_cpus, cpu_count * sizeof(struct cpu_usage));
@@ -114,8 +116,9 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             fclose(f);
             goto error; /* unexpected EOF or read error */
         }
-        int cpu_idx, user, nice, system, idle;
-        if (sscanf(line, "cpu%d %d %d %d %d", &cpu_idx, &user, &nice, &system, &idle) != 5) {
+        int cpu_idx;
+        long long user, nice, system, idle;
+        if (sscanf(line, "cpu%d %lld %lld %lld %lld", &cpu_idx, &user, &nice, &system, &idle) != 5) {
             fclose(f);
             goto error;
         }
@@ -209,13 +212,15 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             int number = -1;
             int length = strlen("cpu");
             sscanf(walk + 1, "cpu%d%n", &number, &length);
-            if (number == -1) {
+            if (number < 0) {
+                /* Not a number at all (-1), or a negative one: either way it
+                 * must never be used as an index. */
                 fprintf(stderr, "i3status: provided CPU number cannot be parsed\n");
             } else if (number >= cpu_count) {
                 fprintf(stderr, "i3status: provided CPU number '%d' above detected number of CPU %d\n", number, cpu_count);
             } else {
-                int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
-                int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
+                long long cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
+                long long cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
                 outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
             }

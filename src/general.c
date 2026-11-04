@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <glob.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 
 #include "i3status.h"
@@ -29,11 +29,14 @@
 bool slurp(const char *filename, char *destination, int size) {
     int fd;
 
+    /* We need at least one byte for the trailing 0 byte */
+    if (size < 1)
+        return false;
+
     if ((fd = open(filename, O_RDONLY)) == -1)
         return false;
 
-    /* We need one byte for the trailing 0 byte */
-    int n = read(fd, destination, size - 1);
+    ssize_t n = read(fd, destination, size - 1);
     if (n != -1)
         destination[n] = '\0';
     (void)close(fd);
@@ -48,19 +51,22 @@ bool slurp(const char *filename, char *destination, int size) {
  *
  */
 char *resolve_tilde(const char *path) {
-    static glob_t globbuf;
+    glob_t globbuf;
     char *head, *tail, *result = NULL;
+
+    memset(&globbuf, 0, sizeof(globbuf));
 
     tail = strchr(path, '/');
     head = strndup(path, tail ? (size_t)(tail - path) : strlen(path));
+    if (head == NULL)
+        die("Error: out of memory (strndup())\n");
 
     int res = glob(head, GLOB_TILDE, NULL, &globbuf);
     free(head);
-    /* no match, or many wildcard matches are bad */
-    if (res == GLOB_NOMATCH || globbuf.gl_pathc != 1)
+
+    /* no match, an error, or many wildcard matches: keep the path as given */
+    if (res != 0 || globbuf.gl_pathc != 1) {
         result = sstrdup(path);
-    else if (res != 0) {
-        die("glob() failed");
     } else {
         head = globbuf.gl_pathv[0];
         result = scalloc(strlen(head) + (tail ? strlen(tail) : 0) + 1);

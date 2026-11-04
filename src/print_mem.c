@@ -22,7 +22,7 @@ static const char *const iec_symbols[] = {"B", "KiB", "MiB", "GiB", "TiB"};
  * Prints the given amount of bytes in a human readable manner.
  *
  */
-static int print_bytes_human(char *outwalk, unsigned long bytes, const char *unit, const int decimals) {
+static int print_bytes_human(char *outwalk, size_t size, unsigned long bytes, const char *unit, const int decimals) {
     double base = bytes;
     size_t exponent = 0;
     while (base >= BINARY_BASE && exponent < MAX_EXPONENT) {
@@ -33,8 +33,12 @@ static int print_bytes_human(char *outwalk, unsigned long bytes, const char *uni
         base /= BINARY_BASE;
         exponent += 1;
     }
-    const int prec = decimals > MAX_DECIMALS ? MAX_DECIMALS : decimals;
-    return sprintf(outwalk, "%.*f %s", prec, base, iec_symbols[exponent]);
+    /* A negative precision would be ignored by printf and give six decimals,
+     * which no longer fits the (small) output buffers. */
+    int prec = decimals > MAX_DECIMALS ? MAX_DECIMALS : decimals;
+    if (prec < 0)
+        prec = 0;
+    return snprintf(outwalk, size, "%.*f %s", prec, base, iec_symbols[exponent]);
 }
 
 static int print_percentage(char *outwalk, float percent) {
@@ -94,12 +98,12 @@ void print_memory(memory_ctx_t *ctx) {
     const char *output_color = NULL;
 
     int unread_fields = 6;
-    unsigned long ram_total;
-    unsigned long ram_free;
-    unsigned long ram_available;
-    unsigned long ram_buffers;
-    unsigned long ram_cached;
-    unsigned long ram_shared;
+    unsigned long ram_total = 0;
+    unsigned long ram_free = 0;
+    unsigned long ram_available = 0;
+    unsigned long ram_buffers = 0;
+    unsigned long ram_cached = 0;
+    unsigned long ram_shared = 0;
 
     FILE *file = fopen("/proc/meminfo", "r");
     if (!file) {
@@ -141,9 +145,10 @@ void print_memory(memory_ctx_t *ctx) {
 
     unsigned long ram_used;
     if (BEGINS_WITH(ctx->memory_used_method, "memavailable")) {
-        ram_used = ram_total - ram_available;
+        ram_used = ram_total > ram_available ? ram_total - ram_available : 0;
     } else if (BEGINS_WITH(ctx->memory_used_method, "classical")) {
-        ram_used = ram_total - ram_free - ram_buffers - ram_cached;
+        const unsigned long ram_unused = ram_free + ram_buffers + ram_cached;
+        ram_used = ram_total > ram_unused ? ram_total - ram_unused : 0;
     } else {
         die("Unexpected value: memory_used_method = %s", ctx->memory_used_method);
     }
@@ -179,11 +184,11 @@ void print_memory(memory_ctx_t *ctx) {
     char string_percentage_used[STRING_SIZE];
     char string_percentage_shared[STRING_SIZE];
 
-    print_bytes_human(string_ram_total, ram_total, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_used, ram_used, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_free, ram_free, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_available, ram_available, ctx->unit, ctx->decimals);
-    print_bytes_human(string_ram_shared, ram_shared, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_total, sizeof(string_ram_total), ram_total, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_used, sizeof(string_ram_used), ram_used, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_free, sizeof(string_ram_free), ram_free, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_available, sizeof(string_ram_available), ram_available, ctx->unit, ctx->decimals);
+    print_bytes_human(string_ram_shared, sizeof(string_ram_shared), ram_shared, ctx->unit, ctx->decimals);
     print_percentage(string_percentage_free, 100.0 * ram_free / ram_total);
     print_percentage(string_percentage_available, 100.0 * ram_available / ram_total);
     print_percentage(string_percentage_used, 100.0 * ram_used / ram_total);

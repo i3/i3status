@@ -45,10 +45,12 @@ void print_time(time_ctx_t *ctx) {
         INSTANCE(ctx->title);
 
     set_timezone(NULL);
-    localtime_r(&ctx->t, &local_tm);
+    if (localtime_r(&ctx->t, &local_tm) == NULL)
+        goto out;
 
     set_timezone(ctx->tz);
-    localtime_r(&ctx->t, &tm);
+    if (localtime_r(&ctx->t, &tm) == NULL)
+        goto out;
 
     // When hide_if_equals_localtime is true, compare local and target time to display only if different
     time_t local_t = mktime(&local_tm);
@@ -64,7 +66,7 @@ void print_time(time_ctx_t *ctx) {
     char string_time[STRING_SIZE];
 
     if (ctx->format_time == NULL) {
-        outwalk += strftime(ctx->buf, 4096, ctx->format, &tm);
+        outwalk += strftime(ctx->buf, ctx->buflen, ctx->format, &tm);
     } else {
         strftime(string_time, sizeof(string_time), ctx->format_time, &tm);
         placeholder_t placeholders[] = {

@@ -40,10 +40,13 @@ static int print_eth_speed(char *outwalk, const char *interface) {
     struct ifreq ifr;
     struct ethtool_cmd ecmd;
 
+    (void)memset(&ecmd, 0, sizeof(ecmd));
     ecmd.cmd = ETHTOOL_GSET;
     (void)memset(&ifr, 0, sizeof(ifr));
     ifr.ifr_data = (caddr_t)&ecmd;
-    (void)strcpy(ifr.ifr_name, interface);
+    /* The interface name comes straight from the configuration and may be
+     * longer than the kernel allows (IFNAMSIZ): never copy it unbounded. */
+    (void)snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface);
     if (ioctl(general_socket, SIOCETHTOOL, &ifr) == 0) {
         ethspeed = (ecmd.speed == USHRT_MAX ? 0 : ethtool_cmd_speed(&ecmd));
         if (ethspeed == 2500) {

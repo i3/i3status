@@ -27,21 +27,24 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
         return NULL;
 
     /* We have to first iterate over the string to see how much buffer space
-     * we need to allocate. */
-    int buffer_len = strlen(format) + 1;
+     * we need to allocate. A placeholder without a value expands to nothing. */
+    size_t buffer_len = strlen(format) + 1;
     for (const char *walk = format; *walk != '\0'; walk++) {
         for (int i = 0; i < num; i++) {
             if (!CS_STARTS_WITH(walk, placeholders[i].name))
                 continue;
 
-            buffer_len = buffer_len - strlen(placeholders[i].name) + strlen(placeholders[i].value);
-            walk += strlen(placeholders[i].name) - 1;
+            const size_t name_len = strlen(placeholders[i].name);
+            const size_t value_len = (placeholders[i].value != NULL) ? strlen(placeholders[i].value) : 0;
+            buffer_len = buffer_len - name_len + value_len;
+            walk += name_len - 1;
             break;
         }
     }
 
-    /* Now we can parse the format string. */
-    char buffer[buffer_len];
+    /* Now we can parse the format string. The buffer lives on the heap (and
+     * not on the stack) because its size depends on the user's configuration. */
+    char *buffer = scalloc(buffer_len);
     char *outwalk = buffer;
     for (const char *walk = format; *walk != '\0'; walk++) {
         if (*walk != '%') {
@@ -56,7 +59,11 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
             }
 
             matched = true;
-            outwalk += sprintf(outwalk, "%s", placeholders[i].value);
+            if (placeholders[i].value != NULL) {
+                const size_t value_len = strlen(placeholders[i].value);
+                memcpy(outwalk, placeholders[i].value, value_len);
+                outwalk += value_len;
+            }
             walk += strlen(placeholders[i].name) - 1;
             break;
         }
@@ -66,5 +73,5 @@ char *format_placeholders(const char *format, placeholder_t *placeholders, int n
     }
 
     *outwalk = '\0';
-    return sstrdup(buffer);
+    return buffer;
 }

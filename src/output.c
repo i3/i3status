@@ -41,6 +41,10 @@ char *color(const char *colorstr) {
         int b = (col & (0xFF << 16)) / 0x800000;
         col = (r << 2) | (g << 1) | b;
         (void)snprintf(colorbuf, sizeof(colorbuf), "\033[3%d;1m", col);
+    } else {
+        /* No color support for this output format: never hand back stale
+         * content from an earlier call. */
+        colorbuf[0] = '\0';
     }
     return colorbuf;
 }
@@ -82,59 +86,89 @@ void reset_cursor(void) {
 }
 
 /*
+ * Appends the NUL-terminated string `str` at offset *pos of `buffer`, but only
+ * if it fits completely (leaving room for the terminating NUL byte). Returns
+ * false, without writing anything, if it does not fit.
+ */
+static bool append_whole(char *buffer, size_t size, size_t *pos, const char *str) {
+    const size_t len = strlen(str);
+    if (*pos + len >= size) {
+        return false;
+    }
+    memcpy(&buffer[*pos], str, len);
+    *pos += len;
+    return true;
+}
+
+/*
  * Escapes ampersand, less-than, greater-than, single-quote, and double-quote
  * characters with the corresponding Pango markup strings if markup is enabled.
  * See the glib implementation:
  * https://git.gnome.org/browse/glib/tree/glib/gmarkup.c?id=03db1f455b4265654e237d2ad55464b4113cba8a#n2142
  *
+ * The result is always NUL-terminated and is truncated at an entity boundary,
+ * so it never ends in a half-written entity such as "&am".
+ *
  */
-void maybe_escape_markup(char *text, char *buffer, size_t size) {
-    size--; /* Leave a byte for NUL termination. */
+void maybe_escape_markup(const char *text, char *buffer, size_t size) {
+    if (size == 0) {
+        return;
+    }
 
     if (markup_format == M_NONE) {
         snprintf(buffer, size, "%s", text);
         return;
     }
 
-    for (size_t i = 0; *text != '\0'; text++) {
-        if (i >= size) {
-            return;
-        }
-        switch (*text) {
+    size_t i = 0;
+    for (; *text != '\0'; text++) {
+        const unsigned char c = (unsigned char)*text;
+        char single[2] = {(char)c, '\0'};
+        char numeric[16];
+        const char *replacement;
+
+        switch (c) {
             case '&':
-                i += snprintf(&buffer[i], size - i, "%s", "&amp;");
+                replacement = "&amp;";
                 break;
             case '<':
-                i += snprintf(&buffer[i], size - i, "%s", "&lt;");
+                replacement = "&lt;";
                 break;
             case '>':
-                i += snprintf(&buffer[i], size - i, "%s", "&gt;");
+                replacement = "&gt;";
                 break;
             case '\'':
-                i += snprintf(&buffer[i], size - i, "%s", "&apos;");
+                replacement = "&apos;";
                 break;
             case '"':
-                i += snprintf(&buffer[i], size - i, "%s", "&quot;");
+                replacement = "&quot;";
                 break;
             default:
-                if ((0x1 <= *text && *text <= 0x8) ||
-                    (0xb <= *text && *text <= 0xc) ||
-                    (0xe <= *text && *text <= 0x1f)) {
-                    i += snprintf(&buffer[i], size - i, "&#x%x;", *text);
+                if ((0x1 <= c && c <= 0x8) ||
+                    (0xb <= c && c <= 0xc) ||
+                    (0xe <= c && c <= 0x1f)) {
+                    snprintf(numeric, sizeof(numeric), "&#x%x;", (unsigned int)c);
+                    replacement = numeric;
                 } else {
-                    buffer[i] = *text;
-                    i++;
+                    replacement = single;
                 }
                 break;
         }
+
+        if (!append_whole(buffer, size, &i, replacement)) {
+            break;
+        }
     }
+    buffer[i] = '\0';
 }
 
 /*
  * remove leading spaces
  */
 char *ltrim(const char *s) {
-    while (isspace(*s))
+    if (s == NULL)
+        return NULL;
+    while (isspace((unsigned char)*s))
         ++s;
     return sstrdup(s);
 }
@@ -145,10 +179,10 @@ char *ltrim(const char *s) {
 char *rtrim(const char *s) {
     char *r = sstrdup(s);
     if (r != NULL) {
-        char *fr = r + strlen(s) - 1;
-        while ((isspace(*fr) || *fr == 0) && fr >= r)
-            --fr;
-        *++fr = 0;
+        size_t len = strlen(r);
+        while (len > 0 && isspace((unsigned char)r[len - 1]))
+            --len;
+        r[len] = '\0';
     }
     return r;
 }

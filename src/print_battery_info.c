@@ -152,7 +152,7 @@ static bool slurp_battery_info(battery_info_ctx_t *ctx, struct battery_info *bat
     bool watt_as_unit = false;
     int voltage = -1;
     char batpath[512];
-    sprintf(batpath, path, number);
+    snprintf(batpath, sizeof(batpath), path, number);
     INSTANCE(batpath);
 
     if (!slurp(batpath, buf, sizeof(buf))) {
@@ -545,6 +545,7 @@ static bool slurp_all_batteries(battery_info_ctx_t *ctx, struct battery_info *ba
     }
 
     if (!strcmp(globpath, path)) {
+        free(globpath);
         OUTPUT_FULL_TEXT("no '%d' in battery path");
         return false;
     }
@@ -713,11 +714,13 @@ void print_battery_info(battery_info_ctx_t *ctx) {
     if (batt_info.seconds_remaining >= 0) {
         time_t empty_time = time(NULL) + batt_info.seconds_remaining;
         set_timezone(NULL); /* Use local time. */
-        struct tm *empty_tm = localtime(&empty_time);
-        if (ctx->hide_seconds)
-            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0));
-        else
-            snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm->tm_hour, 0), max(empty_tm->tm_min, 0), max(empty_tm->tm_sec, 0));
+        struct tm empty_tm;
+        if (localtime_r(&empty_time, &empty_tm) != NULL) {
+            if (ctx->hide_seconds)
+                snprintf(string_emptytime, STRING_SIZE, "%02d:%02d", max(empty_tm.tm_hour, 0), max(empty_tm.tm_min, 0));
+            else
+                snprintf(string_emptytime, STRING_SIZE, "%02d:%02d:%02d", max(empty_tm.tm_hour, 0), max(empty_tm.tm_min, 0), max(empty_tm.tm_sec, 0));
+        }
     }
 
     if (batt_info.present_rate >= 0)

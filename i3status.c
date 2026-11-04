@@ -22,6 +22,7 @@
 #include <netinet/in.h>
 #include <getopt.h>
 #include <signal.h>
+#include <errno.h>
 #include <confuse.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -57,7 +58,8 @@
 /* socket file descriptor for general purposes */
 int general_socket;
 
-static bool exit_upon_signal = false;
+/* Written from a signal handler, so it must be a sig_atomic_t. */
+static volatile sig_atomic_t exit_upon_signal = 0;
 static bool run_once = false;
 
 cfg_t *cfg, *cfg_general, *cfg_section;
@@ -78,8 +80,9 @@ char *pct_mark;
  * https://www.securecoding.cert.org/confluence/display/seccode/SIG30-C.+Call+only+asynchronous-safe+functions+within+signal+handlers
  *
  */
-void fatalsig(int signum) {
-    exit_upon_signal = true;
+static void fatalsig(int signum) {
+    (void)signum;
+    exit_upon_signal = 1;
 }
 
 /*
@@ -87,7 +90,8 @@ void fatalsig(int signum) {
  * interrupt nanosleep() so that i3status immediately generates new output.
  *
  */
-void sigusr1(int signum) {
+static void sigusr1(int signum) {
+    (void)signum;
 }
 
 /*
@@ -208,7 +212,7 @@ static char *get_config_path(void) {
     if (path_exists(config_path))
         return config_path;
     free(config_path);
-    char *buf = strdup(xdg_config_dirs);
+    char *buf = sstrdup(xdg_config_dirs);
     char *tok = strtok(buf, ":");
     while (tok != NULL) {
         tok = resolve_tilde(tok);
@@ -516,6 +520,10 @@ int main(int argc, char *argv[]) {
                        argv[0]);
                 return 0;
                 break;
+            case '?':
+                /* getopt_long() has already printed what was wrong. */
+                fprintf(stderr, "Syntax: %s [-c <configfile>] [-h] [-v] [--run-once]\n", argv[0]);
+                return EXIT_FAILURE;
             case 'v':
                 printf("i3status " I3STATUS_VERSION " © 2008 Michael Stapelberg and contributors\n"
 #if HAS_PULSEAUDIO
@@ -538,7 +546,10 @@ int main(int argc, char *argv[]) {
         configfile = get_config_path();
 
     cfg = cfg_init(opts, CFGF_NOCASE);
-    if (cfg_parse(cfg, configfile) == CFG_PARSE_ERROR)
+    const int parse_result = cfg_parse(cfg, configfile);
+    if (parse_result == CFG_FILE_ERROR)
+        die("Could not open configuration file \"%s\": %s\n", configfile, strerror(errno));
+    if (parse_result == CFG_PARSE_ERROR)
         return EXIT_FAILURE;
 
     if (cfg_size(cfg, "order") == 0)
@@ -626,14 +637,19 @@ int main(int argc, char *argv[]) {
             cfg_general->name, cfg_general->line, interval);
     }
 
-    for (int j = 0; j < cfg_size(cfg, "order"); j++) {
-        const char *current = cfg_getnstr(cfg, "order", j);
+    for (unsigned int k = 0; k < cfg_size(cfg, "order"); k++) {
+        const char *current = cfg_getnstr(cfg, "order", k);
         const char *name = "battery";
         if (!BEGINS_WITH(current, name)) {
             continue;
         }
-        const char *title = current + strlen(name) + 1;
+        const char *title = current[strlen(name)] == '\0' ? current + strlen(name) : current + strlen(name) + 1;
         cfg_section = cfg_gettsec(cfg, name, title);
+        if (cfg_section == NULL) {
+            /* The order entry has no matching section (reported when it is
+             * processed below), so there is nothing to adjust. */
+            continue;
+        }
         bool integer_battery_capacity = cfg_getbool(cfg_section, "integer_battery_capacity");
         char *format_percentage = cfg_getstr(cfg_section, "format_percentage");
         if (integer_battery_capacity) {
@@ -654,6 +670,8 @@ int main(int argc, char *argv[]) {
     char buffer[4096];
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
+    if (per_instance == NULL)
+        die("Error: out of memory (calloc())\n");
 
     while (1) {
         if (exit_upon_signal) {
@@ -957,7 +975,9 @@ int main(int argc, char *argv[]) {
             unsigned int len;
 #endif
             yajl_gen_get_buf(json_gen, &buf, &len);
-            write(STDOUT_FILENO, buf, len);
+            /* Go through stdio (like everything else we print) so that a
+             * partial write is retried and the output stays in order. */
+            fwrite(buf, 1, len, stdout);
             yajl_gen_clear(json_gen);
         }
 
@@ -975,7 +995,16 @@ int main(int argc, char *argv[]) {
          * that we start with :00 on every new minute. */
         struct timeval current_timeval;
         gettimeofday(&current_timeval, NULL);
-        struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
+        struct timespec ts;
+        ts.tv_sec = interval - 1 - (current_timeval.tv_sec % interval);
+        ts.tv_nsec = (1000000L - (long)current_timeval.tv_usec) * 1000L;
+        /* Exactly on a full second the remainder is a whole second, which
+         * does not fit into tv_nsec. nanosleep() would reject it with EINVAL
+         * and we would immediately print a second, redundant line. */
+        if (ts.tv_nsec >= 1000000000L) {
+            ts.tv_sec += 1;
+            ts.tv_nsec -= 1000000000L;
+        }
         nanosleep(&ts, NULL);
     }
 

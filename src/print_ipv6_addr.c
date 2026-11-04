@@ -103,14 +103,23 @@ static char *get_ipv6_addr(void) {
         if (!addr_string && result->ai_next != NULL)
             continue;
 
-        if ((cached = malloc(sizeof(struct addrinfo))) == NULL)
-            return NULL;
-        memcpy(cached, resp, sizeof(struct addrinfo));
-        if ((cached->ai_addr = malloc(resp->ai_addrlen)) == NULL) {
-            cached = NULL;
+        struct addrinfo *copy = malloc(sizeof(struct addrinfo));
+        if (copy == NULL) {
+            freeaddrinfo(result);
             return NULL;
         }
-        memcpy(cached->ai_addr, resp->ai_addr, resp->ai_addrlen);
+        memcpy(copy, resp, sizeof(struct addrinfo));
+        if ((copy->ai_addr = malloc(resp->ai_addrlen)) == NULL) {
+            free(copy);
+            freeaddrinfo(result);
+            return NULL;
+        }
+        memcpy(copy->ai_addr, resp->ai_addr, resp->ai_addrlen);
+        /* The rest of the list is about to be freed, so do not keep pointers
+         * into it around. Only the family and the address are ever used. */
+        copy->ai_next = NULL;
+        copy->ai_canonname = NULL;
+        cached = copy;
         freeaddrinfo(result);
         return addr_string;
     }
@@ -154,13 +163,14 @@ char *get_iface_addr(const char *searched_addr_string) {
         char addr_string[INET6_ADDRSTRLEN];
         if (inet_ntop(AF_INET6, ipv6_addr, addr_string, sizeof(addr_string)) == NULL) {
             perror("inet_ntop()");
+            freeifaddrs(addresses);
             return iface_string;
         }
 
         if (!strcmp(addr_string, searched_addr_string)) {
             /* Found the address we wanted */
             iface_found = true;
-            strncpy(iface_string, addr->ifa_name, sizeof(iface_string));
+            snprintf(iface_string, sizeof(iface_string), "%s", addr->ifa_name);
             break;
         }
     }
@@ -186,7 +196,7 @@ void print_ipv6_info(ipv6_info_ctx_t *ctx) {
 
     if (addr_string == NULL) {
         START_COLOR("color_bad");
-        outwalk += sprintf(outwalk, "%s", ctx->format_down);
+        OUTPUT_STRING(ctx->format_down);
         END_COLOR;
         OUTPUT_FULL_TEXT(ctx->buf);
         return;

@@ -70,8 +70,9 @@ struct disc_time *get_ddate(struct tm *current_tm) {
 
     /* We have to know, whether we have to insert St. Tib's Day, so whether it's a leap
      * year in gregorian calendar */
-    int is_leap_year = !(current_tm->tm_year % 4) &&
-                       (!(current_tm->tm_year % 400) || current_tm->tm_year % 100);
+    const int gregorian_year = current_tm->tm_year + 1900;
+    int is_leap_year = !(gregorian_year % 4) &&
+                       (!(gregorian_year % 400) || gregorian_year % 100);
 
     /* If St. Tib's Day has passed, it will be necessary to skip a day. */
     int yday = current_tm->tm_yday;
@@ -97,7 +98,8 @@ void print_ddate(ddate_ctx_t *ctx) {
     struct tm current_tm;
     struct disc_time *dt;
     set_timezone(NULL); /* Use local time. */
-    localtime_r(&ctx->t, &current_tm);
+    if (localtime_r(&ctx->t, &current_tm) == NULL)
+        return;
     if ((dt = get_ddate(&current_tm)) == NULL)
         return;
 
@@ -108,8 +110,9 @@ void print_ddate(ddate_ctx_t *ctx) {
     char string_d[STRING_SIZE];
     char string_e[STRING_SIZE];
     char string_Y[STRING_SIZE];
-    char string_H[STRING_SIZE];
-    char string_N[STRING_SIZE];
+    /* Only filled in on holidays, so they must start out empty. */
+    char string_H[STRING_SIZE] = "";
+    char string_N[STRING_SIZE] = "";
     /* Newline- and Tabbing-characters */
     char string_n[2] = "\n";
     char string_t[2] = "\t";
@@ -124,22 +127,25 @@ void print_ddate(ddate_ctx_t *ctx) {
     /* Day of the season (ordinal and cardinal) */
     snprintf(string_d, STRING_SIZE, "%d", dt->season_day + 1);
     snprintf(string_e, STRING_SIZE, "%d", dt->season_day + 1);
+    /* The 11th, 12th and 13th (season_day is zero-based) are the exceptions
+     * to the st/nd/rd pattern. */
     if (dt->season_day > 9 && dt->season_day < 13) {
         strcat(string_e, "th");
-    }
-    switch (dt->season_day % 10) {
-        case 0:
-            strcat(string_e, "st");
-            break;
-        case 1:
-            strcat(string_e, "nd");
-            break;
-        case 2:
-            strcat(string_e, "rd");
-            break;
-        default:
-            strcat(string_e, "th");
-            break;
+    } else {
+        switch (dt->season_day % 10) {
+            case 0:
+                strcat(string_e, "st");
+                break;
+            case 1:
+                strcat(string_e, "nd");
+                break;
+            case 2:
+                strcat(string_e, "rd");
+                break;
+            default:
+                strcat(string_e, "th");
+                break;
+        }
     }
     /* YOLD */
     snprintf(string_Y, STRING_SIZE, "%d", dt->year);
@@ -150,11 +156,6 @@ void print_ddate(ddate_ctx_t *ctx) {
     if (dt->season_day == 49) {
         snprintf(string_H, STRING_SIZE, "%s", holidays[dt->season + 5]);
     }
-    /* Stop parsing the format string, except on Holidays */
-    if (dt->season_day != 4 && dt->season_day != 49) {
-        snprintf(string_N, STRING_SIZE, "%s", "\0");
-    }
-
     placeholder_t placeholders[] = {
         {.name = "%A", .value = string_A},
         {.name = "%a", .value = string_a},

@@ -88,18 +88,14 @@ static bool save_info(uint32_t sink_idx, int new_volume, const char *new_descrip
         return changed;
     }
     /* index not found, store it */
-    entry = malloc(sizeof(*entry));
+    entry = scalloc(sizeof(*entry));
     TAILQ_INSERT_HEAD(&cached_info, entry, entries);
     entry->idx = sink_idx;
     entry->volume = new_volume;
     strncpy(entry->description, new_description, sizeof(entry->description) - 1);
     entry->description[sizeof(entry->description) - 1] = '\0';
-    if (name) {
-        entry->name = malloc(strlen(name) + 1);
-        strcpy(entry->name, name);
-    } else {
-        entry->name = NULL;
-    }
+    /* sstrdup() passes NULL through, so this covers "no name" as well. */
+    entry->name = sstrdup(name);
     pthread_mutex_unlock(&pulse_mutex);
     return true;
 }

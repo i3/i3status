@@ -75,9 +75,11 @@ extern char *pct_mark;
     if (BEGINS_WITH(current, name)) \
     with(cfg_t *, sec, cfg_section = cfg_getsec(cfg, name)) if (sec != NULL)
 
-#define CASE_SEC_TITLE(name)                              \
-    if (BEGINS_WITH(current, name))                       \
-    with(const char *, title, current + strlen(name) + 1) \
+/* If the order entry is just the bare module name (no title), `title` is the
+ * empty string instead of pointing past the end of the entry. */
+#define CASE_SEC_TITLE(name)                                                                \
+    if (BEGINS_WITH(current, name))                                                         \
+    with(const char *, title, current[strlen(name)] == '\0' ? current + strlen(name) : current + strlen(name) + 1) \
         with(cfg_t *, sec, cfg_section = cfg_gettsec(cfg, name, title)) if (sec != NULL)
 
 /* Macro which any plugin can use to output the full_text part (when the output
@@ -175,12 +177,24 @@ extern char *pct_mark;
         }                                                                                          \
     } while (0)
 
-#define OUTPUT_FORMATTED                                             \
-    do {                                                             \
-        const size_t remaining = ctx->buflen - (outwalk - ctx->buf); \
-        strncpy(outwalk, formatted, remaining);                      \
-        outwalk += strlen(formatted);                                \
+/* Appends a string to the output buffer without ever writing past its end.
+ * Over-long input is truncated, and the buffer is always NUL-terminated. */
+#define OUTPUT_STRING(str)                                                    \
+    do {                                                                      \
+        const char *_str = (str);                                             \
+        const size_t _used = (size_t)(outwalk - ctx->buf);                    \
+        if (_used < ctx->buflen) {                                            \
+            const size_t _room = ctx->buflen - _used - 1;                     \
+            size_t _len = strlen(_str);                                       \
+            if (_len > _room)                                                 \
+                _len = _room;                                                 \
+            memcpy(outwalk, _str, _len);                                      \
+            outwalk += _len;                                                  \
+            *outwalk = '\0';                                                  \
+        }                                                                     \
     } while (0)
+
+#define OUTPUT_FORMATTED OUTPUT_STRING(formatted)
 
 /*
  * The "min_width" module option may either be defined as a string or a number.
@@ -204,7 +218,7 @@ void print_separator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
-void maybe_escape_markup(char *text, char *buffer, size_t size);
+void maybe_escape_markup(const char *text, char *buffer, size_t size);
 
 char *rtrim(const char *s);
 char *ltrim(const char *s);
