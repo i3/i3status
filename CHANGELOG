@@ -1,3 +1,8 @@
+UNRELEASED
+
+ • add per-module "interval" option to update modules at different rates
+ • SIGUSR1 now forces all modules to be refreshed
+
 2024-08-19 i3status 2.15
 
  • man: document --run-once flag

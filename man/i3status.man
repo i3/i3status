@@ -162,7 +162,10 @@ color, even when colors are disabled by the +colors+ directive. This option has
 no effect when +output_format+ is set to +i3bar+ or +none+.
 
 The +interval+ directive specifies the time in seconds for which i3status will
-sleep before printing the next status line.
+sleep before printing the next status line. Updates are aligned to the wall
+clock, e.g. an interval of 5 updates at :00, :05, :10, etc. Individual modules
+can override this interval, see +interval+ in <<_universal_module_options>>.
+Sending +SIGUSR1+ to i3status refreshes all modules immediately.
 
 Using +output_format+ you can choose which format strings i3status should
 use in its output. Currently available are:
@@ -701,8 +704,27 @@ separator_block_width::
 	gap, a separator symbol will be drawn unless separator is disabled. This is
 	why the specified width should leave enough space for the separator symbol.
 
+The following option can be used with all modules, regardless of the output
+format:
+
+interval::
+	The time in seconds after which this module is updated. Defaults to 0,
+	which means the +interval+ from the +general+ section is used. In between
+	updates, the module's last output is shown again. This lets you e.g. show a
+	clock with seconds that updates every second, while expensive modules are
+	updated less frequently.
+
 *Example configuration*:
 -------------------------------------------------------------
+general {
+    interval = 5
+}
+
+tztime local {
+    format = "%H:%M:%S"
+    interval = 1
+}
+
 disk "/" {
     format = "%avail"
     align = "left"

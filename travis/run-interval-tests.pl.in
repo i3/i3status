@@ -1,0 +1,263 @@
+#!/usr/bin/env perl
+#
+# Tests for the (per-module) "interval" option. Unlike run-tests.pl, these
+# tests do not use --run-once: they let i3status run for a few seconds and
+# check which status lines each module was re-rendered on.
+#
+# The probe is a tztime module with format "%s" (seconds since the epoch). All
+# modules rendered in one loop iteration share the same timestamp, so the
+# value a module shows is exactly the time it was last rendered. For a module
+# with interval iv whose first render happened at t0, the value shown on a
+# line printed at time t must be max(t0, t - t % iv).
+
+use v5.10;
+use strict;
+use warnings;
+use File::Temp qw(tempfile);
+use JSON::PP;
+use List::Util qw(max);
+use Term::ANSIColor qw(:constants);
+
+my $i3status = '@abs_top_builddir@/i3status';
+my $failures = 0;
+
+sub write_conf {
+    my ($content) = @_;
+    my ($fh, $name) = tempfile('i3status-interval-XXXXXX', SUFFIX => '.conf', TMPDIR => 1, UNLINK => 1);
+    print $fh $content;
+    close $fh;
+    return $name;
+}
+
+# Starts i3status with the given config and returns its first $n lines of
+# output. $on_line, if given, is called as $on_line->($index, $pid) after each
+# line is read. $timeout (seconds) defaults to one line per second plus some
+# slack; cases whose lines are further apart must pass their own.
+sub run_lines {
+    my ($conf, $n, $on_line, $timeout) = @_;
+    $timeout //= $n + 3;
+    my $pid = open(my $fh, '-|') // die "fork: $!";
+    if ($pid == 0) {
+        open(STDERR, '>', '/dev/null');
+        $ENV{LC_ALL} = 'C';
+        exec($i3status, '-c', $conf) or exit 127;
+    }
+    my @lines;
+    my $ok = eval {
+        local $SIG{ALRM} = sub { die "timeout\n" };
+        alarm($timeout);
+        while (@lines < $n and defined(my $line = <$fh>)) {
+            chomp $line;
+            push @lines, $line;
+            $on_line->($#lines, $pid) if $on_line;
+        }
+        alarm(0);
+        1;
+    };
+    kill('TERM', $pid);
+    close($fh);
+    die "reading i3status output: $@" unless $ok;
+    die "i3status exited after " . scalar(@lines) . " of $n lines\n" if @lines < $n;
+    return @lines;
+}
+
+# Splits plain ("none" format) lines into columns of epoch timestamps.
+sub columns {
+    return map { [split(/ \| /, $_)] } @_;
+}
+
+sub check {
+    my ($name, $code) = @_;
+    my @errors = eval { $code->() };
+    push @errors, "died: $@" if $@;
+    if (@errors) {
+        say "Testing interval case '$name'… ", BOLD, RED, "Failed!", RESET;
+        say "  $_" for @errors;
+        $failures++;
+    } else {
+        say "Testing interval case '$name'… ", BOLD, GREEN, "OK", RESET;
+    }
+}
+
+# Checks that column $col of @rows follows the refresh schedule of a module
+# with interval $iv. Column $ref must be a module with interval 1, which gives
+# the time each line was printed at.
+sub check_schedule {
+    my ($rows, $ref, $col, $iv, $label) = @_;
+    my @errors;
+    my $t0 = $rows->[0][$ref];
+    for my $i (0 .. $#$rows) {
+        my $t = $rows->[$i][$ref];
+        my $expected = max($t0, $t - $t % $iv);
+        my $got = $rows->[$i][$col];
+        push @errors, "$label (interval $iv), line $i at $t: expected $expected, got $got"
+            if $got != $expected;
+    }
+    return @errors;
+}
+
+check('modules refresh on their own interval', sub {
+    my $conf = write_conf(<<'EOF');
+general {
+        output_format = "none"
+        interval = 1
+}
+order += "tztime every1"
+order += "tztime every2"
+order += "tztime every3"
+order += "tztime hourly"
+tztime every1 { format = "%s" }
+tztime every2 { format = "%s" interval = 2 }
+tztime every3 { format = "%s" interval = 3 }
+tztime hourly { format = "%s" interval = 3600 }
+EOF
+    my @rows = columns(run_lines($conf, 6));
+    my @errors;
+    for my $i (1 .. $#rows) {
+        push @errors, "line $i: interval 1 module did not advance"
+            unless $rows[$i][0] > $rows[$i - 1][0];
+    }
+    push @errors, check_schedule(\@rows, 0, 1, 2, 'every2');
+    push @errors, check_schedule(\@rows, 0, 2, 3, 'every3');
+    push @errors, check_schedule(\@rows, 0, 3, 3600, 'hourly');
+    # 6 lines span at least 5 seconds, so the interval-2/3 modules must have
+    # been re-rendered at least once.
+    push @errors, "every2 module was never refreshed" if $rows[-1][1] == $rows[0][1];
+    push @errors, "every3 module was never refreshed" if $rows[-1][2] == $rows[0][2];
+    return @errors;
+});
+
+check('modules without interval or interval = 0 inherit general interval', sub {
+    my $conf = write_conf(<<'EOF');
+general {
+        output_format = "none"
+        interval = 2
+}
+order += "tztime fast"
+order += "tztime unset"
+order += "tztime zero"
+tztime fast { format = "%s" interval = 1 }
+tztime unset { format = "%s" }
+tztime zero { format = "%s" interval = 0 }
+EOF
+    my @rows = columns(run_lines($conf, 5));
+    my @errors;
+    for my $i (1 .. $#rows) {
+        push @errors, "line $i: a line should be printed every second (interval 1 module), got "
+            . ($rows[$i][0] - $rows[$i - 1][0]) . "s"
+            unless $rows[$i][0] - $rows[$i - 1][0] == 1;
+    }
+    push @errors, check_schedule(\@rows, 0, 1, 2, 'unset');
+    push @errors, check_schedule(\@rows, 0, 2, 2, 'zero');
+    return @errors;
+});
+
+check('general interval alone keeps aligned cadence', sub {
+    my $conf = write_conf(<<'EOF');
+general {
+        output_format = "none"
+        interval = 2
+}
+order += "tztime only"
+tztime only { format = "%s" }
+EOF
+    # Lines are up to 2 seconds apart.
+    my @rows = columns(run_lines($conf, 4, undef, 2 * 4 + 3));
+    my @errors;
+    for my $i (1 .. $#rows) {
+        my $t = $rows[$i][0];
+        my $prev = $rows[$i - 1][0];
+        # The first line is printed at startup (any second); the next one at
+        # the following multiple of 2, every 2 seconds after that.
+        my $expected_gap = ($i == 1 ? 2 - $prev % 2 : 2);
+        push @errors, "line $i at $t: not aligned to a multiple of 2" if $t % 2 != 0;
+        push @errors, "line $i: expected ${expected_gap}s since previous line, got " . ($t - $prev) . "s"
+            unless $t - $prev == $expected_gap;
+    }
+    return @errors;
+});
+
+check('SIGUSR1 refreshes modules which are not due', sub {
+    my $conf = write_conf(<<'EOF');
+general {
+        output_format = "none"
+        interval = 3600
+}
+order += "tztime a"
+order += "tztime b"
+tztime a { format = "%s" }
+tztime b { format = "%s" interval = 7200 }
+EOF
+    # Without the signals, no new line would be printed for up to an hour.
+    my @rows = columns(run_lines($conf, 3, sub {
+        my ($i, $pid) = @_;
+        if ($i < 2) {
+            select(undef, undef, undef, 1.1);
+            kill('USR1', $pid);
+        }
+    }));
+    my @errors;
+    for my $i (1 .. $#rows) {
+        push @errors, "line $i: module a was not refreshed (still $rows[$i][0])"
+            unless $rows[$i][0] > $rows[$i - 1][0];
+        push @errors, "line $i: modules disagree ($rows[$i][0] vs $rows[$i][1])"
+            unless $rows[$i][0] == $rows[$i][1];
+    }
+    return @errors;
+});
+
+check('i3bar output stays valid JSON with cached and missing modules', sub {
+    my $conf = write_conf(<<'EOF');
+general {
+        output_format = "i3bar"
+        interval = 1
+}
+order += "tztime fast"
+order += "tztime missing"
+order += "tztime slow"
+tztime fast { format = "%s" }
+tztime slow { format = "%s" interval = 3600 }
+EOF
+    my @lines = run_lines($conf, 5);
+    my @errors;
+    push @errors, "bad header: $lines[0]" unless $lines[0] eq '{"version":1}';
+    push @errors, "bad stream start: $lines[1]" unless $lines[1] eq '[';
+    push @errors, "first status line must not start with a comma" if $lines[2] =~ /^,/;
+    push @errors, "line $_ must start with a comma" for grep { $lines[$_] !~ /^,/ } 3 .. $#lines;
+    my $stream = eval { decode_json(join("\n", @lines[1 .. $#lines]) . ']') };
+    return (@errors, "invalid JSON: $@") unless $stream;
+    my $t0 = $stream->[0][0]{full_text};
+    for my $i (0 .. $#$stream) {
+        my @blocks = @{$stream->[$i]};
+        push @errors, "line $i: expected 2 blocks (missing section skipped), got " . scalar(@blocks)
+            unless @blocks == 2;
+        my ($fast, $slow) = map { $_->{full_text} } @blocks;
+        push @errors, "line $i: unexpected instances"
+            unless ($blocks[0]{instance} // '') eq 'fast' and ($blocks[1]{instance} // '') eq 'slow';
+        push @errors, "line $i: cached slow module changed ($slow, expected $t0)"
+            unless $slow == max($t0, $fast - $fast % 3600);
+    }
+    return @errors;
+});
+
+for my $case ([negative => '-1'], [string => '"abc"'], [float => '1.5']) {
+    my ($what, $value) = @$case;
+    check("$what module interval is rejected", sub {
+        my $conf = write_conf(<<"EOF");
+general {
+        output_format = "none"
+}
+order += "tztime a"
+tztime a { format = "%s" interval = $value }
+EOF
+        my $output = `LC_ALL=C '$i3status' -c '$conf' 2>&1`;
+        my $exit = $? >> 8;
+        my @errors;
+        push @errors, "expected exit code 1, got $exit" unless $exit == 1;
+        push @errors, "expected an error about 'interval', got: $output"
+            unless $output =~ /interval/;
+        return @errors;
+    });
+}
+
+exit($failures ? 1 : 0);
