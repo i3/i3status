@@ -9,14 +9,22 @@ on:
 jobs:
   build:
     name: build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
+    - name: Cache APT Packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt/archives
+        key: ${{ runner.os }}-${{ matrix.compiler }}-apt-meson-${{ hashFiles('**/meson.build') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-apt-meson-
+
 
     - name: install build dependencies
       run: sudo apt update && sudo apt install clang-format-12 libconfuse-dev libyajl-dev libasound2-dev libpulse-dev libnl-genl-3-dev asciidoc xmlto libcap2-bin pulseaudio meson
