@@ -244,6 +244,14 @@ run_tests = custom_target(
   build_by_default: true,
 )
 
+run_interval_tests = custom_target(
+  'run-interval-tests',
+  input: ['travis/run-interval-tests.pl.in'],
+  output: ['run-interval-tests.pl'],
+  command: replace_dirs,
+  build_by_default: true,
+)
+
 perl = find_program('perl')
 if meson.version().version_compare('>=0.46.0')
   test(
@@ -251,6 +259,15 @@ if meson.version().version_compare('>=0.46.0')
     perl,
     args: [run_tests],
     timeout: 120,  # Default of 30 seconds can cause timeouts on slower machines
+  )
+  # These tests let i3status run for several seconds each. They wait on the
+  # wall clock rather than the CPU, so they take ~17-21s even on slow
+  # machines; each case also has its own (shorter) timeout.
+  test(
+    'run-interval-tests',
+    perl,
+    args: [run_interval_tests],
+    timeout: 30,
   )
 else
   # meson < 0.46.0 does not support the depends arg in test targets.

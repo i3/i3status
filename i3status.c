@@ -54,6 +54,9 @@
 #define CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT \
     CFG_INT("separator_block_width", 0, CFGF_NODEFAULT)
 
+#define CFG_CUSTOM_INTERVAL_OPT \
+    CFG_INT("interval", 0, CFGF_NONE)
+
 /* socket file descriptor for general purposes */
 int general_socket;
 
@@ -83,11 +86,15 @@ void fatalsig(int signum) {
 }
 
 /*
- * Do nothing upon SIGUSR1. Running this signal handler will nevertheless
- * interrupt nanosleep() so that i3status immediately generates new output.
+ * Upon SIGUSR1, request that all modules are refreshed (ignoring their
+ * interval). Running this signal handler also interrupts nanosleep() so that
+ * i3status immediately generates new output.
  *
  */
+static volatile sig_atomic_t force_refresh = 0;
+
 void sigusr1(int signum) {
+    force_refresh = 1;
 }
 
 /*
@@ -263,6 +270,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "%title: %status", CFGF_NONE),
         CFG_STR("format_down", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -274,6 +282,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format", "%title: %status", CFGF_NONE),
         CFG_STR("format_down", NULL, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -288,6 +297,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_quality", "%3d%s", CFGF_NONE),
         CFG_STR("format_signal", "%3d%s", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -298,6 +308,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_up", "E: %ip (%speed)", CFGF_NONE),
         CFG_STR("format_down", "E: down", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -308,6 +319,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_up", "%ip", CFGF_NONE),
         CFG_STR("format_down", "no IPv6", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -330,6 +342,7 @@ int main(int argc, char *argv[]) {
         CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
         CFG_BOOL("hide_seconds", true, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -339,6 +352,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t time_opts[] = {
         CFG_STR("format", "%Y-%m-%d %H:%M:%S", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -351,6 +365,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_time", NULL, CFGF_NONE),
         CFG_BOOL("hide_if_equals_localtime", false, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -359,6 +374,7 @@ int main(int argc, char *argv[]) {
     cfg_opt_t ddate_opts[] = {
         CFG_STR("format", "%{%a, %b %d%}, %Y%N - %H", CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
         CFG_CUSTOM_SEP_BLOCK_WIDTH_OPT,
@@ -369,6 +385,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("format_above_threshold", NULL, CFGF_NONE),
         CFG_FLOAT("max_threshold", 5, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -384,6 +401,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("unit", "auto", CFGF_NONE),
         CFG_INT("decimals", 1, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -398,6 +416,7 @@ int main(int argc, char *argv[]) {
         CFG_FLOAT("max_threshold", 95, CFGF_NONE),
         CFG_FLOAT("degraded_threshold", 90, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -410,6 +429,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("path", NULL, CFGF_NONE),
         CFG_INT("max_threshold", 75, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -424,6 +444,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("threshold_type", "percentage_avail", CFGF_NONE),
         CFG_FLOAT("low_threshold", 0, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -437,6 +458,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("mixer", "Master", CFGF_NONE),
         CFG_INT("mixer_idx", 0, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -449,6 +471,7 @@ int main(int argc, char *argv[]) {
         CFG_STR("path", NULL, CFGF_NONE),
         CFG_INT("max_characters", 255, CFGF_NONE),
         CFG_CUSTOM_ALIGN_OPT,
+        CFG_CUSTOM_INTERVAL_OPT,
         CFG_CUSTOM_COLOR_OPTS,
         CFG_CUSTOM_MIN_WIDTH_OPT,
         CFG_CUSTOM_SEPARATOR_OPT,
@@ -595,19 +618,11 @@ int main(int argc, char *argv[]) {
     else
         die("Unknown markup format: \"%s\"\n", markup_str);
 
-#if YAJL_MAJOR >= 2
-    yajl_gen json_gen = yajl_gen_alloc(NULL);
-#else
-    yajl_gen json_gen = yajl_gen_alloc(NULL, NULL);
-#endif
-
     if (output_format == O_I3BAR) {
         /* Initialize the i3bar protocol. See i3/docs/i3bar-protocol
          * for details. */
         printf("{\"version\":1}\n[\n");
         fflush(stdout);
-        yajl_gen_array_open(json_gen);
-        yajl_gen_clear(json_gen);
     }
     if (output_format == O_TERM) {
         /* Save the cursor-position and hide the cursor */
@@ -655,6 +670,17 @@ int main(int argc, char *argv[]) {
 
     void **per_instance = calloc(cfg_size(cfg, "order"), sizeof(*per_instance));
 
+    /* Each module is re-rendered only when its interval has elapsed.
+     * Otherwise, its last output is cached and printed again. */
+    struct module_cache {
+        time_t next_update;
+        char *out;
+    };
+    struct module_cache *cache = calloc(cfg_size(cfg, "order"), sizeof(*cache));
+    if (per_instance == NULL || cache == NULL)
+        die("calloc() failed\n");
+    bool first_line = true;
+
     while (1) {
         if (exit_upon_signal) {
             fprintf(stderr, "i3status: exiting due to signal.\n");
@@ -662,15 +688,22 @@ int main(int argc, char *argv[]) {
         }
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        if (output_format == O_I3BAR)
-            yajl_gen_array_open(json_gen);
-        else if (output_format == O_TERM)
-            /* Restore the cursor-position, clear line */
-            printf("\033[u\033[K");
+
+        const bool refresh_all = force_refresh;
+        force_refresh = 0;
+
         for (j = 0; j < cfg_size(cfg, "order"); j++) {
+            struct module_cache *mc = &cache[j];
+            if (!refresh_all && mc->out != NULL && tv.tv_sec < mc->next_update)
+                continue;
+
             cur_instance = per_instance + j;
-            if (j > 0)
-                print_separator(separator);
+            cfg_section = NULL;
+#if YAJL_MAJOR >= 2
+            yajl_gen json_gen = yajl_gen_alloc(NULL);
+#else
+            yajl_gen json_gen = yajl_gen_alloc(NULL, NULL);
+#endif
 
             const char *current = cfg_getnstr(cfg, "order", j);
 
@@ -947,19 +980,65 @@ int main(int argc, char *argv[]) {
                 print_file_contents(&ctx);
                 SEC_CLOSE_MAP;
             }
-        }
-        if (output_format == O_I3BAR) {
-            yajl_gen_array_close(json_gen);
-            const unsigned char *buf;
+
+            free(mc->out);
+            if (output_format == O_I3BAR) {
+                const unsigned char *buf;
 #if YAJL_MAJOR >= 2
-            size_t len;
+                size_t len;
 #else
-            unsigned int len;
+                unsigned int len;
 #endif
-            yajl_gen_get_buf(json_gen, &buf, &len);
-            write(STDOUT_FILENO, buf, len);
-            yajl_gen_clear(json_gen);
+                yajl_gen_get_buf(json_gen, &buf, &len);
+                mc->out = strndup((const char *)buf, len);
+                if (mc->out == NULL)
+                    die("strndup() failed\n");
+                /* Discard any text output (there should be none). */
+                free(take_captured_output());
+            } else {
+                mc->out = take_captured_output();
+            }
+            yajl_gen_free(json_gen);
+
+            int module_interval = interval;
+            if (cfg_section != NULL) {
+                int section_interval = cfg_getint(cfg_section, "interval");
+                if (section_interval < 0) {
+                    die("Invalid interval attribute found in section %s, line %d: %d\n"
+                        "Expected positive integer or 0 (use general interval)\n",
+                        cfg_section->name, cfg_section->line, section_interval);
+                }
+                if (section_interval > 0)
+                    module_interval = section_interval;
+            }
+            /* Align to wall-clock multiples of the interval */
+            mc->next_update = tv.tv_sec - (tv.tv_sec % module_interval) + module_interval;
         }
+
+        /* Print the (cached) output of all modules. */
+        if (output_format == O_I3BAR) {
+            printf("%s[", first_line ? "" : ",");
+            bool first_block = true;
+            for (j = 0; j < cfg_size(cfg, "order"); j++) {
+                if (cache[j].out[0] == '\0')
+                    continue;
+                if (!first_block)
+                    printf(",");
+                printf("%s", cache[j].out);
+                first_block = false;
+            }
+            printf("]");
+        } else {
+            if (output_format == O_TERM)
+                /* Restore the cursor-position, clear line */
+                printf("\033[u\033[K");
+            for (j = 0; j < cfg_size(cfg, "order"); j++) {
+                if (j > 0)
+                    print_separator(separator);
+                printf("%s", cache[j].out);
+            }
+        }
+        first_line = false;
 
         printf("\n");
         fflush(stdout);
@@ -968,16 +1047,22 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        /* To provide updates on every full second (as good as possible)
-         * we don’t use sleep(interval) but we sleep until the next
-         * second (with microsecond precision) plus (interval-1)
-         * seconds. We also align to 60 seconds modulo interval such
-         * that we start with :00 on every new minute. */
+        /* To provide updates on every full second (as good as possible) we don’t use sleep(interval). Since
+         * next_update is aligned to multiples of the module's interval, we start with :00 on every new minute. */
+        time_t next_update = cache[0].next_update;
+        for (j = 1; j < cfg_size(cfg, "order"); j++) {
+            if (cache[j].next_update < next_update)
+                next_update = cache[j].next_update;
+        }
         struct timeval current_timeval;
         gettimeofday(&current_timeval, NULL);
-        struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
+        /* If rendering took so long that we already passed the deadline, wait for the next full second. */
+        time_t secs = (next_update > current_timeval.tv_sec ? next_update - current_timeval.tv_sec : 1);
+        struct timespec ts = {secs - 1, (1000000 - current_timeval.tv_usec) * 1000};
+        if (ts.tv_nsec >= 1000000000) {
+            ts.tv_sec += 1;
+            ts.tv_nsec -= 1000000000;
+        }
         nanosleep(&ts, NULL);
     }
-
-    yajl_gen_free(json_gen);
 }

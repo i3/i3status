@@ -94,7 +94,7 @@ extern char *pct_mark;
             yajl_gen_string(ctx->json_gen, (const unsigned char *)"full_text", strlen("full_text")); \
             yajl_gen_string(ctx->json_gen, (const unsigned char *)text, strlen(text));               \
         } else {                                                                                     \
-            printf("%s", text);                                                                      \
+            capture_output(text);                                                                    \
         }                                                                                            \
     } while (0)
 
@@ -204,6 +204,8 @@ void print_separator(const char *separator);
 char *color(const char *colorstr);
 char *endcolor() __attribute__((pure));
 void reset_cursor(void);
+void capture_output(const char *text);
+char *take_captured_output(void);
 void maybe_escape_markup(char *text, char *buffer, size_t size);
 
 char *rtrim(const char *s);

@@ -74,6 +74,33 @@ void print_separator(const char *separator) {
         printf("%s", separator);
 }
 
+static char *captured_output = NULL;
+static size_t captured_len = 0;
+
+/*
+ * Text output is collected by modules (for non-i3bar output formats) instead of being printed directly,
+ * so that the main loop can cache it and re-print it while the module is not due for an update.
+ */
+void capture_output(const char *text) {
+    size_t len = strlen(text);
+    char *grown = realloc(captured_output, captured_len + len + 1);
+    if (grown == NULL)
+        die("realloc() failed\n");
+    captured_output = grown;
+    memcpy(captured_output + captured_len, text, len + 1);
+    captured_len += len;
+}
+
+/*
+ * Returns the text captured since the last call (never NULL). The caller owns the returned string and must free() it.
+ */
+char *take_captured_output(void) {
+    char *result = (captured_output != NULL ? captured_output : sstrdup(""));
+    captured_output = NULL;
+    captured_len = 0;
+    return result;
+}
+
 /*
  * The term-output hides the cursor. We call this on exit to reset that.
  */
