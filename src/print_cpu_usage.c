@@ -65,6 +65,19 @@ static struct cpu_usage *prev_cpus = NULL;
 static struct cpu_usage *curr_cpus = NULL;
 
 /*
+ * Returns the name of the color option to use for the given usage percentage,
+ * or NULL if the usage is below both thresholds.
+ *
+ */
+static const char *usage_color(const cpu_usage_ctx_t *ctx, int usage) {
+    if (usage >= ctx->max_threshold)
+        return "color_bad";
+    if (usage >= ctx->degraded_threshold)
+        return "color_degraded";
+    return NULL;
+}
+
+/*
  * Reads the CPU utilization from /proc/stat and returns the usage as a
  * percentage.
  *
@@ -184,14 +197,16 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     goto error;
 #endif
 
-    if (diff_usage >= ctx->max_threshold) {
-        START_COLOR("color_bad");
+    const char *colorstr = usage_color(ctx, diff_usage);
+    if (colorstr != NULL) {
+        START_COLOR(colorstr);
         colorful_output = true;
+    }
+
+    if (diff_usage >= ctx->max_threshold) {
         if (ctx->format_above_threshold != NULL)
             selected_format = ctx->format_above_threshold;
     } else if (diff_usage >= ctx->degraded_threshold) {
-        START_COLOR("color_degraded");
-        colorful_output = true;
         if (ctx->format_above_degraded_threshold != NULL)
             selected_format = ctx->format_above_degraded_threshold;
     }
