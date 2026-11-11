@@ -78,6 +78,60 @@ static const char *usage_color(const cpu_usage_ctx_t *ctx, int usage) {
 }
 
 /*
+ * Whether a single value can be colored within the output. i3bar can only
+ * color a whole block, unless pango markup is enabled.
+ *
+ */
+static bool has_inline_colors(void) {
+    return output_format != O_I3BAR || markup_format == M_PANGO;
+}
+
+/*
+ * Writes the given usage percentage to outwalk, colored according to the
+ * thresholds if the output format supports coloring a single value. Returns
+ * the position after the written text.
+ *
+ */
+static char *print_usage(const cpu_usage_ctx_t *ctx, char *outwalk, int usage) {
+    char start[64] = "";
+    const char *end = "";
+    const char *colorstr = usage_color(ctx, usage);
+
+    if (colorstr != NULL && has_inline_colors() && cfg_getbool(cfg_general, "colors")) {
+        if (output_format == O_I3BAR) {
+            const char *val = NULL;
+            if (cfg_section)
+                val = cfg_getstr(cfg_section, colorstr);
+            if (!val)
+                val = cfg_getstr(cfg_general, colorstr);
+            (void)snprintf(start, sizeof(start), "<span foreground='%s'>", val);
+            end = "</span>";
+        } else {
+            (void)snprintf(start, sizeof(start), "%s", color(colorstr));
+            /* endcolor() does not reset the color for dzen2 and lemonbar,
+             * which would color everything up to the next separator. */
+            if (output_format == O_DZEN2)
+                end = "^fg()";
+            else if (output_format == O_LEMONBAR)
+                end = "%{F-}";
+            else
+                end = endcolor();
+        }
+    }
+
+    /* Colors make a value a lot longer than its visible width, so make sure
+     * that many colored values cannot overflow the buffer. A value which does
+     * not fit is dropped entirely to not leave unbalanced markup behind. */
+    const size_t remaining = ctx->buf + ctx->buflen - outwalk;
+    const int written = snprintf(outwalk, remaining, "%s%02d%s%s", start, usage, pct_mark, end);
+    if (written < 0 || (size_t)written >= remaining) {
+        *outwalk = '\0';
+        return outwalk;
+    }
+    return outwalk + written;
+}
+
+/*
  * Reads the CPU utilization from /proc/stat and returns the usage as a
  * percentage.
  *
@@ -93,7 +147,6 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     int diff_idle, diff_total;
 #endif
     int diff_usage;
-    bool colorful_output = false;
 
 #if defined(__linux__)
 
@@ -197,10 +250,12 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     goto error;
 #endif
 
-    const char *colorstr = usage_color(ctx, diff_usage);
-    if (colorstr != NULL) {
-        START_COLOR(colorstr);
-        colorful_output = true;
+    /* Every value is colored on its own. Where that is not possible, color
+     * the whole block based on the overall usage instead. */
+    if (!has_inline_colors()) {
+        const char *colorstr = usage_color(ctx, diff_usage);
+        if (colorstr != NULL)
+            START_COLOR(colorstr);
     }
 
     if (diff_usage >= ctx->max_threshold) {
@@ -216,7 +271,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
             *(outwalk++) = *walk;
 
         } else if (BEGINS_WITH(walk + 1, "usage")) {
-            outwalk += sprintf(outwalk, "%02d%s", diff_usage, pct_mark);
+            outwalk = print_usage(ctx, outwalk, diff_usage);
             walk += strlen("usage");
         }
 #if defined(__linux__)
@@ -232,7 +287,7 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
                 int cpu_diff_idle = curr_cpus[number].idle - prev_cpus[number].idle;
                 int cpu_diff_total = curr_cpus[number].total - prev_cpus[number].total;
                 int cpu_diff_usage = (cpu_diff_total ? (1000 * (cpu_diff_total - cpu_diff_idle) / cpu_diff_total + 5) / 10 : 0);
-                outwalk += sprintf(outwalk, "%02d%s", cpu_diff_usage, pct_mark);
+                outwalk = print_usage(ctx, outwalk, cpu_diff_usage);
             }
             walk += length;
         }
@@ -245,9 +300,6 @@ void print_cpu_usage(cpu_usage_ctx_t *ctx) {
     struct cpu_usage *temp_cpus = prev_cpus;
     prev_cpus = curr_cpus;
     curr_cpus = temp_cpus;
-
-    if (colorful_output)
-        END_COLOR;
 
     OUTPUT_FULL_TEXT(ctx->buf);
     return;
