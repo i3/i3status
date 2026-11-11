@@ -10,5 +10,5 @@ chomp(my $cpu_count = `grep -c -P '^processor\\s+:' /proc/cpuinfo`);
 if ($cpu_count == 1) {
     print "all: <fc=#FF0000>100%</fc> CPU_0: <fc=#FF0000>100%</fc> CPU_1: \n";
 } else {
-    print "all: <fc=#FFFF00>75%</fc> CPU_0: <fc=#FF0000>100%</fc> CPU_1: 50%\n";
+    print "all: <fc=#FFFF00> 75%</fc> CPU_0: <fc=#FF0000>100%</fc> CPU_1:  50%\n";
 }

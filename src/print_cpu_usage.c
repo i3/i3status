@@ -123,7 +123,7 @@ static char *print_usage(const cpu_usage_ctx_t *ctx, char *outwalk, int usage) {
      * that many colored values cannot overflow the buffer. A value which does
      * not fit is dropped entirely to not leave unbalanced markup behind. */
     const size_t remaining = ctx->buf + ctx->buflen - outwalk;
-    const int written = snprintf(outwalk, remaining, "%s%02d%s%s", start, usage, pct_mark, end);
+    const int written = snprintf(outwalk, remaining, "%s%3d%s%s", start, usage, pct_mark, end);
     if (written < 0 || (size_t)written >= remaining) {
         *outwalk = '\0';
         return outwalk;
